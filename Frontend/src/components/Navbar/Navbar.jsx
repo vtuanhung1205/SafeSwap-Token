@@ -1,221 +1,206 @@
-import React, { useState } from "react";
-
-const tokens = [
-  {
-    name: "Ethereum",
-    symbol: "ETH",
-    icon: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
-  },
-  {
-    name: "Tether",
-    symbol: "USDT",
-    icon: "https://cryptologos.cc/logos/tether-usdt-logo.png",
-  },
-  {
-    name: "USD Coin",
-    symbol: "USDC",
-    icon: "https://cryptologos.cc/logos/usd-coin-usdc-logo.png",
-  },
-  {
-    name: "Bitcoin",
-    symbol: "BTC",
-    icon: "https://cryptologos.cc/logos/bitcoin-btc-logo.png",
-  },
-  {
-    name: "BNB",
-    symbol: "BNB",
-    icon: "https://cryptologos.cc/logos/bnb-bnb-logo.png",
-  },
-];
+import React, { useState } from 'react';
+import { ChevronDown, User, LogOut, Wallet, Settings, Shield, BarChart3 } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import { useWebSocket } from '../../hooks/useWebSocket';
+import LoginModal from '../Auth/LoginModal';
+import RegisterModal from '../Auth/RegisterModal';
 
 const Navbar = () => {
-  const [menuOpen, setMenuOpen] = useState(false);
-  // Search state
-  const [query, setQuery] = useState("");
-  const [focused, setFocused] = useState(false);
-  const filtered = tokens.filter(
-    (t) =>
-      t.name.toLowerCase().includes(query.toLowerCase()) ||
-      t.symbol.toLowerCase().includes(query.toLowerCase())
-  );
+  const { user, isAuthenticated, logout, isLoading } = useAuth();
+  const { isConnected } = useWebSocket();
+  const location = useLocation();
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
+
+  const handleLogout = () => {
+    logout();
+    setShowUserMenu(false);
+  };
+
+  const switchToRegister = () => {
+    setShowLoginModal(false);
+    setShowRegisterModal(true);
+  };
+
+  const switchToLogin = () => {
+    setShowRegisterModal(false);
+    setShowLoginModal(true);
+  };
 
   return (
-    <nav className="bg-[#0a0a4a] text-white sticky top-0 z-50 shadow-md">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center h-16 w-full justify-between">
-          {/* Logo + Name */}
+    <>
+      <nav className="bg-[#18181c] border-b border-[#23232a] px-6 py-4">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          {/* Logo */}
           <div className="flex items-center space-x-3">
-            <span className="text-2xl font-bold tracking-wide select-none">
-              Cryptoplace
-            </span>
-          </div>
-          {/* Search (center, grow, mx-6) */}
-          <div className="hidden md:flex flex-grow justify-center mx-6 max-w-md relative">
-            <div className="flex items-center bg-[#18181c] rounded-full px-4 py-2 shadow border border-[#23232a] focus-within:ring-2 focus-within:ring-cyan-500 w-full">
-              <svg
-                className="w-5 h-5 text-gray-400 mr-2"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-              >
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-              <input
-                type="text"
-                placeholder="Search token by name..."
-                className="bg-transparent outline-none text-white flex-1 placeholder-gray-400"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onFocus={() => setFocused(true)}
-                onBlur={() => setTimeout(() => setFocused(false), 100)}
-              />
-            </div>
-            {focused && query && (
-              <div className="absolute left-0 w-full mt-2 bg-[#18181c] rounded-2xl shadow-2xl border border-[#23232a] z-50 overflow-hidden animate-fade-in-down">
-                {filtered.length === 0 ? (
-                  <div className="px-4 py-4 text-gray-400 text-center">
-                    No tokens found.
-                  </div>
-                ) : (
-                  <ul className="max-h-60 overflow-y-auto divide-y divide-[#23232a]">
-                    {filtered.map((token) => (
-                      <li
-                        key={token.symbol}
-                        className="flex items-center px-4 py-3 hover:bg-[#23232a] cursor-pointer transition"
-                      >
-                        <img
-                          src={token.icon}
-                          alt={token.symbol}
-                          className="w-7 h-7 rounded-full mr-3"
-                        />
-                        <div>
-                          <div className="font-semibold text-white">
-                            {token.name}
-                          </div>
-                          <div className="text-xs text-gray-400">
-                            {token.symbol}
-                          </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
+            <Link to="/" className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-cyan-600 rounded-full flex items-center justify-center">
+                <Shield size={20} className="text-white" />
               </div>
-            )}
+              <span className="text-xl font-bold text-white">SafeSwap</span>
+            </Link>
+            {/* WebSocket Status */}
+            <div className="flex items-center space-x-2">
+              <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+              <span className="text-xs text-gray-400">
+                {isConnected ? 'Live' : 'Offline'}
+              </span>
+            </div>
           </div>
-          {/* Menu */}
-          <div className="hidden md:flex space-x-8 text-lg font-medium">
-            <a
-              href="#"
-              className="hover:text-cyan-300 transition-colors duration-200 px-2 py-1 rounded focus:outline-none focus:bg-cyan-900"
+
+          {/* Navigation Menu */}
+          <div className="flex items-center space-x-8">
+            <Link
+              to="/"
+              className={`px-3 py-2 rounded-lg transition ${
+                location.pathname === '/' 
+                  ? 'text-cyan-400 bg-cyan-600/10' 
+                  : 'text-gray-300 hover:text-cyan-400'
+              }`}
             >
               Home
-            </a>
-            <a
-              href="#"
-              className="hover:text-cyan-300 transition-colors duration-200 px-2 py-1 rounded focus:outline-none focus:bg-cyan-900"
+            </Link>
+            <Link
+              to="/swap"
+              className={`px-3 py-2 rounded-lg transition ${
+                location.pathname === '/swap' 
+                  ? 'text-cyan-400 bg-cyan-600/10' 
+                  : 'text-gray-300 hover:text-cyan-400'
+              }`}
             >
-              Features
-            </a>
-            <a
-              href="#"
-              className="hover:text-cyan-300 transition-colors duration-200 px-2 py-1 rounded focus:outline-none focus:bg-cyan-900"
-            >
-              Pricing
-            </a>
-            <a
-              href="#"
-              className="hover:text-cyan-300 transition-colors duration-200 px-2 py-1 rounded focus:outline-none focus:bg-cyan-900"
-            >
-              Blog
-            </a>
+              Swap
+            </Link>
+            {isAuthenticated && (
+              <Link
+                to="/dashboard"
+                className={`px-3 py-2 rounded-lg transition ${
+                  location.pathname === '/dashboard' 
+                    ? 'text-cyan-400 bg-cyan-600/10' 
+                    : 'text-gray-300 hover:text-cyan-400'
+                }`}
+              >
+                Dashboard
+              </Link>
+            )}
           </div>
-          {/* Right side: Currency + Sign up */}
-          <div className="flex items-center space-x-4 ml-2">
-            {/* Currency Dropdown */}
-            <select className="bg-[#18186a] text-white px-3 py-1 rounded border border-white/20 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition">
-              <option>USD</option>
-              <option>EUR</option>
-              <option>VND</option>
-            </select>
-            {/* Sign up Button */}
-            <a
-              href="#"
-              className="flex items-center bg-white text-[#0a0a4a] font-semibold px-5 py-2 rounded-full shadow hover:bg-cyan-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-cyan-400"
-            >
-              Sign up
-              <svg
-                className="ml-2"
-                width="18"
-                height="18"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                viewBox="0 0 24 24"
-              >
-                <path d="M5 12h14M12 5l7 7-7 7" />
-              </svg>
-            </a>
-            {/* Mobile menu button */}
-            <button
-              className="md:hidden flex items-center justify-center w-10 h-10 rounded focus:outline-none focus:ring-2 focus:ring-cyan-400"
-              onClick={() => setMenuOpen(!menuOpen)}
-              aria-label="Open menu"
-            >
-              <svg
-                width="24"
-                height="24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                viewBox="0 0 24 24"
-              >
-                <line x1="3" y1="12" x2="21" y2="12" />
-                <line x1="3" y1="6" x2="21" y2="6" />
-                <line x1="3" y1="18" x2="21" y2="18" />
-              </svg>
-            </button>
+
+          {/* User Section */}
+          <div className="flex items-center space-x-4">
+            {!isLoading && (
+              <>
+                {isAuthenticated ? (
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowUserMenu(!showUserMenu)}
+                      className="flex items-center space-x-3 bg-[#111112] px-4 py-2 rounded-xl border border-[#23232a] hover:border-cyan-600 transition"
+                    >
+                      {user?.avatar ? (
+                        <img
+                          src={user.avatar}
+                          alt={user.name}
+                          className="w-8 h-8 rounded-full"
+                        />
+                      ) : (
+                        <div className="w-8 h-8 bg-cyan-600 rounded-full flex items-center justify-center">
+                          <User size={16} className="text-white" />
+                        </div>
+                      )}
+                      <div className="text-left">
+                        <p className="text-white font-medium text-sm">{user?.name}</p>
+                        <p className="text-gray-400 text-xs">{user?.email}</p>
+                      </div>
+                      <ChevronDown size={16} className="text-gray-400" />
+                    </button>
+
+                    {/* User Dropdown */}
+                    {showUserMenu && (
+                      <div className="absolute right-0 mt-2 w-64 bg-[#18181c] border border-[#23232a] rounded-xl shadow-lg py-2 z-50">
+                        <div className="px-4 py-2 border-b border-[#23232a]">
+                          <p className="text-white font-medium">{user?.name}</p>
+                          <p className="text-gray-400 text-sm">{user?.email}</p>
+                          {user?.walletAddress && (
+                            <p className="text-cyan-500 text-xs mt-1">
+                              {user.walletAddress.slice(0, 6)}...{user.walletAddress.slice(-4)}
+                            </p>
+                          )}
+                        </div>
+                        
+                        <Link
+                          to="/dashboard"
+                          className="w-full px-4 py-2 text-left text-gray-300 hover:bg-[#23232a] transition flex items-center space-x-2"
+                          onClick={() => setShowUserMenu(false)}
+                        >
+                          <BarChart3 size={16} />
+                          <span>Dashboard</span>
+                        </Link>
+                        
+                        <button className="w-full px-4 py-2 text-left text-gray-300 hover:bg-[#23232a] transition flex items-center space-x-2">
+                          <Wallet size={16} />
+                          <span>Wallet</span>
+                        </button>
+                        
+                        <button className="w-full px-4 py-2 text-left text-gray-300 hover:bg-[#23232a] transition flex items-center space-x-2">
+                          <Settings size={16} />
+                          <span>Settings</span>
+                        </button>
+                        
+                        <hr className="border-[#23232a] my-2" />
+                        
+                        <button
+                          onClick={handleLogout}
+                          className="w-full px-4 py-2 text-left text-red-400 hover:bg-[#23232a] transition flex items-center space-x-2"
+                        >
+                          <LogOut size={16} />
+                          <span>Sign Out</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex items-center space-x-3">
+                    <button
+                      onClick={() => setShowLoginModal(true)}
+                      className="px-4 py-2 text-cyan-600 hover:text-cyan-500 font-medium transition"
+                    >
+                      Sign In
+                    </button>
+                    <button
+                      onClick={() => setShowRegisterModal(true)}
+                      className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white font-medium rounded-xl transition"
+                    >
+                      Sign Up
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
-        {/* Mobile Menu */}
-        {menuOpen && (
-          <div className="md:hidden mt-2 animate-fade-in-down">
-            <div className="flex flex-col items-center bg-[#0a0a4a] py-4 rounded shadow-lg">
-              <a
-                href="#"
-                className="block w-full text-center hover:text-cyan-300 transition-colors duration-200 px-4 py-2 rounded mb-2"
-              >
-                Home
-              </a>
-              <a
-                href="#"
-                className="block w-full text-center hover:text-cyan-300 transition-colors duration-200 px-4 py-2 rounded mb-2"
-              >
-                Features
-              </a>
-              <a
-                href="#"
-                className="block w-full text-center hover:text-cyan-300 transition-colors duration-200 px-4 py-2 rounded mb-2"
-              >
-                Pricing
-              </a>
-              <a
-                href="#"
-                className="block w-full text-center hover:text-cyan-300 transition-colors duration-200 px-4 py-2 rounded"
-              >
-                Blog
-              </a>
-            </div>
-          </div>
+
+        {/* Click outside to close user menu */}
+        {showUserMenu && (
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setShowUserMenu(false)}
+          />
         )}
-      </div>
-    </nav>
+      </nav>
+
+      {/* Auth Modals */}
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        onSwitchToRegister={switchToRegister}
+      />
+
+      <RegisterModal
+        isOpen={showRegisterModal}
+        onClose={() => setShowRegisterModal(false)}
+        onSwitchToLogin={switchToLogin}
+      />
+    </>
   );
 };
 
