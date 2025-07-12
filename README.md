@@ -8,7 +8,6 @@
 
 **Date:** July 11, 2025
 
-[Overview](#overview) | [Features](#features) | [Team](#team) | [Technical Details](#technical-details) | [Installation](#installation) | [Usage](#usage) | [Impact](#impact)
 ---
 ## 🚀 Project Overview  
 
