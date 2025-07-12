@@ -3,7 +3,9 @@
 **A Secure Web3 Token Swap UI for the Aptos Blockchain**  
 
 ![Vietnam Aptos Hackathon 2025](https://img.shields.io/badge/Vietnam%20Aptos%20Hackathon-2025-blue)
-**Team Name:** RTS 
+
+**Team Name:** RTS
+
 **Date:** July 11, 2025
 
 [Overview](#overview) | [Features](#features) | [Team](#team) | [Technical Details](#technical-details) | [Installation](#installation) | [Usage](#usage) | [Impact](#impact)
