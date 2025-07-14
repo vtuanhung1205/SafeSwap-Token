@@ -1,10 +1,18 @@
-import React, { useState } from 'react';
-import { ChevronDown, User, LogOut, Wallet, Settings, Shield, BarChart3 } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import { useWebSocket } from '../../hooks/useWebSocket';
-import LoginModal from '../Auth/LoginModal';
-import RegisterModal from '../Auth/RegisterModal';
+import React, { useState } from "react";
+import {
+  ChevronDown,
+  User,
+  LogOut,
+  Wallet,
+  Settings,
+  Shield,
+  BarChart3,
+} from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
+import { useWebSocket } from "../../hooks/useWebSocket";
+import LoginModal from "../Auth/LoginModal";
+import RegisterModal from "../Auth/RegisterModal";
 
 const Navbar = () => {
   const { user, isAuthenticated, logout, isLoading } = useAuth();
@@ -43,9 +51,13 @@ const Navbar = () => {
             </Link>
             {/* WebSocket Status */}
             <div className="flex items-center space-x-2">
-              <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+              <div
+                className={`w-2 h-2 rounded-full ${
+                  isConnected ? "bg-green-500" : "bg-red-500"
+                }`}
+              ></div>
               <span className="text-xs text-gray-400">
-                {isConnected ? 'Live' : 'Offline'}
+                {isConnected ? "Live" : "Offline"}
               </span>
             </div>
           </div>
@@ -55,9 +67,9 @@ const Navbar = () => {
             <Link
               to="/"
               className={`px-3 py-2 rounded-lg transition ${
-                location.pathname === '/' 
-                  ? 'text-cyan-400 bg-cyan-600/10' 
-                  : 'text-gray-300 hover:text-cyan-400'
+                location.pathname === "/"
+                  ? "text-cyan-400 bg-cyan-600/10"
+                  : "text-gray-300 hover:text-cyan-400"
               }`}
             >
               Home
@@ -65,20 +77,30 @@ const Navbar = () => {
             <Link
               to="/swap"
               className={`px-3 py-2 rounded-lg transition ${
-                location.pathname === '/swap' 
-                  ? 'text-cyan-400 bg-cyan-600/10' 
-                  : 'text-gray-300 hover:text-cyan-400'
+                location.pathname === "/swap"
+                  ? "text-cyan-400 bg-cyan-600/10"
+                  : "text-gray-300 hover:text-cyan-400"
               }`}
             >
               Swap
+            </Link>
+            <Link
+              to="/about"
+              className={`px-3 py-2 rounded-lg transition ${
+                location.pathname === "/about"
+                  ? "text-cyan-400 bg-cyan-600/10"
+                  : "text-gray-300 hover:text-cyan-400"
+              }`}
+            >
+              About
             </Link>
             {isAuthenticated && (
               <Link
                 to="/dashboard"
                 className={`px-3 py-2 rounded-lg transition ${
-                  location.pathname === '/dashboard' 
-                    ? 'text-cyan-400 bg-cyan-600/10' 
-                    : 'text-gray-300 hover:text-cyan-400'
+                  location.pathname === "/dashboard"
+                    ? "text-cyan-400 bg-cyan-600/10"
+                    : "text-gray-300 hover:text-cyan-400"
                 }`}
               >
                 Dashboard
@@ -108,7 +130,9 @@ const Navbar = () => {
                         </div>
                       )}
                       <div className="text-left">
-                        <p className="text-white font-medium text-sm">{user?.name}</p>
+                        <p className="text-white font-medium text-sm">
+                          {user?.name}
+                        </p>
                         <p className="text-gray-400 text-xs">{user?.email}</p>
                       </div>
                       <ChevronDown size={16} className="text-gray-400" />
@@ -122,11 +146,12 @@ const Navbar = () => {
                           <p className="text-gray-400 text-sm">{user?.email}</p>
                           {user?.walletAddress && (
                             <p className="text-cyan-500 text-xs mt-1">
-                              {user.walletAddress.slice(0, 6)}...{user.walletAddress.slice(-4)}
+                              {user.walletAddress.slice(0, 6)}...
+                              {user.walletAddress.slice(-4)}
                             </p>
                           )}
                         </div>
-                        
+
                         <Link
                           to="/dashboard"
                           className="w-full px-4 py-2 text-left text-gray-300 hover:bg-[#23232a] transition flex items-center space-x-2"
@@ -135,19 +160,19 @@ const Navbar = () => {
                           <BarChart3 size={16} />
                           <span>Dashboard</span>
                         </Link>
-                        
+
                         <button className="w-full px-4 py-2 text-left text-gray-300 hover:bg-[#23232a] transition flex items-center space-x-2">
                           <Wallet size={16} />
                           <span>Wallet</span>
                         </button>
-                        
+
                         <button className="w-full px-4 py-2 text-left text-gray-300 hover:bg-[#23232a] transition flex items-center space-x-2">
                           <Settings size={16} />
                           <span>Settings</span>
                         </button>
-                        
+
                         <hr className="border-[#23232a] my-2" />
-                        
+
                         <button
                           onClick={handleLogout}
                           className="w-full px-4 py-2 text-left text-red-400 hover:bg-[#23232a] transition flex items-center space-x-2"

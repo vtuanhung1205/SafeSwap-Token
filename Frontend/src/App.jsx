@@ -1,13 +1,19 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
-import { AuthProvider } from './contexts/AuthContext';
-import Navbar from './components/Navbar/Navbar';
-import Footer from './components/Footer';
-import SwapForm from './components/SwapForm';
-import Dashboard from './components/Dashboard/Dashboard';
-import DemoBadge from './components/DemoBadge';
-import './index.css';
+import React from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import { Toaster } from "react-hot-toast";
+import { AuthProvider } from "./contexts/AuthContext";
+import Navbar from "./components/Navbar/Navbar";
+import Footer from "./components/Footer";
+import SwapForm from "./components/SwapForm";
+import Dashboard from "./components/Dashboard/Dashboard";
+import DemoBadge from "./components/DemoBadge";
+import About from "./components/About";
+import "./index.css";
 
 function App() {
   return (
@@ -15,42 +21,43 @@ function App() {
       <Router>
         <div className="min-h-screen bg-black flex flex-col">
           <Navbar />
-          
+
           <main className="flex-1">
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/swap" element={<SwapPage />} />
               <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/about" element={<About />} />
               {/* Redirect unknown routes to home */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
-          
+
           <Footer />
-          
+
           {/* Demo Badge */}
           <DemoBadge />
-          
+
           {/* Toast notifications */}
           <Toaster
             position="top-right"
             toastOptions={{
               duration: 4000,
               style: {
-                background: '#18181c',
-                color: '#fff',
-                border: '1px solid #23232a',
+                background: "#18181c",
+                color: "#fff",
+                border: "1px solid #23232a",
               },
               success: {
                 iconTheme: {
-                  primary: '#06b6d4',
-                  secondary: '#fff',
+                  primary: "#06b6d4",
+                  secondary: "#fff",
                 },
               },
               error: {
                 iconTheme: {
-                  primary: '#ef4444',
-                  secondary: '#fff',
+                  primary: "#ef4444",
+                  secondary: "#fff",
                 },
               },
             }}
@@ -73,7 +80,8 @@ const HomePage = () => {
             SafeSwap
           </h1>
           <p className="text-xl md:text-2xl text-gray-300 mb-8 max-w-2xl mx-auto">
-            The safest way to swap tokens on Aptos with real-time scam detection and secure authentication
+            The safest way to swap tokens on Aptos with real-time scam detection
+            and secure authentication
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
@@ -95,7 +103,9 @@ const HomePage = () => {
       {/* Features Section */}
       <section id="features" className="py-20 px-6">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-4xl font-bold text-center mb-16">Why Choose SafeSwap?</h2>
+          <h2 className="text-4xl font-bold text-center mb-16">
+            Why Choose SafeSwap?
+          </h2>
           <div className="grid md:grid-cols-3 gap-8">
             <FeatureCard
               icon="🛡️"
