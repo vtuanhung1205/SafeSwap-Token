@@ -12,8 +12,9 @@ import Footer from "./components/Footer";
 import SwapForm from "./components/SwapForm";
 import Dashboard from "./components/Dashboard/Dashboard";
 import DemoBadge from "./components/DemoBadge";
-import About from "./components/About";
+import Feature from "./components/Feature";
 import "./index.css";
+import About from "./components/pages/About";
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
               <Route path="/" element={<HomePage />} />
               <Route path="/swap" element={<SwapPage />} />
               <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/feature" element={<Feature />} />
               <Route path="/about" element={<About />} />
               {/* Redirect unknown routes to home */}
               <Route path="*" element={<Navigate to="/" replace />} />

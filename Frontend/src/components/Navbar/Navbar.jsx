@@ -85,14 +85,24 @@ const Navbar = () => {
               Swap
             </Link>
             <Link
-              to="/about"
+              to="/feature"
               className={`px-3 py-2 rounded-lg transition ${
-                location.pathname === "/about"
+                location.pathname === "/feature"
                   ? "text-cyan-400 bg-cyan-600/10"
                   : "text-gray-300 hover:text-cyan-400"
               }`}
             >
-              About
+              Feature
+            </Link>
+            <Link
+              to="/pricing"
+              className={`px-3 py-2 rounded-lg transition ${
+                location.pathname === "/pricing"
+                  ? "text-cyan-400 bg-cyan-600/10"
+                  : "text-gray-300 hover:text-cyan-400"
+              }`}
+            >
+              Pricing
             </Link>
             {isAuthenticated && (
               <Link

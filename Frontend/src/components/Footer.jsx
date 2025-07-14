@@ -10,12 +10,12 @@ const socialLinks = [
       </svg>
     ),
   },
-  {
-    href: "https://x.com/",
-    label: "X",
+    {
+    href: "https://facebook.com/",
+    label: "Facebook",
     icon: (
       <svg width="32" height="32" fill="currentColor" viewBox="0 0 24 24">
-        <path d="M17.53 2.477h3.75l-7.79 8.89 9.17 10.156h-7.21l-5.67-6.6-6.49 6.6H.04l8.32-9.5L-.04 2.477h7.36l5.09 5.92 5.12-5.92zm-1.32 16.36h2.08L6.6 4.56H4.41l11.8 14.277z" />
+        <path d="M12 2.04C6.5 2.04 2 6.53 2 12.06c0 5.52 4.5 10.02 10 10.02s10-4.5 10-10.02C22 6.53 17.5 2.04 12 2.04zM16.5 12.06h-2.25v6h-3V12.06H9.5v-2.25h1.75V8.56c0-1.73 1.05-2.68 2.6-2.68h1.9v2.25h-1.14c-.85 0-.9.4-.9.92v1.45h2.25l-.25 2.25z" />
       </svg>
     ),
   },
@@ -32,26 +32,41 @@ const socialLinks = [
 
 const footerLinks = [
   {
-    title: "App",
-    links: ["Swap", "Search", "Pool"],
+    title: "Product",
+    links: [
+      { label: "Features", href: "/features" },
+      { label: "Pricing", href: "/pricing" },
+      { label: "Integrations", href: "/integrations" },
+    ],
   },
   {
     title: "Company",
-    links: ["Careers", "Blog", "Brand Assets"],
+    links: [
+      { label: "About", href: "/about" },
+      { label: "Our Story", href: "/our-story" },
+      { label: "Developers", href: "/developers" },
+    ],
   },
   {
-    title: "Protocol",
-    links: ["Governance", "Management", "Developers"],
+    title: "Resources",
+    links: [
+      { label: "Docs", href: "/docs" },
+      { label: "API Reference", href: "/api-reference" },
+      { label: "Community", href: "/community" },
+    ],
   },
   {
-    title: "Help?",
-    links: ["Support Center", "Contact"],
+    title: "Support",
+    links: [
+      { label: "Help Center", href: "/help-center" },
+      { label: "Contact Us", href: "/contact" },
+    ],
   },
 ];
 
 const policyLinks = [
-  { label: "Brand Policy", href: "#" },
-  { label: "Privacy Policy", href: "#" },
+  { label: "Terms Of Use", href: "/terms-of-use" },
+  { label: "Privacy Policy", href: "/privacy-policy" },
 ];
 
 const Footer = () => {
@@ -80,12 +95,12 @@ const Footer = () => {
                 <div className="font-bold text-white mb-2">{col.title}</div>
                 <ul className="space-y-1">
                   {col.links.map((link) => (
-                    <li key={link}>
+                    <li key={link.label}>
                       <a
-                        href="#"
+                        href={link.href}
                         className="hover:text-cyan-400 transition text-gray-300"
                       >
-                        {link}
+                        {link.label}
                       </a>
                     </li>
                   ))}
@@ -96,7 +111,7 @@ const Footer = () => {
         </div>
         <hr className="my-8 border-gray-700" />
         <div className="flex flex-col md:flex-row md:items-center md:justify-between text-sm gap-4">
-          <div>© {new Date().getFullYear()} - Cryptoplace</div>
+          <div>© {new Date().getFullYear()} - SafeSwap</div>
           <div className="flex space-x-6">
             {policyLinks.map((item) => (
               <a
