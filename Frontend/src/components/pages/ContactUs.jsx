@@ -34,12 +34,12 @@ const ContactUs = () => {
             </a>
           </li>
           <li>
-            Twitter:{" "}
+            Github:{" "}
             <a
-              href="https://twitter.com/safeswap"
+              href="https://github.com/vtuanhung1205/SafeSwap-Token"
               className="text-cyan-400 underline"
             >
-              @safeswap
+              @SafeSwap-Token
             </a>
           </li>
           <li>

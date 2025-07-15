@@ -240,7 +240,7 @@ const TeamMember = ({ imgSrc, name, role, glowColor }) => {
       : "from-pink-500/60 to-transparent";
 
   return (
-    <div className="relative group">
+    <div className="relative group">  
       {/* Glow Effect */}
       <div
         className={`absolute -inset-0.5 bg-gradient-to-r ${glowClasses} rounded-3xl blur-lg opacity-0 group-hover:opacity-75 transition duration-300`}

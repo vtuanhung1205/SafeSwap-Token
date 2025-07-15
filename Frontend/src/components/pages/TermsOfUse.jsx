@@ -1,125 +1,136 @@
 import React, { useState, useEffect } from "react";
+import {
+  FileText,
+  ShieldCheck,
+  Ban,
+  Copyright,
+  AlertTriangle,
+  Info,
+  History,
+} from "lucide-react";
 
+// --- Main TermsOfUse Component ---
 const TermsOfUse = () => {
   const [loading, setLoading] = useState(true);
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 1200);
     return () => clearTimeout(timer);
   }, []);
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-96 text-gray-400">
+      // The loading screen should also be transparent to work with the animated background
+      <div className="flex items-center justify-center h-screen bg-transparent text-gray-400">
         Loading Terms Of Use...
       </div>
     );
   }
+
   return (
-    <div className="min-h-screen  from-[#18181c] to-[#23232a] text-white px-4 py-12 md:px-12 lg:px-48">
-      <h1 className="text-4xl md:text-5xl font-extrabold mb-8 text-center bg-gradient-to-r from-cyan-400 to-pink-400 bg-clip-text text-transparent">
-        Terms Of Use
-      </h1>
-      <p className="mb-8 text-gray-300 text-lg text-center max-w-2xl mx-auto">
-        Please read these Terms of Use carefully before using SafeSwap. By
-        accessing or using the platform, you agree to be bound by these terms.
-      </p>
-      <div className="max-w-3xl mx-auto bg-[#18181c] rounded-2xl shadow-lg p-8 mb-10">
-        <h2 className="text-2xl font-bold mb-4 text-cyan-400">
-          Table of Contents
-        </h2>
-        <ol className="list-decimal list-inside text-gray-300 mb-8 space-y-1">
-          <li>Acceptance of Terms</li>
-          <li>User Responsibilities</li>
-          <li>Prohibited Activities</li>
-          <li>Intellectual Property</li>
-          <li>Disclaimer of Warranties</li>
-          <li>Limitation of Liability</li>
-          <li>Governing Law</li>
-          <li>Changes to Terms</li>
-          <li>Contact Information</li>
-        </ol>
-        <h2 className="text-2xl font-bold mb-4 text-cyan-400">
-          1. Acceptance of Terms
-        </h2>
-        <p className="text-gray-400 mb-6">
-          By using SafeSwap, you agree to comply with and be legally bound by
-          these Terms of Use. If you do not agree to these terms, please do not
-          use the platform.
-        </p>
-        <h2 className="text-2xl font-bold mb-4 text-cyan-400">
-          2. User Responsibilities
-        </h2>
-        <p className="text-gray-400 mb-6">
-          You are responsible for your use of the platform and for any
-          consequences thereof. You agree to provide accurate information and to
-          use SafeSwap in compliance with all applicable laws and regulations.
-        </p>
-        <h2 className="text-2xl font-bold mb-4 text-cyan-400">
-          3. Prohibited Activities
-        </h2>
-        <ul className="list-disc list-inside text-gray-300 mb-6 space-y-1">
-          <li>Engaging in fraudulent, illegal, or abusive activities.</li>
-          <li>
-            Attempting to gain unauthorized access to the platform or other
-            users' accounts.
-          </li>
-          <li>
-            Disrupting or interfering with the security or operation of
-            SafeSwap.
-          </li>
-        </ul>
-        <h2 className="text-2xl font-bold mb-4 text-cyan-400">
-          4. Intellectual Property
-        </h2>
-        <p className="text-gray-400 mb-6">
-          All content, trademarks, and data on SafeSwap are the property of the
-          platform or its licensors. You may not use, copy, or distribute any
-          content without permission.
-        </p>
-        <h2 className="text-2xl font-bold mb-4 text-cyan-400">
-          5. Disclaimer of Warranties
-        </h2>
-        <p className="text-gray-400 mb-6">
-          SafeSwap is provided "as is" and "as available" without warranties of
-          any kind. We do not guarantee the accuracy, reliability, or
-          availability of the platform.
-        </p>
-        <h2 className="text-2xl font-bold mb-4 text-cyan-400">
-          6. Limitation of Liability
-        </h2>
-        <p className="text-gray-400 mb-6">
-          To the fullest extent permitted by law, SafeSwap and its affiliates
-          shall not be liable for any damages arising from your use of the
-          platform.
-        </p>
-        <h2 className="text-2xl font-bold mb-4 text-cyan-400">
-          7. Governing Law
-        </h2>
-        <p className="text-gray-400 mb-6">
-          These Terms of Use are governed by the laws of the jurisdiction in
-          which SafeSwap operates.
-        </p>
-        <h2 className="text-2xl font-bold mb-4 text-cyan-400">
-          8. Changes to Terms
-        </h2>
-        <p className="text-gray-400 mb-6">
-          We reserve the right to modify these Terms at any time. Continued use
-          of the platform constitutes acceptance of the new terms. Please review
-          this page regularly for updates.
-        </p>
-        <h2 className="text-2xl font-bold mb-4 text-cyan-400">
-          9. Contact Information
-        </h2>
-        <p className="text-gray-400 mb-2">
-          If you have any questions about these Terms, please contact us at{" "}
+    <div className="bg-transparent text-white">
+      {/* Hero Section */}
+      <section className="relative py-20 px-6 flex items-center justify-center text-center">
+        <div className="relative z-10 max-w-4xl mx-auto">
+          <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-cyan-400 to-pink-400 bg-clip-text text-transparent">
+            Terms of Use
+          </h1>
+          <p className="text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto">
+            Your agreement for using the SafeSwap platform. Please read these
+            terms carefully before accessing or using our services.
+          </p>
+        </div>
+      </section>
+
+      {/* Terms Content Section */}
+      <section className="py-12 px-6">
+        <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
+          <TermCard
+            icon={FileText}
+            title="1. Acceptance of Terms"
+          >
+            By using SafeSwap, you agree to comply with and be legally bound by
+            these Terms of Use. If you do not agree to these terms, please do
+            not use the platform.
+          </TermCard>
+
+          <TermCard
+            icon={ShieldCheck}
+            title="2. User Responsibilities"
+          >
+            You are responsible for your use of the platform and for any
+            consequences thereof. You agree to provide accurate information and
+            to use SafeSwap in compliance with all applicable laws.
+          </TermCard>
+
+          <TermCard
+            icon={Ban}
+            title="3. Prohibited Activities"
+          >
+            Engaging in fraudulent, illegal, or abusive activities, attempting
+            to gain unauthorized access, or disrupting the platform's security
+            is strictly prohibited.
+          </TermCard>
+
+          <TermCard
+            icon={Copyright}
+            title="4. Intellectual Property"
+          >
+            All content, trademarks, and data on SafeSwap are the property of
+            the platform or its licensors. You may not use, copy, or distribute
+            any content without permission.
+          </TermCard>
+
+          <TermCard
+            icon={AlertTriangle}
+            title="5. Disclaimer of Warranties"
+          >
+            SafeSwap is provided "as is" and "as available" without warranties
+            of any kind. We do not guarantee the accuracy, reliability, or
+            availability of the platform.
+          </TermCard>
+
+          <TermCard
+            icon={History}
+            title="6. Changes to Terms"
+          >
+            We reserve the right to modify these Terms at any time. Continued
+            use of the platform constitutes acceptance of the new terms. Please
+            review this page regularly.
+          </TermCard>
+        </div>
+      </section>
+
+      {/* Contact Section */}
+      <section className="py-24 px-6 text-center">
+        <div className="relative z-10 max-w-4xl mx-auto">
+          <h2 className="text-3xl font-bold mb-4">Have Questions?</h2>
+          <p className="text-xl text-gray-400 mb-8 max-w-2xl mx-auto">
+            If you have any questions about these Terms, please don't hesitate
+            to reach out to our support team.
+          </p>
           <a
             href="mailto:support@safeswap.com"
-            className="text-cyan-400 underline"
+            className="px-8 py-4 border border-cyan-600 text-cyan-600 hover:bg-cyan-600 hover:text-white font-bold rounded-2xl transition-all duration-300"
           >
-            support@safeswap.com
+            Contact Support
           </a>
-          .
-        </p>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+// --- Helper Component for each Term Card (styled like FeatureCard) ---
+const TermCard = ({ icon: Icon, title, children }) => {
+  return (
+    <div className="bg-[#18181c] border border-[#23232a] rounded-2xl p-6 flex flex-col shadow-lg transition-all duration-300 hover:border-cyan-500/50 hover:scale-105">
+      <div className="flex items-center mb-4">
+        <div className="bg-gray-800 p-3 rounded-full text-cyan-400 mr-4">
+          <Icon size={24} />
+        </div>
+        <h3 className="text-xl font-bold text-white">{title}</h3>
       </div>
+      <p className="text-gray-400 text-sm leading-relaxed">{children}</p>
     </div>
   );
 };

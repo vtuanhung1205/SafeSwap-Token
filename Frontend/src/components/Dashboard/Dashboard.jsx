@@ -133,8 +133,8 @@ const Dashboard = () => {
             onClick={fetchDashboardData}
             disabled={loading}
           >
-            {loading ? 'Refreshing...' : 'Refresh'}
-          </button>
+              {loading ? 'Refreshing...' : 'Refresh'}
+            </button>
         </div>
 
         {swapHistory.length === 0 ? (

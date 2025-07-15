@@ -21,7 +21,8 @@ import Community from "./components/pages/Community";
 import HelpCenter from "./components/pages/HelpCenter";
 import ContactUs from "./components/pages/ContactUs";
 import TermsOfUse from "./components/pages/TermsOfUse";
-import PrivacyPolicy from "./components/pages/PrivacyPolicy";
+import PagePrivacy from "./components/pages/PagePrivacy";
+import NotFoundPage from "./components/NotFoundPage/NotFoundPage"
 import "./index.css";
 // Icons
 import {
@@ -83,11 +84,10 @@ function App() {
               <Route path="/help-center" element={<HelpCenter />} />
               <Route path="/contact" element={<ContactUs />} />
               <Route path="/terms-of-use" element={<TermsOfUse />} />
-              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
+              <Route path="/privacy-policy" element={<PagePrivacy />} />
+              <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </main>
-
           <Footer />
           <DemoBadge />
           <Toaster
