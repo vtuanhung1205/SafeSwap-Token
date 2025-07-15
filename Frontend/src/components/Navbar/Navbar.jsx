@@ -7,6 +7,7 @@ import {
   Settings,
   Shield,
   BarChart3,
+  Bell,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
@@ -21,6 +22,12 @@ const Navbar = () => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications] = useState([
+    { id: 1, message: "Welcome to SafeSwap!" },
+    { id: 2, message: "Your swap was successful." },
+    { id: 3, message: "New feature: Scam detection upgraded!" },
+  ]);
 
   const handleLogout = () => {
     logout();
@@ -120,6 +127,50 @@ const Navbar = () => {
 
           {/* User Section */}
           <div className="flex items-center space-x-4">
+            {/* Notification Bell */}
+            <div className="relative">
+              <button
+                className="relative p-2 rounded-full hover:bg-[#23232a] focus:outline-none"
+                onClick={() => setShowNotifications((prev) => !prev)}
+                onMouseEnter={() => setShowNotifications(true)}
+                onMouseLeave={() => setShowNotifications(false)}
+              >
+                <Bell className="w-6 h-6 text-cyan-400" />
+                {notifications.length > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-pink-500 text-white text-xs font-bold rounded-full px-1.5 py-0.5 border-2 border-[#18181c]">
+                    {notifications.length}
+                  </span>
+                )}
+              </button>
+              {/* Notification Dropdown */}
+              {showNotifications && (
+                <div
+                  className="absolute right-0 mt-2 w-80 bg-[#18181c] border border-[#23232a] rounded-xl shadow-lg py-2 z-50"
+                  onMouseEnter={() => setShowNotifications(true)}
+                  onMouseLeave={() => setShowNotifications(false)}
+                >
+                  <div className="px-4 py-2 border-b border-[#23232a] text-white font-semibold">
+                    Notifications
+                  </div>
+                  {notifications.length === 0 ? (
+                    <div className="px-4 py-4 text-gray-400 text-center">
+                      No notifications
+                    </div>
+                  ) : (
+                    <ul className="max-h-60 overflow-y-auto">
+                      {notifications.map((n) => (
+                        <li
+                          key={n.id}
+                          className="px-4 py-3 text-gray-200 hover:bg-[#23232a] transition border-b border-[#23232a] last:border-b-0"
+                        >
+                          {n.message}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+            </div>
             {!isLoading && (
               <>
                 {isAuthenticated ? (

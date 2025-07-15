@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 const socialLinks = [
   {
@@ -10,7 +11,7 @@ const socialLinks = [
       </svg>
     ),
   },
-    {
+  {
     href: "/",
     label: "Facebook",
     icon: (
@@ -103,13 +104,13 @@ const Footer = () => {
           <div>© {new Date().getFullYear()} - SafeSwap</div>
           <div className="flex space-x-6">
             {policyLinks.map((item) => (
-              <a
+              <Link
                 key={item.label}
-                href={item.href}
+                to={item.href}
                 className="hover:text-cyan-400 transition"
               >
                 {item.label}
-              </a>
+              </Link>
             ))}
           </div>
         </div>
