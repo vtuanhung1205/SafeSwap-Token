@@ -98,6 +98,7 @@ const SwapForm = () => {
           slippage: 0.5,
           fee: parseFloat(fromAmount) * 0.003,
           priceImpact: 0.1,
+          feeUsd: parseFloat(fromAmount) * 0.003 * fromPrice, // Add this line
         };
 
         // Simulate API delay

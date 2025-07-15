@@ -62,20 +62,34 @@ const ShieldVisual = () => (
 // --- Main About Component ---
 
 const About = () => {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 1200);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96 text-gray-400">
+        Loading About...
+      </div>
+    );
+  }
+
   return (
-    <div className="bg-transparent text-white">
+    <div className="bg-transparent text-white min-h-screen">
       {/* Hero Section */}
-      <header className="relative text-center py-24 sm:py-32 px-6">
-        <div className="relative z-10">
-          <h1 className="text-5xl md:text-7xl font-extrabold mb-4 bg-gradient-to-r from-cyan-400 to-pink-400 bg-clip-text text-transparent">
-            About SafeSwap
+      <section className="relative py-24 px-6 flex items-center justify-center text-center">
+        <div className="relative z-10 max-w-4xl mx-auto">
+          <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-pink-400 to-cyan-400 bg-clip-text text-transparent">
+            About
           </h1>
-          <p className="text-lg md:text-xl text-gray-300 max-w-3xl mx-auto">
-            We're on a mission to build a safer, smarter, and more transparent
-            DeFi experience on the Aptos blockchain.
+          <p className="text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto">
+            This is the About page. Add your content here.
           </p>
         </div>
-      </header>
+      </section>
 
       <main className="max-w-7xl mx-auto px-6">
         {/* Our Mission Section */}
@@ -89,10 +103,12 @@ const About = () => {
                 In the rapidly growing world of DeFi, every user deserves{" "}
                 <strong className="text-cyan-300">trustworthy tools</strong> to
                 navigate an open but unpredictable ecosystem. Our mission is to
-                make token swapping safer for everyone, from first-time users to seasoned veterans.
+                make token swapping safer for everyone, from first-time users to
+                seasoned veterans.
               </p>
               <p>
-                SafeSwap is our answer: a platform built to protect your wallet and give you peace of mind.
+                SafeSwap is our answer: a platform built to protect your wallet
+                and give you peace of mind.
               </p>
             </div>
             <div className="flex justify-center items-center">
@@ -105,10 +121,26 @@ const About = () => {
         <Section className="bg-[#101014]/50 rounded-3xl">
           <SectionTitle>Our Core Principles</SectionTitle>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            <PrincipleCard icon={ShieldCheck} title="Real-time Protection" description="We analyze smart contracts and token data in real time to flag risks before you transact." />
-            <PrincipleCard icon={BrainCircuit} title="AI-Powered Intelligence" description="Our model is trained on thousands of real-world scam patterns to provide highly accurate warnings." />
-            <PrincipleCard icon={Eye} title="Actionable Clarity" description="Receive clear, understandable alerts about potential risks, not confusing jargon." />
-            <PrincipleCard icon={BookOpen} title="Radical Transparency" description="Track all your swaps with a detailed history for education, review, and peace of mind." />
+            <PrincipleCard
+              icon={ShieldCheck}
+              title="Real-time Protection"
+              description="We analyze smart contracts and token data in real time to flag risks before you transact."
+            />
+            <PrincipleCard
+              icon={BrainCircuit}
+              title="AI-Powered Intelligence"
+              description="Our model is trained on thousands of real-world scam patterns to provide highly accurate warnings."
+            />
+            <PrincipleCard
+              icon={Eye}
+              title="Actionable Clarity"
+              description="Receive clear, understandable alerts about potential risks, not confusing jargon."
+            />
+            <PrincipleCard
+              icon={BookOpen}
+              title="Radical Transparency"
+              description="Track all your swaps with a detailed history for education, review, and peace of mind."
+            />
           </div>
         </Section>
 
@@ -126,8 +158,11 @@ const About = () => {
               Built By Developers, For Everyone
             </h2>
             <p className="text-lg text-gray-300 max-w-3xl mx-auto">
-              SafeSwap was created by a passionate team of developers, designers,
-              and security researchers who believe in a safer Web3. Our combined expertise in Machine Learning, Blockchain Development, and Product Design drove us to build a solution we'd confidently use ourselves.
+              SafeSwap was created by a passionate team of developers,
+              designers, and security researchers who believe in a safer Web3.
+              Our combined expertise in Machine Learning, Blockchain
+              Development, and Product Design drove us to build a solution we'd
+              confidently use ourselves.
             </p>
           </div>
         </Section>
@@ -137,16 +172,36 @@ const About = () => {
           <SectionTitle>Our Vision for a Safer Web3</SectionTitle>
           <p className="text-center text-lg text-gray-300 max-w-3xl mx-auto mb-20">
             We don’t just want to protect users—we want to{" "}
-            <strong className="text-cyan-300">raise the security standard</strong>{" "}
+            <strong className="text-cyan-300">
+              raise the security standard
+            </strong>{" "}
             for the entire ecosystem. Here's our roadmap:
           </p>
           <div className="relative">
             <div className="absolute left-1/2 top-0 h-full w-0.5 bg-white/10 -translate-x-1/2"></div>
             <div className="space-y-4">
-              <TimelineNode icon={Sprout} title="Public Scam Registry" desc="Launch a community-driven database of fraudulent tokens and contracts." />
-              <TimelineNode icon={Code} title="Verification APIs for Builders" desc="Offer real-time token verification APIs for other dApps and wallets to integrate." side="right" />
-              <TimelineNode icon={Rocket} title="Direct DEX Integrations" desc="Integrate swap safety features directly into the most popular Aptos DEXes." />
-              <TimelineNode icon={Users} title="Protocol Partnerships" desc="Partner with leading DeFi protocols and wallets to expand user protection across the ecosystem." side="right" />
+              <TimelineNode
+                icon={Sprout}
+                title="Public Scam Registry"
+                desc="Launch a community-driven database of fraudulent tokens and contracts."
+              />
+              <TimelineNode
+                icon={Code}
+                title="Verification APIs for Builders"
+                desc="Offer real-time token verification APIs for other dApps and wallets to integrate."
+                side="right"
+              />
+              <TimelineNode
+                icon={Rocket}
+                title="Direct DEX Integrations"
+                desc="Integrate swap safety features directly into the most popular Aptos DEXes."
+              />
+              <TimelineNode
+                icon={Users}
+                title="Protocol Partnerships"
+                desc="Partner with leading DeFi protocols and wallets to expand user protection across the ecosystem."
+                side="right"
+              />
             </div>
           </div>
         </Section>
@@ -154,17 +209,27 @@ const About = () => {
         {/* Join Us Section */}
         <Section className="bg-[#101014]/50 rounded-3xl">
           <div className="text-center max-w-3xl mx-auto">
-            <h2 className="text-4xl font-bold text-white mb-4">Let's Build Together</h2>
+            <h2 className="text-4xl font-bold text-white mb-4">
+              Let's Build Together
+            </h2>
             <p className="text-lg text-gray-300 mb-8">
               Whether you're a builder, investor, or DeFi explorer, we welcome
               your feedback and contributions. Let's make Web3 safer, together.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a href="https://github.com/vtuanhung1205/SafeSwap-Token" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-3 px-8 py-4 bg-cyan-600 hover:bg-cyan-700 text-white font-bold rounded-2xl transition-all duration-300 transform hover:scale-105">
+              <a
+                href="https://github.com/vtuanhung1205/SafeSwap-Token"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-3 px-8 py-4 bg-cyan-600 hover:bg-cyan-700 text-white font-bold rounded-2xl transition-all duration-300 transform hover:scale-105"
+              >
                 <Github size={20} />
                 View on GitHub
               </a>
-              <a href="mailto:safeswap@proton.me" className="flex items-center justify-center gap-3 px-8 py-4 border border-cyan-600 text-cyan-400 hover:bg-cyan-600 hover:text-white font-bold rounded-2xl transition-all duration-300">
+              <a
+                href="mailto:safeswap@proton.me"
+                className="flex items-center justify-center gap-3 px-8 py-4 border border-cyan-600 text-cyan-400 hover:bg-cyan-600 hover:text-white font-bold rounded-2xl transition-all duration-300"
+              >
                 <Mail size={20} />
                 Contact Us
               </a>
@@ -192,10 +257,15 @@ const TimelineNode = ({ icon: Icon, title, desc, side = "left" }) => {
   const [ref, isInView] = useInView({ threshold: 0.5, triggerOnce: true });
   const alignmentClass = side === "left" ? "md:text-right" : "md:text-left";
   const orderClass = side === "left" ? "md:pr-12" : "md:pl-12 md:order-last";
-  const animationClass = isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-5";
+  const animationClass = isInView
+    ? "opacity-100 translate-y-0"
+    : "opacity-0 translate-y-5";
 
   return (
-    <div ref={ref} className={`grid md:grid-cols-2 items-center my-8 transition-all duration-700 ease-out ${animationClass}`}>
+    <div
+      ref={ref}
+      className={`grid md:grid-cols-2 items-center my-8 transition-all duration-700 ease-out ${animationClass}`}
+    >
       <div className={`space-y-2 ${orderClass} ${alignmentClass}`}>
         <h4 className="font-bold text-white text-xl">{title}</h4>
         <p className="text-gray-400">{desc}</p>
