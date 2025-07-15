@@ -50,16 +50,6 @@ SafeSwap is a groundbreaking Web3 Token Swap UI built on the **Aptos blockchain*
 
 ---
 
-## 👥 Team Members  
-
-- **John Doe** - *Lead Developer*: Oversees smart contract development and blockchain integration.  
-- **Jane Smith** - *UI/UX Designer*: Designs intuitive and user-friendly interfaces for SafeSwap.  
-- **Alex Nguyen** - *Security Engineer*: Implements real-time scam detection and authentication systems.  
-- **Emily Chen** - *Frontend Developer*: Builds responsive and scalable UI components.  
-- **Michael Brown** - *Project Manager*: Coordinates team efforts and ensures timely delivery.  
-
----
-
 ## 🛠️ Technical Details  
 
 ### Detailed Features  
