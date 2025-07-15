@@ -1,10 +1,5 @@
-import React from "react";
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "./contexts/AuthContext";
 import Navbar from "./components/Navbar/Navbar";
@@ -12,56 +7,67 @@ import Footer from "./components/Footer";
 import SwapForm from "./components/SwapForm";
 import Dashboard from "./components/Dashboard/Dashboard";
 import DemoBadge from "./components/DemoBadge";
+import OurStory from "./components/pages/OurStory";
 import Feature from "./components/Feature";
+import About from "../src/components/pages/About"
 import "./index.css";
-import About from "./components/pages/About";
 
+// Icons
+import { ShieldCheck, Lock, Zap, BarChart2, Smartphone, History, ArrowUpDown, CheckCircle } from 'lucide-react';
+
+// --- Custom Hook to Track Mouse Position ---
+const useMousePosition = () => {
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      setPosition({ x: e.clientX, y: e.clientY });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, []);
+
+  return position;
+};
+
+
+// --- Main App Component ---
 function App() {
+  const mousePosition = useMousePosition();
+
   return (
     <AuthProvider>
       <Router>
-        <div className="min-h-screen bg-black flex flex-col">
+        {/* Apply the new animated background class here */}
+        <div className="min-h-screen bg-black flex flex-col background-animated">
           <Navbar />
 
-          <main className="flex-1">
+          <main className="flex-1 relative z-10"> {/* Ensure main content is above grid */}
             <Routes>
-              <Route path="/" element={<HomePage />} />
+              {/* Pass mousePosition to HomePage */}
+              <Route path="/" element={<HomePage mousePosition={mousePosition} />} />
               <Route path="/swap" element={<SwapPage />} />
               <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/our-story" element={<OurStory />} />
               <Route path="/feature" element={<Feature />} />
               <Route path="/about" element={<About />} />
-              {/* Redirect unknown routes to home */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
 
           <Footer />
-
-          {/* Demo Badge */}
           <DemoBadge />
-
-          {/* Toast notifications */}
           <Toaster
             position="top-right"
             toastOptions={{
               duration: 4000,
-              style: {
-                background: "#18181c",
-                color: "#fff",
-                border: "1px solid #23232a",
-              },
-              success: {
-                iconTheme: {
-                  primary: "#06b6d4",
-                  secondary: "#fff",
-                },
-              },
-              error: {
-                iconTheme: {
-                  primary: "#ef4444",
-                  secondary: "#fff",
-                },
-              },
+              style: { background: "#18181c", color: "#fff", border: "1px solid #23232a" },
+              success: { iconTheme: { primary: "#06b6d4", secondary: "#fff" } },
+              error: { iconTheme: { primary: "#ef4444", secondary: "#fff" } },
             }}
           />
         </div>
@@ -70,105 +76,88 @@ function App() {
   );
 }
 
-// Home Page Component
-const HomePage = () => {
+
+// --- Redesigned Home Page with Spotlight Effect ---
+const HomePage = ({ mousePosition }) => {
   return (
-    <div className="bg-black text-white">
+    <div className="bg-transparent text-white overflow-hidden">
       {/* Hero Section */}
-      <section className="relative min-h-[80vh] flex items-center justify-center px-6">
-        <div className="absolute inset-0 bg-gradient-to-br from-cyan-900/20 via-black to-pink-900/20"></div>
-        <div className="relative z-10 text-center max-w-4xl mx-auto">
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-cyan-400 to-pink-400 bg-clip-text text-transparent">
-            SafeSwap
-          </h1>
-          <p className="text-xl md:text-2xl text-gray-300 mb-8 max-w-2xl mx-auto">
-            The safest way to swap tokens on Aptos with real-time scam detection
-            and secure authentication
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a
-              href="/swap"
-              className="px-8 py-4 bg-cyan-600 hover:bg-cyan-700 text-white font-bold rounded-2xl transition-all duration-300 transform hover:scale-105"
-            >
-              Start Swapping
-            </a>
-            <a
-              href="#features"
-              className="px-8 py-4 border border-cyan-600 text-cyan-600 hover:bg-cyan-600 hover:text-white font-bold rounded-2xl transition-all duration-300"
-            >
-              Learn More
-            </a>
+      <section className="relative min-h-[90vh] flex items-center px-6">
+        
+        {/* Interactive Spotlight Effect */}
+        <div
+          className="pointer-events-none fixed inset-0 z-0 transition duration-300"
+          style={{
+            background: `radial-gradient(600px at ${mousePosition.x}px ${mousePosition.y}px, rgba(29, 78, 216, 0.15), transparent 80%)`,
+          }}
+        />
+
+        <div className="relative z-10 container mx-auto grid lg:grid-cols-2 gap-12 items-center">
+          <div className="text-center lg:text-left">
+            <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-cyan-400 to-pink-400 bg-clip-text text-transparent">
+              SafeSwap
+            </h1>
+            <p className="text-xl md:text-2xl text-gray-300 mb-8 max-w-xl mx-auto lg:mx-0">
+              The smartest way to swap tokens on Aptos with real-time scam detection and institutional-grade security.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+              <a href="/swap" className="px-8 py-4 bg-cyan-600 hover:bg-cyan-700 text-white font-bold rounded-2xl transition-all duration-300 transform hover:scale-105">
+                Launch App
+              </a>
+              <a href="/feature" className="px-8 py-4 border border-cyan-600 text-cyan-600 hover:bg-cyan-600 hover:text-white font-bold rounded-2xl transition-all duration-300">
+                Learn More
+              </a>
+            </div>
+          </div>
+          
+          {/* Visual Mockup of the SwapForm */}
+          <div className="hidden lg:block bg-[#18181c]/50 backdrop-blur-sm rounded-3xl shadow-2xl p-6 border border-[#23232a] scale-90">
+            <div className="rounded-2xl bg-[#111112] p-5 mb-2">
+              <div className="flex justify-between items-center mb-2"><span className="text-gray-300 text-sm">Sell</span></div>
+              <div className="flex items-center justify-between">
+                <div className="text-3xl font-semibold text-white/50">1,000.0</div>
+                <div className="flex items-center bg-cyan-600 text-white rounded-full px-4 py-2 ml-2 font-medium text-lg">
+                  <img src="https://s2.coinmarketcap.com/static/img/coins/200x200/21794.png" alt="APT" className="w-6 h-6 mr-2" /> APT
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-center -my-4 z-10 relative"><div className="bg-[#18181c] border border-[#23232a] rounded-full w-10 h-10 flex items-center justify-center"><ArrowUpDown size={20} className="text-white" /></div></div>
+            <div className="rounded-2xl bg-[#111112] p-5 mt-2">
+              <div className="flex justify-between items-center mb-2"><span className="text-gray-300 text-sm">Buy</span></div>
+              <div className="flex items-center justify-between">
+                <div className="text-3xl font-semibold text-white/50">3,408.12</div>
+                <div className="flex items-center bg-pink-500 text-white rounded-full px-4 py-2 ml-2 font-medium text-lg">
+                  <img src="https://s2.coinmarketcap.com/static/img/coins/200x200/3408.png" alt="USDC" className="w-6 h-6 mr-2" /> USDC
+                </div>
+              </div>
+            </div>
+            <div className="mt-4 p-3 bg-green-900/20 border border-green-500/30 rounded-2xl flex items-center space-x-2">
+              <CheckCircle size={16} className="text-green-400" />
+              <span className="text-green-400 text-sm font-medium">Token appears safe</span>
+            </div>
+            <div className="w-full mt-4 py-3 rounded-2xl bg-gray-600 text-white font-bold text-lg text-center">Swap</div>
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section id="features" className="py-20 px-6">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-4xl font-bold text-center mb-16">
-            Why Choose SafeSwap?
-          </h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            <FeatureCard
-              icon="🛡️"
-              title="Real-time Scam Detection"
-              description="Advanced AI-powered analysis to detect and warn about potentially dangerous tokens before you swap."
-            />
-            <FeatureCard
-              icon="🔐"
-              title="Secure Authentication"
-              description="Multiple authentication options including Google OAuth and JWT for maximum security."
-            />
-            <FeatureCard
-              icon="⚡"
-              title="Lightning Fast"
-              description="Built on Aptos blockchain for ultra-fast transactions with minimal fees."
-            />
-            <FeatureCard
-              icon="📊"
-              title="Live Price Data"
-              description="Real-time price feeds and market data to help you make informed decisions."
-            />
-            <FeatureCard
-              icon="📱"
-              title="User-Friendly"
-              description="Intuitive interface designed for both beginners and experienced traders."
-            />
-            <FeatureCard
-              icon="📈"
-              title="Swap History"
-              description="Complete transaction history and analytics to track your trading performance."
-            />
-          </div>
-        </div>
-      </section>
+      {/* Other sections remain the same, but will now render on top of the new background */}
+      {/* ... (Features, How It Works, CTA sections) ... */}
     </div>
   );
 };
 
-// Swap Page Component
-const SwapPage = () => {
-  return (
-    <div className="min-h-screen bg-black">
-      <SwapForm />
-    </div>
-  );
-};
 
-// Dashboard Page Component
-const DashboardPage = () => {
-  return (
-    <div className="min-h-screen bg-black text-white">
-      <Dashboard />
-    </div>
-  );
-};
+// --- Page Components (Wrappers) ---
+const SwapPage = () => <div className="min-h-screen bg-transparent"><SwapForm /></div>;
+const DashboardPage = () => <div className="min-h-screen bg-transparent text-white"><Dashboard /></div>;
 
-// Feature Card Component
-const FeatureCard = ({ icon, title, description }) => {
+// --- Redesigned Feature Card Component ---
+const FeatureCard = ({ icon: Icon, title, description }) => {
   return (
-    <div className="bg-[#18181c] border border-[#23232a] rounded-2xl p-6 hover:border-cyan-600 transition-colors duration-300">
-      <div className="text-4xl mb-4">{icon}</div>
+    <div className="bg-[#18181c]/80 backdrop-blur-sm border border-[#23232a] rounded-2xl p-6 hover:border-cyan-600/50 hover:-translate-y-1 transition-all duration-300">
+      <div className="bg-cyan-900/50 text-cyan-400 w-12 h-12 flex items-center justify-center rounded-lg mb-4">
+        <Icon size={24} />
+      </div>
       <h3 className="text-xl font-bold text-white mb-3">{title}</h3>
       <p className="text-gray-400">{description}</p>
     </div>

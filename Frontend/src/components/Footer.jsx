@@ -2,7 +2,7 @@ import React from "react";
 
 const socialLinks = [
   {
-    href: "https://github.com/",
+    href: "https://github.com/vtuanhung1205/SafeSwap-Token",
     label: "Github",
     icon: (
       <svg width="32" height="32" fill="currentColor" viewBox="0 0 24 24">
@@ -11,20 +11,11 @@ const socialLinks = [
     ),
   },
     {
-    href: "https://facebook.com/",
+    href: "/",
     label: "Facebook",
     icon: (
       <svg width="32" height="32" fill="currentColor" viewBox="0 0 24 24">
         <path d="M12 2.04C6.5 2.04 2 6.53 2 12.06c0 5.52 4.5 10.02 10 10.02s10-4.5 10-10.02C22 6.53 17.5 2.04 12 2.04zM16.5 12.06h-2.25v6h-3V12.06H9.5v-2.25h1.75V8.56c0-1.73 1.05-2.68 2.6-2.68h1.9v2.25h-1.14c-.85 0-.9.4-.9.92v1.45h2.25l-.25 2.25z" />
-      </svg>
-    ),
-  },
-  {
-    href: "https://discord.com/",
-    label: "Discord",
-    icon: (
-      <svg width="32" height="32" fill="currentColor" viewBox="0 0 24 24">
-        <path d="M20.317 4.369A19.791 19.791 0 0 0 16.885 3.2a.074.074 0 0 0-.079.037c-.34.607-.719 1.396-.984 2.01a18.524 18.524 0 0 0-5.59 0 12.51 12.51 0 0 0-.997-2.01.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.684 4.369a.069.069 0 0 0-.032.027C.533 8.159-.32 11.81.099 15.415a.082.082 0 0 0 .031.056c2.52 1.85 4.96 2.97 7.36 3.7a.077.077 0 0 0 .084-.027c.567-.78 1.073-1.6 1.497-2.48a.076.076 0 0 0-.041-.104c-.812-.308-1.58-.693-2.33-1.13a.077.077 0 0 1-.008-.127c.156-.117.312-.238.46-.36a.074.074 0 0 1 .077-.01c4.87 2.23 10.13 2.23 14.96 0a.073.073 0 0 1 .078.009c.148.122.304.243.46.36a.077.077 0 0 1-.006.127c-.75.437-1.52.822-2.33 1.13a.076.076 0 0 0-.04.105c.427.88.933 1.7 1.496 2.48a.076.076 0 0 0 .084.028c2.4-.73 4.84-1.85 7.36-3.7a.077.077 0 0 0 .03-.055c.5-4.09-.838-7.74-3.553-11.019a.061.061 0 0 0-.033-.028zM8.02 15.331c-1.01 0-1.84-.92-1.84-2.05 0-1.13.81-2.05 1.84-2.05 1.02 0 1.85.93 1.84 2.05 0 1.13-.81 2.05-1.84 2.05zm7.96 0c-1.01 0-1.84-.92-1.84-2.05 0-1.13.81-2.05 1.84-2.05 1.02 0 1.85.93 1.84 2.05 0 1.13-.81 2.05-1.84 2.05z" />
       </svg>
     ),
   },
@@ -34,9 +25,8 @@ const footerLinks = [
   {
     title: "Product",
     links: [
-      { label: "Features", href: "/features" },
+      { label: "Features", href: "/feature" },
       { label: "Pricing", href: "/pricing" },
-      { label: "Integrations", href: "/integrations" },
     ],
   },
   {
@@ -44,7 +34,6 @@ const footerLinks = [
     links: [
       { label: "About", href: "/about" },
       { label: "Our Story", href: "/our-story" },
-      { label: "Developers", href: "/developers" },
     ],
   },
   {
