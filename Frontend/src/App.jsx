@@ -15,6 +15,11 @@ import DemoBadge from "./components/DemoBadge";
 import OurStory from "./components/pages/OurStory";
 import Feature from "./components/Feature";
 import About from "../src/components/pages/About";
+import Docs from "./components/pages/Docs";
+import APIReference from "./components/pages/APIReference";
+import Community from "./components/pages/Community";
+import HelpCenter from "./components/pages/HelpCenter";
+import ContactUs from "./components/pages/ContactUs";
 import "./index.css";
 // Icons
 import {
@@ -54,7 +59,7 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <div className="min-h-screen bg-black flex flex-col background-animated">
+        <div className="min-h-screen flex flex-col background-animated">
           <Navbar />
 
           <main className="flex-1 relative z-10">
@@ -68,6 +73,11 @@ function App() {
               <Route path="/our-story" element={<OurStory />} />
               <Route path="/feature" element={<Feature />} />
               <Route path="/about" element={<About />} />
+              <Route path="/docs" element={<Docs />} />
+              <Route path="/api-reference" element={<APIReference />} />
+              <Route path="/community" element={<Community />} />
+              <Route path="/help-center" element={<HelpCenter />} />
+              <Route path="/contact" element={<ContactUs />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
