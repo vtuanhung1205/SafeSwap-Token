@@ -7,7 +7,7 @@ import { mockPrices } from '../utils/mockData';
 import toast from 'react-hot-toast';
 
 // Toggle this for demo mode
-const DEMO_MODE = true;
+const DEMO_MODE = false;
 
 const tokens = [
   {

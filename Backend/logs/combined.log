@@ -1,0 +1,472 @@
+{"level":"info","message":"Initialized 5 sample tokens","service":"safeswap-backend","timestamp":"2025-07-16 02:34:00"}
+{"level":"info","message":"🚀 SafeSwap Mock Backend Server running on port 5000","service":"safeswap-backend","timestamp":"2025-07-16 02:34:00"}
+{"level":"info","message":"🌍 Environment: development","service":"safeswap-backend","timestamp":"2025-07-16 02:34:00"}
+{"level":"info","message":"💾 Using In-Memory Mock Database (No MongoDB required)","service":"safeswap-backend","timestamp":"2025-07-16 02:34:00"}
+{"level":"info","message":"📊 Auto-updating token prices every 30 seconds","service":"safeswap-backend","timestamp":"2025-07-16 02:34:00"}
+{"level":"info","message":"🔗 API Base URL: http://localhost:5000/api/v1","service":"safeswap-backend","timestamp":"2025-07-16 02:34:00"}
+{"level":"info","message":"📋 Available endpoints:","service":"safeswap-backend","timestamp":"2025-07-16 02:34:00"}
+{"level":"info","message":"   - POST /api/v1/auth/register","service":"safeswap-backend","timestamp":"2025-07-16 02:34:00"}
+{"level":"info","message":"   - POST /api/v1/auth/login","service":"safeswap-backend","timestamp":"2025-07-16 02:34:00"}
+{"level":"info","message":"   - GET /api/v1/pricing/tokens","service":"safeswap-backend","timestamp":"2025-07-16 02:34:00"}
+{"level":"info","message":"   - GET /api/v1/pricing/token/:symbol","service":"safeswap-backend","timestamp":"2025-07-16 02:34:00"}
+{"level":"info","message":"   - GET /api/v1/debug/data","service":"safeswap-backend","timestamp":"2025-07-16 02:34:00"}
+{"level":"info","message":"Initialized 5 sample tokens","service":"safeswap-backend","timestamp":"2025-07-16 02:34:41"}
+{"level":"info","message":"🚀 SafeSwap Mock Backend Server running on port 5000","service":"safeswap-backend","timestamp":"2025-07-16 02:34:41"}
+{"level":"info","message":"🌍 Environment: development","service":"safeswap-backend","timestamp":"2025-07-16 02:34:41"}
+{"level":"info","message":"💾 Using In-Memory Mock Database (No MongoDB required)","service":"safeswap-backend","timestamp":"2025-07-16 02:34:41"}
+{"level":"info","message":"📊 Auto-updating token prices every 30 seconds","service":"safeswap-backend","timestamp":"2025-07-16 02:34:41"}
+{"level":"info","message":"🔗 API Base URL: http://localhost:5000/api/v1","service":"safeswap-backend","timestamp":"2025-07-16 02:34:41"}
+{"level":"info","message":"📋 Available endpoints:","service":"safeswap-backend","timestamp":"2025-07-16 02:34:41"}
+{"level":"info","message":"   - POST /api/v1/auth/register","service":"safeswap-backend","timestamp":"2025-07-16 02:34:41"}
+{"level":"info","message":"   - POST /api/v1/auth/login","service":"safeswap-backend","timestamp":"2025-07-16 02:34:41"}
+{"level":"info","message":"   - GET /api/v1/pricing/tokens","service":"safeswap-backend","timestamp":"2025-07-16 02:34:41"}
+{"level":"info","message":"   - GET /api/v1/pricing/token/:symbol","service":"safeswap-backend","timestamp":"2025-07-16 02:34:41"}
+{"level":"info","message":"   - GET /api/v1/debug/data","service":"safeswap-backend","timestamp":"2025-07-16 02:34:41"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:35:00"}
+{"level":"info","message":"Initialized 5 sample tokens","service":"safeswap-backend","timestamp":"2025-07-16 02:35:19"}
+{"level":"info","message":"🚀 SafeSwap Mock Backend Server running on port 5000","service":"safeswap-backend","timestamp":"2025-07-16 02:35:19"}
+{"level":"info","message":"🌍 Environment: development","service":"safeswap-backend","timestamp":"2025-07-16 02:35:19"}
+{"level":"info","message":"💾 Using In-Memory Mock Database (No MongoDB required)","service":"safeswap-backend","timestamp":"2025-07-16 02:35:19"}
+{"level":"info","message":"📊 Auto-updating token prices every 30 seconds","service":"safeswap-backend","timestamp":"2025-07-16 02:35:19"}
+{"level":"info","message":"🔗 API Base URL: http://localhost:5000/api/v1","service":"safeswap-backend","timestamp":"2025-07-16 02:35:19"}
+{"level":"info","message":"📋 Available endpoints:","service":"safeswap-backend","timestamp":"2025-07-16 02:35:19"}
+{"level":"info","message":"   - POST /api/v1/auth/register","service":"safeswap-backend","timestamp":"2025-07-16 02:35:19"}
+{"level":"info","message":"   - POST /api/v1/auth/login","service":"safeswap-backend","timestamp":"2025-07-16 02:35:19"}
+{"level":"info","message":"   - GET /api/v1/pricing/tokens","service":"safeswap-backend","timestamp":"2025-07-16 02:35:19"}
+{"level":"info","message":"   - GET /api/v1/pricing/token/:symbol","service":"safeswap-backend","timestamp":"2025-07-16 02:35:19"}
+{"level":"info","message":"   - GET /api/v1/debug/data","service":"safeswap-backend","timestamp":"2025-07-16 02:35:19"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:35:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:36:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:36:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:37:00"}
+{"level":"info","message":"Initialized 5 sample tokens","service":"safeswap-backend","timestamp":"2025-07-16 02:38:03"}
+{"level":"info","message":"🚀 SafeSwap Mock Backend Server running on port 5000","service":"safeswap-backend","timestamp":"2025-07-16 02:38:04"}
+{"level":"info","message":"🌍 Environment: development","service":"safeswap-backend","timestamp":"2025-07-16 02:38:04"}
+{"level":"info","message":"💾 Using In-Memory Mock Database (No MongoDB required)","service":"safeswap-backend","timestamp":"2025-07-16 02:38:04"}
+{"level":"info","message":"📊 Auto-updating token prices every 30 seconds","service":"safeswap-backend","timestamp":"2025-07-16 02:38:04"}
+{"level":"info","message":"🔗 API Base URL: http://localhost:5000/api/v1","service":"safeswap-backend","timestamp":"2025-07-16 02:38:04"}
+{"level":"info","message":"📋 Available endpoints:","service":"safeswap-backend","timestamp":"2025-07-16 02:38:04"}
+{"level":"info","message":"   - POST /api/v1/auth/register","service":"safeswap-backend","timestamp":"2025-07-16 02:38:04"}
+{"level":"info","message":"   - POST /api/v1/auth/login","service":"safeswap-backend","timestamp":"2025-07-16 02:38:04"}
+{"level":"info","message":"   - GET /api/v1/pricing/tokens","service":"safeswap-backend","timestamp":"2025-07-16 02:38:04"}
+{"level":"info","message":"   - GET /api/v1/pricing/token/:symbol","service":"safeswap-backend","timestamp":"2025-07-16 02:38:04"}
+{"level":"info","message":"   - GET /api/v1/debug/data","service":"safeswap-backend","timestamp":"2025-07-16 02:38:04"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:38:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:39:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:39:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:40:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:40:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:41:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:41:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:42:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:42:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:43:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:43:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:44:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:44:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:45:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:45:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:46:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:46:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:47:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:47:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:48:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:48:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:49:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:49:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:50:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:50:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:51:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:51:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:52:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:52:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:53:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:53:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:54:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:54:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:55:00"}
+{"level":"info","message":"Initialized 5 sample tokens","service":"safeswap-backend","timestamp":"2025-07-16 02:55:25"}
+{"level":"info","message":"🚀 SafeSwap Mock Backend Server running on port 5000","service":"safeswap-backend","timestamp":"2025-07-16 02:55:25"}
+{"level":"info","message":"🌍 Environment: development","service":"safeswap-backend","timestamp":"2025-07-16 02:55:25"}
+{"level":"info","message":"💾 Using In-Memory Mock Database (No MongoDB required)","service":"safeswap-backend","timestamp":"2025-07-16 02:55:25"}
+{"level":"info","message":"📊 Auto-updating token prices every 30 seconds","service":"safeswap-backend","timestamp":"2025-07-16 02:55:25"}
+{"level":"info","message":"🔗 API Base URL: http://localhost:5000/api/v1","service":"safeswap-backend","timestamp":"2025-07-16 02:55:25"}
+{"level":"info","message":"📋 Available endpoints:","service":"safeswap-backend","timestamp":"2025-07-16 02:55:25"}
+{"level":"info","message":"   - POST /api/v1/auth/register","service":"safeswap-backend","timestamp":"2025-07-16 02:55:25"}
+{"level":"info","message":"   - POST /api/v1/auth/login","service":"safeswap-backend","timestamp":"2025-07-16 02:55:25"}
+{"level":"info","message":"   - GET /api/v1/pricing/tokens","service":"safeswap-backend","timestamp":"2025-07-16 02:55:25"}
+{"level":"info","message":"   - GET /api/v1/pricing/token/:symbol","service":"safeswap-backend","timestamp":"2025-07-16 02:55:25"}
+{"level":"info","message":"   - GET /api/v1/debug/data","service":"safeswap-backend","timestamp":"2025-07-16 02:55:25"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:55:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:56:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:56:30"}
+{"level":"info","message":"Initialized 5 sample tokens","service":"safeswap-backend","timestamp":"2025-07-16 02:56:40"}
+{"level":"info","message":"🚀 SafeSwap Mock Backend Server running on port 5000","service":"safeswap-backend","timestamp":"2025-07-16 02:56:40"}
+{"level":"info","message":"🌍 Environment: development","service":"safeswap-backend","timestamp":"2025-07-16 02:56:40"}
+{"level":"info","message":"💾 Using In-Memory Mock Database (No MongoDB required)","service":"safeswap-backend","timestamp":"2025-07-16 02:56:40"}
+{"level":"info","message":"📊 Auto-updating token prices every 30 seconds","service":"safeswap-backend","timestamp":"2025-07-16 02:56:40"}
+{"level":"info","message":"🔗 API Base URL: http://localhost:5000/api/v1","service":"safeswap-backend","timestamp":"2025-07-16 02:56:40"}
+{"level":"info","message":"📋 Available endpoints:","service":"safeswap-backend","timestamp":"2025-07-16 02:56:40"}
+{"level":"info","message":"   - POST /api/v1/auth/register","service":"safeswap-backend","timestamp":"2025-07-16 02:56:40"}
+{"level":"info","message":"   - POST /api/v1/auth/login","service":"safeswap-backend","timestamp":"2025-07-16 02:56:40"}
+{"level":"info","message":"   - GET /api/v1/pricing/tokens","service":"safeswap-backend","timestamp":"2025-07-16 02:56:40"}
+{"level":"info","message":"   - GET /api/v1/pricing/token/:symbol","service":"safeswap-backend","timestamp":"2025-07-16 02:56:40"}
+{"level":"info","message":"   - GET /api/v1/debug/data","service":"safeswap-backend","timestamp":"2025-07-16 02:56:40"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:57:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:57:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:58:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:58:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:59:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 02:59:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:00:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:01:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:01:30"}
+{"level":"info","message":"Initialized 5 sample tokens","service":"safeswap-backend","timestamp":"2025-07-16 03:01:57"}
+{"level":"info","message":"🚀 SafeSwap Mock Backend Server running on port 5000","service":"safeswap-backend","timestamp":"2025-07-16 03:01:57"}
+{"level":"info","message":"🌍 Environment: development","service":"safeswap-backend","timestamp":"2025-07-16 03:01:57"}
+{"level":"info","message":"💾 Using In-Memory Mock Database (No MongoDB required)","service":"safeswap-backend","timestamp":"2025-07-16 03:01:57"}
+{"level":"info","message":"📊 Auto-updating token prices every 30 seconds","service":"safeswap-backend","timestamp":"2025-07-16 03:01:57"}
+{"level":"info","message":"🔗 API Base URL: http://localhost:5000/api/v1","service":"safeswap-backend","timestamp":"2025-07-16 03:01:57"}
+{"level":"info","message":"📋 Available endpoints:","service":"safeswap-backend","timestamp":"2025-07-16 03:01:57"}
+{"level":"info","message":"   - POST /api/v1/auth/register","service":"safeswap-backend","timestamp":"2025-07-16 03:01:57"}
+{"level":"info","message":"   - POST /api/v1/auth/login","service":"safeswap-backend","timestamp":"2025-07-16 03:01:57"}
+{"level":"info","message":"   - GET /api/v1/pricing/tokens","service":"safeswap-backend","timestamp":"2025-07-16 03:01:57"}
+{"level":"info","message":"   - GET /api/v1/pricing/token/:symbol","service":"safeswap-backend","timestamp":"2025-07-16 03:01:57"}
+{"level":"info","message":"   - GET /api/v1/debug/data","service":"safeswap-backend","timestamp":"2025-07-16 03:01:57"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:02:00"}
+{"level":"info","message":"Initialized 5 sample tokens","service":"safeswap-backend","timestamp":"2025-07-16 03:08:28"}
+{"level":"info","message":"🚀 SafeSwap Mock Backend Server running on port 5000","service":"safeswap-backend","timestamp":"2025-07-16 03:08:28"}
+{"level":"info","message":"🌍 Environment: development","service":"safeswap-backend","timestamp":"2025-07-16 03:08:28"}
+{"level":"info","message":"💾 Using In-Memory Mock Database (No MongoDB required)","service":"safeswap-backend","timestamp":"2025-07-16 03:08:28"}
+{"level":"info","message":"📊 Auto-updating token prices every 30 seconds","service":"safeswap-backend","timestamp":"2025-07-16 03:08:28"}
+{"level":"info","message":"🔗 API Base URL: http://localhost:5000/api/v1","service":"safeswap-backend","timestamp":"2025-07-16 03:08:28"}
+{"level":"info","message":"📋 Available endpoints:","service":"safeswap-backend","timestamp":"2025-07-16 03:08:28"}
+{"level":"info","message":"   - POST /api/v1/auth/register","service":"safeswap-backend","timestamp":"2025-07-16 03:08:28"}
+{"level":"info","message":"   - POST /api/v1/auth/login","service":"safeswap-backend","timestamp":"2025-07-16 03:08:28"}
+{"level":"info","message":"   - GET /api/v1/pricing/tokens","service":"safeswap-backend","timestamp":"2025-07-16 03:08:28"}
+{"level":"info","message":"   - GET /api/v1/pricing/token/:symbol","service":"safeswap-backend","timestamp":"2025-07-16 03:08:28"}
+{"level":"info","message":"   - GET /api/v1/debug/data","service":"safeswap-backend","timestamp":"2025-07-16 03:08:28"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:08:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:09:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:09:30"}
+{"level":"info","message":"Initialized 5 sample tokens","service":"safeswap-backend","timestamp":"2025-07-16 03:10:00"}
+{"level":"info","message":"🚀 SafeSwap Mock Backend Server running on port 5000","service":"safeswap-backend","timestamp":"2025-07-16 03:10:01"}
+{"level":"info","message":"🌍 Environment: development","service":"safeswap-backend","timestamp":"2025-07-16 03:10:01"}
+{"level":"info","message":"💾 Using In-Memory Mock Database (No MongoDB required)","service":"safeswap-backend","timestamp":"2025-07-16 03:10:01"}
+{"level":"info","message":"📊 Auto-updating token prices every 30 seconds","service":"safeswap-backend","timestamp":"2025-07-16 03:10:01"}
+{"level":"info","message":"🔗 API Base URL: http://localhost:5000/api/v1","service":"safeswap-backend","timestamp":"2025-07-16 03:10:01"}
+{"level":"info","message":"📋 Available endpoints:","service":"safeswap-backend","timestamp":"2025-07-16 03:10:01"}
+{"level":"info","message":"   - POST /api/v1/auth/register","service":"safeswap-backend","timestamp":"2025-07-16 03:10:01"}
+{"level":"info","message":"   - POST /api/v1/auth/login","service":"safeswap-backend","timestamp":"2025-07-16 03:10:01"}
+{"level":"info","message":"   - GET /api/v1/pricing/tokens","service":"safeswap-backend","timestamp":"2025-07-16 03:10:01"}
+{"level":"info","message":"   - GET /api/v1/pricing/token/:symbol","service":"safeswap-backend","timestamp":"2025-07-16 03:10:01"}
+{"level":"info","message":"   - GET /api/v1/debug/data","service":"safeswap-backend","timestamp":"2025-07-16 03:10:01"}
+{"level":"info","message":"Initialized 5 sample tokens","service":"safeswap-backend","timestamp":"2025-07-16 03:10:24"}
+{"level":"info","message":"🚀 SafeSwap Mock Backend Server running on port 5000","service":"safeswap-backend","timestamp":"2025-07-16 03:10:24"}
+{"level":"info","message":"🌍 Environment: development","service":"safeswap-backend","timestamp":"2025-07-16 03:10:24"}
+{"level":"info","message":"💾 Using In-Memory Mock Database (No MongoDB required)","service":"safeswap-backend","timestamp":"2025-07-16 03:10:24"}
+{"level":"info","message":"📊 Auto-updating token prices every 30 seconds","service":"safeswap-backend","timestamp":"2025-07-16 03:10:24"}
+{"level":"info","message":"🔗 API Base URL: http://localhost:5000/api/v1","service":"safeswap-backend","timestamp":"2025-07-16 03:10:24"}
+{"level":"info","message":"📋 Available endpoints:","service":"safeswap-backend","timestamp":"2025-07-16 03:10:24"}
+{"level":"info","message":"   - POST /api/v1/auth/register","service":"safeswap-backend","timestamp":"2025-07-16 03:10:24"}
+{"level":"info","message":"   - POST /api/v1/auth/login","service":"safeswap-backend","timestamp":"2025-07-16 03:10:24"}
+{"level":"info","message":"   - GET /api/v1/pricing/tokens","service":"safeswap-backend","timestamp":"2025-07-16 03:10:24"}
+{"level":"info","message":"   - GET /api/v1/pricing/token/:symbol","service":"safeswap-backend","timestamp":"2025-07-16 03:10:24"}
+{"level":"info","message":"   - GET /api/v1/debug/data","service":"safeswap-backend","timestamp":"2025-07-16 03:10:24"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:10:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:11:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:11:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:12:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:12:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:13:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:13:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:14:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:14:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:15:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:15:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:16:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:16:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:17:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:17:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:18:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:18:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:19:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:19:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:20:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:20:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:21:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:21:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:22:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:22:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:23:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:23:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:24:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:24:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:25:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:25:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:26:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:27:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:27:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:28:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:28:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:29:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:29:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:30:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:30:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:31:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:31:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:32:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:32:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:33:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:33:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:34:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:34:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:35:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:35:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:36:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:36:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:37:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:37:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:38:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:38:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:39:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:39:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:40:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:40:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:41:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:41:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:42:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:42:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:43:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:43:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:44:00"}
+{"level":"info","message":"Initialized 5 sample tokens","service":"safeswap-backend","timestamp":"2025-07-16 03:44:38"}
+{"level":"info","message":"🚀 SafeSwap Mock Backend Server running on port 5000","service":"safeswap-backend","timestamp":"2025-07-16 03:44:38"}
+{"level":"info","message":"🌍 Environment: development","service":"safeswap-backend","timestamp":"2025-07-16 03:44:38"}
+{"level":"info","message":"💾 Using In-Memory Mock Database (No MongoDB required)","service":"safeswap-backend","timestamp":"2025-07-16 03:44:38"}
+{"level":"info","message":"📊 Auto-updating token prices every 30 seconds","service":"safeswap-backend","timestamp":"2025-07-16 03:44:38"}
+{"level":"info","message":"🔗 API Base URL: http://localhost:5000/api/v1","service":"safeswap-backend","timestamp":"2025-07-16 03:44:38"}
+{"level":"info","message":"📋 Available endpoints:","service":"safeswap-backend","timestamp":"2025-07-16 03:44:38"}
+{"level":"info","message":"   - POST /api/v1/auth/register","service":"safeswap-backend","timestamp":"2025-07-16 03:44:38"}
+{"level":"info","message":"   - POST /api/v1/auth/login","service":"safeswap-backend","timestamp":"2025-07-16 03:44:38"}
+{"level":"info","message":"   - GET /api/v1/pricing/tokens","service":"safeswap-backend","timestamp":"2025-07-16 03:44:38"}
+{"level":"info","message":"   - GET /api/v1/pricing/token/:symbol","service":"safeswap-backend","timestamp":"2025-07-16 03:44:38"}
+{"level":"info","message":"   - GET /api/v1/debug/data","service":"safeswap-backend","timestamp":"2025-07-16 03:44:38"}
+{"level":"info","message":"Sample users initialized for testing","service":"safeswap-backend","timestamp":"2025-07-16 03:44:40"}
+{"level":"info","message":"Available test accounts:","service":"safeswap-backend","timestamp":"2025-07-16 03:44:40"}
+{"level":"info","message":"1. demo@safeswap.com / 123456","service":"safeswap-backend","timestamp":"2025-07-16 03:44:40"}
+{"level":"info","message":"2. admin@safeswap.com / admin123","service":"safeswap-backend","timestamp":"2025-07-16 03:44:40"}
+{"level":"info","message":"3. john@example.com / password123","service":"safeswap-backend","timestamp":"2025-07-16 03:44:40"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:45:00"}
+{"level":"info","message":"User logged in: demo@safeswap.com","service":"safeswap-backend","timestamp":"2025-07-16 03:45:24"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:45:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:46:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:46:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:47:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:48:00"}
+{"level":"info","message":"Initialized 5 sample tokens","service":"safeswap-backend","timestamp":"2025-07-16 03:48:26"}
+{"level":"info","message":"🚀 SafeSwap Mock Backend Server running on port 5000","service":"safeswap-backend","timestamp":"2025-07-16 03:48:26"}
+{"level":"info","message":"🌍 Environment: development","service":"safeswap-backend","timestamp":"2025-07-16 03:48:26"}
+{"level":"info","message":"💾 Using In-Memory Mock Database (No MongoDB required)","service":"safeswap-backend","timestamp":"2025-07-16 03:48:26"}
+{"level":"info","message":"📊 Auto-updating token prices every 30 seconds","service":"safeswap-backend","timestamp":"2025-07-16 03:48:26"}
+{"level":"info","message":"🔗 API Base URL: http://localhost:5000/api/v1","service":"safeswap-backend","timestamp":"2025-07-16 03:48:26"}
+{"level":"info","message":"📋 Available endpoints:","service":"safeswap-backend","timestamp":"2025-07-16 03:48:26"}
+{"level":"info","message":"   - POST /api/v1/auth/register","service":"safeswap-backend","timestamp":"2025-07-16 03:48:26"}
+{"level":"info","message":"   - POST /api/v1/auth/login","service":"safeswap-backend","timestamp":"2025-07-16 03:48:26"}
+{"level":"info","message":"   - GET /api/v1/pricing/tokens","service":"safeswap-backend","timestamp":"2025-07-16 03:48:26"}
+{"level":"info","message":"   - GET /api/v1/pricing/token/:symbol","service":"safeswap-backend","timestamp":"2025-07-16 03:48:26"}
+{"level":"info","message":"   - GET /api/v1/debug/data","service":"safeswap-backend","timestamp":"2025-07-16 03:48:26"}
+{"level":"info","message":"Sample users initialized for testing","service":"safeswap-backend","timestamp":"2025-07-16 03:48:27"}
+{"level":"info","message":"Available test accounts:","service":"safeswap-backend","timestamp":"2025-07-16 03:48:27"}
+{"level":"info","message":"1. demo@safeswap.com / 123456","service":"safeswap-backend","timestamp":"2025-07-16 03:48:27"}
+{"level":"info","message":"2. admin@safeswap.com / admin123","service":"safeswap-backend","timestamp":"2025-07-16 03:48:27"}
+{"level":"info","message":"3. john@example.com / password123","service":"safeswap-backend","timestamp":"2025-07-16 03:48:27"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:48:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:49:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:49:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:50:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:50:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:51:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:51:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:52:00"}
+{"level":"info","message":"Initialized 5 sample tokens","service":"safeswap-backend","timestamp":"2025-07-16 03:52:21"}
+{"level":"info","message":"🚀 SafeSwap Mock Backend Server running on port 5000","service":"safeswap-backend","timestamp":"2025-07-16 03:52:21"}
+{"level":"info","message":"🌍 Environment: development","service":"safeswap-backend","timestamp":"2025-07-16 03:52:21"}
+{"level":"info","message":"💾 Using In-Memory Mock Database (No MongoDB required)","service":"safeswap-backend","timestamp":"2025-07-16 03:52:21"}
+{"level":"info","message":"📊 Auto-updating token prices every 30 seconds","service":"safeswap-backend","timestamp":"2025-07-16 03:52:21"}
+{"level":"info","message":"🔗 API Base URL: http://localhost:5000/api/v1","service":"safeswap-backend","timestamp":"2025-07-16 03:52:21"}
+{"level":"info","message":"📋 Available endpoints:","service":"safeswap-backend","timestamp":"2025-07-16 03:52:21"}
+{"level":"info","message":"   - POST /api/v1/auth/register","service":"safeswap-backend","timestamp":"2025-07-16 03:52:21"}
+{"level":"info","message":"   - POST /api/v1/auth/login","service":"safeswap-backend","timestamp":"2025-07-16 03:52:21"}
+{"level":"info","message":"   - GET /api/v1/pricing/tokens","service":"safeswap-backend","timestamp":"2025-07-16 03:52:21"}
+{"level":"info","message":"   - GET /api/v1/pricing/token/:symbol","service":"safeswap-backend","timestamp":"2025-07-16 03:52:21"}
+{"level":"info","message":"   - GET /api/v1/debug/data","service":"safeswap-backend","timestamp":"2025-07-16 03:52:21"}
+{"level":"info","message":"Sample users initialized for testing","service":"safeswap-backend","timestamp":"2025-07-16 03:52:23"}
+{"level":"info","message":"Available test accounts:","service":"safeswap-backend","timestamp":"2025-07-16 03:52:23"}
+{"level":"info","message":"1. demo@safeswap.com / 123456","service":"safeswap-backend","timestamp":"2025-07-16 03:52:23"}
+{"level":"info","message":"2. admin@safeswap.com / admin123","service":"safeswap-backend","timestamp":"2025-07-16 03:52:23"}
+{"level":"info","message":"3. john@example.com / password123","service":"safeswap-backend","timestamp":"2025-07-16 03:52:23"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:52:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:53:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:53:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:54:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:54:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:55:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:55:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:56:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:56:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:57:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:57:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:58:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:58:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:59:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 03:59:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:00:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:00:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:01:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:01:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:02:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:02:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:03:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:03:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:04:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:04:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:05:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:05:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:06:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:06:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:07:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:07:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:08:00"}
+{"level":"info","message":"Initialized 5 sample tokens","service":"safeswap-backend","timestamp":"2025-07-16 04:08:46"}
+{"level":"info","message":"🚀 SafeSwap Mock Backend Server running on port 5000","service":"safeswap-backend","timestamp":"2025-07-16 04:08:46"}
+{"level":"info","message":"🌍 Environment: development","service":"safeswap-backend","timestamp":"2025-07-16 04:08:46"}
+{"level":"info","message":"💾 Using In-Memory Mock Database (No MongoDB required)","service":"safeswap-backend","timestamp":"2025-07-16 04:08:46"}
+{"level":"info","message":"📊 Auto-updating token prices every 30 seconds","service":"safeswap-backend","timestamp":"2025-07-16 04:08:46"}
+{"level":"info","message":"🔗 API Base URL: http://localhost:5000/api/v1","service":"safeswap-backend","timestamp":"2025-07-16 04:08:46"}
+{"level":"info","message":"📋 Available endpoints:","service":"safeswap-backend","timestamp":"2025-07-16 04:08:46"}
+{"level":"info","message":"   - POST /api/v1/auth/register","service":"safeswap-backend","timestamp":"2025-07-16 04:08:46"}
+{"level":"info","message":"   - POST /api/v1/auth/login","service":"safeswap-backend","timestamp":"2025-07-16 04:08:46"}
+{"level":"info","message":"   - GET /api/v1/pricing/tokens","service":"safeswap-backend","timestamp":"2025-07-16 04:08:46"}
+{"level":"info","message":"   - GET /api/v1/pricing/token/:symbol","service":"safeswap-backend","timestamp":"2025-07-16 04:08:46"}
+{"level":"info","message":"   - GET /api/v1/debug/data","service":"safeswap-backend","timestamp":"2025-07-16 04:08:46"}
+{"level":"info","message":"Sample users initialized for testing","service":"safeswap-backend","timestamp":"2025-07-16 04:08:47"}
+{"level":"info","message":"Available test accounts:","service":"safeswap-backend","timestamp":"2025-07-16 04:08:47"}
+{"level":"info","message":"1. demo@safeswap.com / 123456","service":"safeswap-backend","timestamp":"2025-07-16 04:08:47"}
+{"level":"info","message":"2. admin@safeswap.com / admin123","service":"safeswap-backend","timestamp":"2025-07-16 04:08:47"}
+{"level":"info","message":"3. john@example.com / password123","service":"safeswap-backend","timestamp":"2025-07-16 04:08:47"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:09:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:09:30"}
+{"level":"info","message":"Initialized 5 sample tokens","service":"safeswap-backend","timestamp":"2025-07-16 04:10:12"}
+{"level":"info","message":"🚀 SafeSwap Mock Backend Server running on port 5000","service":"safeswap-backend","timestamp":"2025-07-16 04:10:12"}
+{"level":"info","message":"🌍 Environment: development","service":"safeswap-backend","timestamp":"2025-07-16 04:10:12"}
+{"level":"info","message":"💾 Using In-Memory Mock Database (No MongoDB required)","service":"safeswap-backend","timestamp":"2025-07-16 04:10:12"}
+{"level":"info","message":"📊 Auto-updating token prices every 30 seconds","service":"safeswap-backend","timestamp":"2025-07-16 04:10:12"}
+{"level":"info","message":"🔗 API Base URL: http://localhost:5000/api/v1","service":"safeswap-backend","timestamp":"2025-07-16 04:10:12"}
+{"level":"info","message":"📋 Available endpoints:","service":"safeswap-backend","timestamp":"2025-07-16 04:10:12"}
+{"level":"info","message":"   - POST /api/v1/auth/register","service":"safeswap-backend","timestamp":"2025-07-16 04:10:12"}
+{"level":"info","message":"   - POST /api/v1/auth/login","service":"safeswap-backend","timestamp":"2025-07-16 04:10:12"}
+{"level":"info","message":"   - GET /api/v1/pricing/tokens","service":"safeswap-backend","timestamp":"2025-07-16 04:10:12"}
+{"level":"info","message":"   - GET /api/v1/pricing/token/:symbol","service":"safeswap-backend","timestamp":"2025-07-16 04:10:12"}
+{"level":"info","message":"   - GET /api/v1/debug/data","service":"safeswap-backend","timestamp":"2025-07-16 04:10:12"}
+{"level":"info","message":"Sample users initialized for testing","service":"safeswap-backend","timestamp":"2025-07-16 04:10:14"}
+{"level":"info","message":"Available test accounts:","service":"safeswap-backend","timestamp":"2025-07-16 04:10:14"}
+{"level":"info","message":"1. demo@safeswap.com / 123456","service":"safeswap-backend","timestamp":"2025-07-16 04:10:14"}
+{"level":"info","message":"2. admin@safeswap.com / admin123","service":"safeswap-backend","timestamp":"2025-07-16 04:10:14"}
+{"level":"info","message":"3. john@example.com / password123","service":"safeswap-backend","timestamp":"2025-07-16 04:10:14"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:10:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:11:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:11:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:12:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:12:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:13:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:13:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:14:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:14:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:15:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:16:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:16:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:17:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:17:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:18:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:18:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:19:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:19:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:20:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:20:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:21:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:21:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:22:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:22:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:23:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:23:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:24:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:24:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:25:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:25:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:26:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:26:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:27:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:27:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:28:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:28:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:29:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:29:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:30:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:30:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:31:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:31:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:32:00"}
+{"level":"info","message":"Initialized 5 sample tokens","service":"safeswap-backend","timestamp":"2025-07-16 04:32:30"}
+{"level":"info","message":"🚀 SafeSwap Mock Backend Server running on port 5000","service":"safeswap-backend","timestamp":"2025-07-16 04:32:31"}
+{"level":"info","message":"🌍 Environment: development","service":"safeswap-backend","timestamp":"2025-07-16 04:32:31"}
+{"level":"info","message":"💾 Using In-Memory Mock Database (No MongoDB required)","service":"safeswap-backend","timestamp":"2025-07-16 04:32:31"}
+{"level":"info","message":"📊 Auto-updating token prices every 30 seconds","service":"safeswap-backend","timestamp":"2025-07-16 04:32:31"}
+{"level":"info","message":"🔗 API Base URL: http://localhost:5000/api/v1","service":"safeswap-backend","timestamp":"2025-07-16 04:32:31"}
+{"level":"info","message":"📋 Available endpoints:","service":"safeswap-backend","timestamp":"2025-07-16 04:32:31"}
+{"level":"info","message":"   - POST /api/v1/auth/register","service":"safeswap-backend","timestamp":"2025-07-16 04:32:31"}
+{"level":"info","message":"   - POST /api/v1/auth/login","service":"safeswap-backend","timestamp":"2025-07-16 04:32:31"}
+{"level":"info","message":"   - GET /api/v1/pricing/tokens","service":"safeswap-backend","timestamp":"2025-07-16 04:32:31"}
+{"level":"info","message":"   - GET /api/v1/pricing/token/:symbol","service":"safeswap-backend","timestamp":"2025-07-16 04:32:31"}
+{"level":"info","message":"   - GET /api/v1/debug/data","service":"safeswap-backend","timestamp":"2025-07-16 04:32:31"}
+{"level":"info","message":"Sample users initialized for testing","service":"safeswap-backend","timestamp":"2025-07-16 04:32:33"}
+{"level":"info","message":"Available test accounts:","service":"safeswap-backend","timestamp":"2025-07-16 04:32:33"}
+{"level":"info","message":"1. demo@safeswap.com / 123456","service":"safeswap-backend","timestamp":"2025-07-16 04:32:33"}
+{"level":"info","message":"2. admin@safeswap.com / admin123","service":"safeswap-backend","timestamp":"2025-07-16 04:32:33"}
+{"level":"info","message":"3. john@example.com / password123","service":"safeswap-backend","timestamp":"2025-07-16 04:32:33"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:33:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:33:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:34:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:34:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:35:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:35:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:36:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:36:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:37:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:37:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:38:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:38:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:39:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:39:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:40:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:40:30"}
+{"level":"info","message":"Initialized 5 sample tokens","service":"safeswap-backend","timestamp":"2025-07-16 04:40:38"}
+{"level":"info","message":"🚀 SafeSwap Mock Backend Server running on port 5000","service":"safeswap-backend","timestamp":"2025-07-16 04:40:38"}
+{"level":"info","message":"🌍 Environment: development","service":"safeswap-backend","timestamp":"2025-07-16 04:40:38"}
+{"level":"info","message":"💾 Using In-Memory Mock Database (No MongoDB required)","service":"safeswap-backend","timestamp":"2025-07-16 04:40:38"}
+{"level":"info","message":"📊 Auto-updating token prices every 30 seconds","service":"safeswap-backend","timestamp":"2025-07-16 04:40:38"}
+{"level":"info","message":"🔗 API Base URL: http://localhost:5000/api/v1","service":"safeswap-backend","timestamp":"2025-07-16 04:40:38"}
+{"level":"info","message":"📋 Available endpoints:","service":"safeswap-backend","timestamp":"2025-07-16 04:40:38"}
+{"level":"info","message":"   - POST /api/v1/auth/register","service":"safeswap-backend","timestamp":"2025-07-16 04:40:38"}
+{"level":"info","message":"   - POST /api/v1/auth/login","service":"safeswap-backend","timestamp":"2025-07-16 04:40:38"}
+{"level":"info","message":"   - GET /api/v1/pricing/tokens","service":"safeswap-backend","timestamp":"2025-07-16 04:40:38"}
+{"level":"info","message":"   - GET /api/v1/pricing/token/:symbol","service":"safeswap-backend","timestamp":"2025-07-16 04:40:38"}
+{"level":"info","message":"   - GET /api/v1/debug/data","service":"safeswap-backend","timestamp":"2025-07-16 04:40:38"}
+{"level":"info","message":"Sample users initialized for testing","service":"safeswap-backend","timestamp":"2025-07-16 04:40:40"}
+{"level":"info","message":"Available test accounts:","service":"safeswap-backend","timestamp":"2025-07-16 04:40:40"}
+{"level":"info","message":"1. demo@safeswap.com / 123456","service":"safeswap-backend","timestamp":"2025-07-16 04:40:40"}
+{"level":"info","message":"2. admin@safeswap.com / admin123","service":"safeswap-backend","timestamp":"2025-07-16 04:40:40"}
+{"level":"info","message":"3. john@example.com / password123","service":"safeswap-backend","timestamp":"2025-07-16 04:40:40"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:41:00"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:41:30"}
+{"level":"info","message":"Updated token prices randomly","service":"safeswap-backend","timestamp":"2025-07-16 04:42:00"}

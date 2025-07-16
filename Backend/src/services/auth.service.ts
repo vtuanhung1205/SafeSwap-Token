@@ -30,11 +30,11 @@ export class AuthService {
   public generateTokens(payload: JWTPayload): AuthTokens {
     const accessToken = jwt.sign(payload, this.jwtSecret, {
       expiresIn: this.jwtExpiresIn,
-    });
+    } as jwt.SignOptions);
 
     const refreshToken = jwt.sign(payload, this.jwtRefreshSecret, {
       expiresIn: this.jwtRefreshExpiresIn,
-    });
+    } as jwt.SignOptions);
 
     return { accessToken, refreshToken };
   }
@@ -123,13 +123,86 @@ export class AuthService {
     }
   }
 
+  public async registerUser(email: string, password: string, name: string): Promise<{ user: IUser; tokens: AuthTokens }> {
+    try {
+      // Check if user already exists
+      const existingUser = await User.findOne({ email: email.toLowerCase() });
+      if (existingUser) {
+        throw new Error('User with this email already exists');
+      }
+
+      // Create new user
+      const user = new User({
+        email: email.toLowerCase(),
+        password,
+        name,
+        isVerified: false // Email verification can be added later
+      });
+
+      await user.save();
+
+      // Generate tokens
+      const tokens = this.generateTokens({
+        userId: (user._id as any).toString(),
+        email: user.email,
+        name: user.name
+      });
+
+      logger.info(`New user registered: ${email}`);
+
+      return {
+        user,
+        tokens
+      };
+    } catch (error) {
+      logger.error('User registration failed:', error);
+      throw error;
+    }
+  }
+
+  public async loginUser(email: string, password: string): Promise<{ user: IUser; tokens: AuthTokens }> {
+    try {
+      // Find user by email
+      const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
+      if (!user) {
+        throw new Error('Invalid credentials');
+      }
+
+      // Check password
+      const isPasswordValid = await user.comparePassword(password);
+      if (!isPasswordValid) {
+        throw new Error('Invalid credentials');
+      }
+
+      // Generate tokens
+      const tokens = this.generateTokens({
+        userId: (user._id as any).toString(),
+        email: user.email,
+        name: user.name
+      });
+
+      // Remove password from response
+      user.password = undefined;
+
+      logger.info(`User logged in: ${email}`);
+
+      return {
+        user,
+        tokens
+      };
+    } catch (error) {
+      logger.error('User login failed:', error);
+      throw error;
+    }
+  }
+
   public async getUserById(userId: string): Promise<IUser | null> {
     try {
       const user = await User.findById(userId);
       return user;
     } catch (error) {
-      logger.error(`Failed to get user by ID ${userId}:`, error);
-      return null;
+      logger.error('Get user by ID failed:', error);
+      throw error;
     }
   }
 
@@ -165,23 +238,25 @@ export class AuthService {
 
   public async refreshAccessToken(refreshToken: string): Promise<AuthTokens> {
     try {
-      const decoded = this.verifyRefreshToken(refreshToken);
-      const user = await this.getUserById(decoded.userId);
-
+      const payload = jwt.verify(refreshToken, this.jwtRefreshSecret) as JWTPayload;
+      
+      // Verify user still exists
+      const user = await User.findById(payload.userId);
       if (!user) {
-        throw createError('User not found', 404);
+        throw new Error('User not found');
       }
 
-      const newTokens = this.generateTokens({
-        userId: user._id.toString(),
+      // Generate new tokens
+      const tokens = this.generateTokens({
+        userId: (user._id as any).toString(),
         email: user.email,
-        name: user.name,
+        name: user.name
       });
 
-      return newTokens;
+      return tokens;
     } catch (error) {
-      logger.error('Failed to refresh access token:', error);
-      throw error;
+      logger.error('Token refresh failed:', error);
+      throw new Error('Invalid refresh token');
     }
   }
 
@@ -200,4 +275,4 @@ export class AuthService {
       throw error;
     }
   }
-} 
+}

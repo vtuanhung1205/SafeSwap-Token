@@ -86,4 +86,26 @@ export interface PriceUpdateMessage extends WebSocketMessage {
     price: number;
     change24h: number;
   };
-} 
+}
+
+export interface AuthTokens {
+  accessToken: string;
+  refreshToken: string;
+}
+
+export interface AuthResult {
+  user: User;
+  tokens: AuthTokens;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface RegisterRequest {
+  email: string;
+  password: string;
+  confirmPassword: string;
+  name: string;
+}

@@ -1,32 +1,54 @@
 import axios from 'axios';
 import cron from 'node-cron';
 import { TokenPrice } from '@/models/TokenPrice.model';
+import { DataSeedService } from '@/services/dataSeed.service';
 import { logger } from '@/utils/logger';
 
 export class PriceFeedService {
   private readonly coingeckoApiKey: string;
   private readonly coinmarketcapApiKey: string;
   private readonly supportedTokens: string[] = ['bitcoin', 'ethereum', 'aptos', 'tether', 'usd-coin'];
+  private dataSeedService: DataSeedService;
+  private isDemo: boolean;
 
   constructor() {
     this.coingeckoApiKey = process.env.COINGECKO_API_KEY || '';
     this.coinmarketcapApiKey = process.env.COINMARKETCAP_API_KEY || '';
+    this.dataSeedService = new DataSeedService();
+    this.isDemo = process.env.NODE_ENV === 'development' || process.env.DEMO_MODE === 'true';
   }
 
-  public initialize(): void {
-    // Fetch prices immediately on startup
-    this.fetchAllPrices();
-    
-    // Schedule price updates every 30 seconds
-    cron.schedule('*/30 * * * * *', async () => {
-      try {
-        await this.fetchAllPrices();
-      } catch (error) {
-        logger.error('Scheduled price fetch failed:', error);
-      }
-    });
+  public async initialize(): Promise<void> {
+    if (this.isDemo) {
+      // In demo mode, seed the database with mock data
+      await this.dataSeedService.seedDatabase();
+      
+      // Update prices every 30 seconds with mock data
+      cron.schedule('*/30 * * * * *', async () => {
+        try {
+          await this.dataSeedService.updatePrices();
+          logger.info('📊 Updated mock prices for demo');
+        } catch (error) {
+          logger.error('Failed to update mock prices:', error);
+        }
+      });
 
-    logger.info('💰 PriceFeedService initialized with 30-second intervals');
+      logger.info('💰 PriceFeedService initialized in DEMO mode with mock data');
+    } else {
+      // In production mode, fetch real prices
+      this.fetchAllPrices();
+      
+      // Schedule price updates every 30 seconds
+      cron.schedule('*/30 * * * * *', async () => {
+        try {
+          await this.fetchAllPrices();
+        } catch (error) {
+          logger.error('Scheduled price fetch failed:', error);
+        }
+      });
+
+      logger.info('💰 PriceFeedService initialized with real data from CoinGecko');
+    }
   }
 
   public async fetchAllPrices(): Promise<void> {

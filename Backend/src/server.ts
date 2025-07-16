@@ -14,6 +14,7 @@ import authRoutes from '@/routes/auth.routes';
 import walletRoutes from '@/routes/wallet.routes';
 import swapRoutes from '@/routes/swap.routes';
 import priceRoutes from '@/routes/price.routes';
+import pricingRoutes from '@/routes/pricing.routes';
 import { WebSocketService } from '@/services/websocket.service';
 import { PriceFeedService } from '@/services/priceFeed.service';
 
@@ -57,6 +58,7 @@ app.use(`/api/${apiVersion}/auth`, authRoutes);
 app.use(`/api/${apiVersion}/wallet`, walletRoutes);
 app.use(`/api/${apiVersion}/swap`, swapRoutes);
 app.use(`/api/${apiVersion}/price`, priceRoutes);
+app.use(`/api/${apiVersion}/pricing`, pricingRoutes);
 
 // WebSocket Service
 const webSocketService = new WebSocketService(io);

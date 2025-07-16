@@ -4,10 +4,14 @@ export interface ITokenPrice extends Document {
   symbol: string;
   name: string;
   price: number;
-  change24h: number;
-  volume24h: number;
-  marketCap: number;
-  lastUpdated: Date;
+  change_24h: number;
+  volume_24h: number;
+  market_cap: number;
+  last_updated: Date;
+  logo_url?: string;
+  rank?: number;
+  circulating_supply?: number;
+  max_supply?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -29,23 +33,39 @@ const tokenPriceSchema = new Schema<ITokenPrice>(
       required: true,
       min: 0,
     },
-    change24h: {
+    change_24h: {
       type: Number,
       default: 0,
     },
-    volume24h: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
-    marketCap: {
+    volume_24h: {
       type: Number,
       default: 0,
       min: 0,
     },
-    lastUpdated: {
+    market_cap: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    last_updated: {
       type: Date,
       default: Date.now,
+    },
+    logo_url: {
+      type: String,
+      default: '',
+    },
+    rank: {
+      type: Number,
+      default: 0,
+    },
+    circulating_supply: {
+      type: Number,
+      default: 0,
+    },
+    max_supply: {
+      type: Number,
+      default: 0,
     },
   },
   {
@@ -55,17 +75,20 @@ const tokenPriceSchema = new Schema<ITokenPrice>(
 
 // Index for performance
 tokenPriceSchema.index({ symbol: 1 });
-tokenPriceSchema.index({ lastUpdated: -1 });
+tokenPriceSchema.index({ last_updated: -1 });
+tokenPriceSchema.index({ market_cap: -1 });
+tokenPriceSchema.index({ change_24h: -1 });
+tokenPriceSchema.index({ volume_24h: -1 });
 
 // Virtual for price ID
 tokenPriceSchema.virtual('id').get(function () {
-  return this._id.toHexString();
+  return (this._id as any).toHexString();
 });
 
 // Ensure virtual fields are serialized
 tokenPriceSchema.set('toJSON', {
   virtuals: true,
-  transform: function (doc, ret) {
+  transform: function (doc: any, ret: any) {
     delete ret._id;
     delete ret.__v;
     return ret;
