@@ -12,7 +12,7 @@ import os
 # ==============================================================================
 
 # 1. ĐIỀN ĐỊA CHỈ VÍ BẠN MUỐN XỬ LÝ
-WALLET_ADDRESS = "0x66cb05df2d855fbae92cdb2dfac9a0b29c969a03998fa817735d27391b52b189"  # Thay bằng ví bạn muốn
+WALLET_ADDRESS = "0x8d82d605ce7516d0042ebef208546413c3a0d2d8175303d2997f04cdf624f82b"  # Thay bằng ví bạn muốn
 
 # 2. ĐÁNH DẤU NHÃN CHO VÍ NÀY (0 = Thường, 1 = Đáng nghi)
 LABEL = 0
