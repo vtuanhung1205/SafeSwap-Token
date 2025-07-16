@@ -222,15 +222,23 @@ const Navbar = () => {
                           <span>Dashboard</span>
                         </Link>
 
-                        <button className="w-full px-4 py-2 text-left text-gray-300 hover:bg-[#23232a] transition flex items-center space-x-2">
+                        <Link
+                          to="/wallet"
+                          className="w-full px-4 py-2 text-left text-gray-300 hover:bg-[#23232a] transition flex items-center space-x-2"
+                          onClick={() => setShowUserMenu(false)}
+                        >
                           <Wallet size={16} />
                           <span>Wallet</span>
-                        </button>
+                        </Link>
 
-                        <button className="w-full px-4 py-2 text-left text-gray-300 hover:bg-[#23232a] transition flex items-center space-x-2">
+                        <Link
+                          to="/settings"
+                          className="w-full px-4 py-2 text-left text-gray-300 hover:bg-[#23232a] transition flex items-center space-x-2"
+                          onClick={() => setShowUserMenu(false)}
+                        >
                           <Settings size={16} />
                           <span>Settings</span>
-                        </button>
+                        </Link>
 
                         <hr className="border-[#23232a] my-2" />
 

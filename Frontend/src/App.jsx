@@ -22,7 +22,7 @@ import HelpCenter from "./components/pages/HelpCenter";
 import ContactUs from "./components/pages/ContactUs";
 import TermsOfUse from "./components/pages/TermsOfUse";
 import PagePrivacy from "./components/pages/PagePrivacy";
-import NotFoundPage from "./components/NotFoundPage/NotFoundPage"
+import NotFoundPage from "./components/NotFoundPage/NotFoundPage";
 import "./index.css";
 // Icons
 import {
@@ -36,6 +36,8 @@ import {
   CheckCircle,
   Bot,
 } from "lucide-react";
+import Wallet from "./components/pages/Wallet";
+import Settings from "./components/pages/Settings";
 
 // --- Custom Hook to Track Mouse Position ---
 const useMousePosition = () => {
@@ -85,6 +87,8 @@ function App() {
               <Route path="/contact" element={<ContactUs />} />
               <Route path="/terms-of-use" element={<TermsOfUse />} />
               <Route path="/privacy-policy" element={<PagePrivacy />} />
+              <Route path="/wallet" element={<Wallet />} />
+              <Route path="/settings" element={<Settings />} />
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </main>
