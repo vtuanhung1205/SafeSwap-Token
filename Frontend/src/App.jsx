@@ -93,7 +93,6 @@ function App() {
             </Routes>
           </main>
           <Footer />
-          <DemoBadge />
           <Toaster
             position="top-right"
             toastOptions={{
