@@ -32,9 +32,9 @@ const PricingPlanCard = ({ plan, navigate, isLoaded, index }) => (
         </li>
       ))}
     </ul>
-    {plan.name === "Enterprise" ? (
+    {(plan.name === "Enterprise" || plan.name === "Advance") ? (
       <a
-        href="mailto:safeswap@proton.me"
+        href="mailto:safeswap@contact.me"
         className="block w-full text-center px-6 py-3 rounded-xl font-bold border border-cyan-600 text-cyan-400 hover:bg-cyan-600 hover:text-white transition-all duration-300"
       >
         Contact Us

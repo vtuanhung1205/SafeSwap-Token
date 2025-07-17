@@ -27,10 +27,10 @@ const ContactUs = () => {
           <li>
             Email:{" "}
             <a
-              href="mailto:support@safeswap.com"
+              href="mailto:safeswap@contact.me"
               className="text-cyan-400 underline"
             >
-              support@safeswap.com
+              safeswap@contact.me
             </a>
           </li>
           <li>

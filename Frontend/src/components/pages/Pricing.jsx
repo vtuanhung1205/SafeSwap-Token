@@ -22,7 +22,7 @@ const Pricing = () => {
   useEffect(() => {
     // This effect runs when `loading` becomes false
     if (!loading) {
-      // A tiny delay to ensure cards are in the DOM before we trigger the animation
+      // A tiny delay to ensure cards are in the DOM before we trigger the animationad
       const animationTimer = setTimeout(() => setIsLoaded(true), 50);
       return () => clearTimeout(animationTimer);
     }
