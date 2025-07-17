@@ -1,0 +1,3 @@
+wallet_address,label,first_transaction_date,wallet_age_days,apt_balance,other_token_count,total_transaction_count,successful_transaction_count,failed_transaction_count,unique_interacted_contracts,unique_interacted_addresses,avg_time_between_tx_seconds,std_dev_time_between_tx_seconds,most_active_hour,most_active_weekday,is_self_funded
+0x8d82d605ce7516d0042ebef208546413c3a0d2d8175303d2997f04cdf624f82b,0,2025-07-16 07:53:56 UTC,0,6.7962134,5,2148,2135,13,6,19,1451.3423381462505,5817.141308332573,16,Tuesday,1
+0x983fe110ab9a83bd43da49260d064017af8527826957e7ebd057ba50a7b2458e,1,2024-11-15 15:28:39 UTC,243,0,0,19400,18878,522,10,8,1082.2853239857725,96598.90075537586,4,Tuesday,1
