@@ -1,13 +1,19 @@
+// components/PricingPlanCard.js
 import React from "react";
 import { BarChart3 } from "lucide-react";
 
-const PricingPlanCard = ({ plan, navigate }) => (
+// Accept `isLoaded` and `index` as new props
+const PricingPlanCard = ({ plan, navigate, isLoaded, index }) => (
   <div
-    className={`flex-1 bg-[#18181c] border rounded-2xl p-8 shadow-lg transition-all duration-300 hover:border-cyan-500/50 hover:scale-105 ${
-      plan.highlight
-        ? "border-cyan-500 ring-2 ring-cyan-400/30"
-        : "border-[#23232a]"
-    }`}
+    className={`flex-1 bg-[#18181c] border rounded-2xl p-8 shadow-lg 
+      ${plan.highlight ? "border-cyan-500 ring-2 ring-cyan-400/30" : "border-[#23232a]"}
+      
+      // These are the new animation classes
+      transition-all duration-500 ease-out
+      ${isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-5"}`}
+      
+    // This inline style creates the staggered delay
+    style={{ transitionDelay: `${index * 150}ms` }}
   >
     <div className="flex flex-col items-center mb-6">
       <div className="bg-gray-800 p-4 rounded-full text-cyan-400 mb-4">

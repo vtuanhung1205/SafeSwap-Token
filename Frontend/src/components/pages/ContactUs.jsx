@@ -42,15 +42,6 @@ const ContactUs = () => {
               @SafeSwap-Token
             </a>
           </li>
-          <li>
-            Discord:{" "}
-            <a
-              href="https://discord.gg/safeswap"
-              className="text-cyan-400 underline"
-            >
-              discord.gg/safeswap
-            </a>
-          </li>
         </ul>
         <form className="max-w-md mx-auto bg-[#23232a] p-6 rounded-xl shadow-inner">
           <label className="block text-gray-300 mb-2">Your Email</label>
