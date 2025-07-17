@@ -35,7 +35,7 @@ export const authenticateToken = async (
     };
 
     next();
-  } catch (error) {
+  } catch (error: any) { // Add type any to error
     logger.error('Authentication failed:', error);
     
     const response = {

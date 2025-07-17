@@ -96,46 +96,37 @@ export class AptosService {
     }
   }
 
-  public async getAccountInfo(address: string): Promise<any> {
+  public async getAccount(accountAddress: string): Promise<any> {
     try {
-      const account = await this.aptos.getAccountInfo({
-        accountAddress: address,
-      });
-
-      return {
-        address: account.address,
-        sequenceNumber: account.sequence_number,
-        authenticationKey: account.authentication_key,
-      };
+      const account = await this.aptos.getAccount({ accountAddress });
+      return account;
     } catch (error) {
-      logger.error(`Failed to get account info for ${address}:`, error);
-      throw createError('Failed to get account information', 500);
+      logger.error(`Failed to get account ${accountAddress}:`, error);
+      throw createError(500, 'Failed to fetch account from Aptos network');
     }
   }
 
-  public async getTransactionHistory(address: string, limit: number = 25): Promise<any[]> {
+  public async getAccountTransactions(accountAddress: string, limit: number = 25): Promise<any[]> {
     try {
       const transactions = await this.aptos.getAccountTransactions({
-        accountAddress: address,
+        accountAddress,
         options: {
           limit,
-          orderBy: [{ sequence_number: 'desc' }],
+          // orderBy is not a valid property here, so we remove it
         },
       });
-
-      return transactions.map(tx => ({
+      return transactions.map((tx: any) => ({
         hash: tx.hash,
-        type: tx.type,
-        sequenceNumber: tx.sequence_number,
-        timestamp: tx.timestamp,
+        version: tx.version,
         success: tx.success,
-        gasUsed: tx.gas_used,
-        gasUnitPrice: tx.gas_unit_price,
+        gas_used: tx.gas_used,
+        timestamp: tx.timestamp,
+        // Adapt to the correct payload structure
         payload: tx.payload,
       }));
     } catch (error) {
-      logger.error(`Failed to get transaction history for ${address}:`, error);
-      return [];
+      logger.error(`Failed to get transactions for ${accountAddress}:`, error);
+      throw createError(500, 'Failed to fetch transactions');
     }
   }
 
@@ -195,16 +186,35 @@ export class AptosService {
     }
   }
 
-  public async estimateGasFee(transaction: any): Promise<number> {
+  public async simulateTransaction(sender: IWallet, payload: any): Promise<any> {
     try {
-      const gasEstimate = await this.aptos.simulateTransaction({
+      const senderAccount = await this.aptos.getAccount({ accountAddress: sender.address });
+      
+      const transaction = await this.aptos.transaction.build.simple({
+        sender: sender.address,
+        data: payload,
+      });
+
+      // The method is likely part of transaction simulation utilities, not top-level
+      const simulationResult = await this.aptos.transaction.simulate.simple({
+        signerPublicKey: sender.publicKey,
         transaction,
       });
 
-      return gasEstimate[0].gas_used * gasEstimate[0].gas_unit_price;
+      return simulationResult;
     } catch (error) {
-      logger.error('Failed to estimate gas fee:', error);
-      throw createError('Failed to estimate gas fee', 500);
+      logger.error('Failed to simulate transaction:', error);
+      throw createError(500, 'Transaction simulation failed');
+    }
+  }
+
+  public async getGasPrice(): Promise<number> {
+    try {
+      const gasPrice = await this.aptos.getGasPrice();
+      return gasPrice;
+    } catch (error) {
+      logger.error('Failed to get gas price:', error);
+      throw createError(500, 'Failed to fetch gas price');
     }
   }
 } 

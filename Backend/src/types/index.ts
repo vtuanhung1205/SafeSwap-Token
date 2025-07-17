@@ -85,5 +85,18 @@ export interface PriceUpdateMessage extends WebSocketMessage {
     symbol: string;
     price: number;
     change24h: number;
+    // Add missing properties based on the error
+    volume24h?: number;
+    marketCap?: number;
+    lastUpdated?: Date;
   };
+}
+
+// Extend Express's Request interface
+declare global {
+  namespace Express {
+    interface Request {
+      user?: User; // Use the existing User interface
+    }
+  }
 } 

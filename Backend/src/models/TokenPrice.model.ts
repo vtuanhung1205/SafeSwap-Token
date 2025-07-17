@@ -65,10 +65,9 @@ tokenPriceSchema.virtual('id').get(function () {
 // Ensure virtual fields are serialized
 tokenPriceSchema.set('toJSON', {
   virtuals: true,
-  transform: function (doc, ret) {
+  versionKey: false,
+  transform: (doc: any, ret: any) => {
     delete ret._id;
-    delete ret.__v;
-    return ret;
   },
 });
 

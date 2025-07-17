@@ -27,15 +27,13 @@ export class AuthService {
     this.jwtRefreshExpiresIn = process.env.JWT_REFRESH_EXPIRES_IN || '30d';
   }
 
-  public generateTokens(payload: JWTPayload): AuthTokens {
-    const accessToken = jwt.sign(payload, this.jwtSecret, {
+  public generateTokens(userId: string): { accessToken: string; refreshToken: string } {
+    const accessToken = jwt.sign({ id: userId }, this.jwtSecret, {
       expiresIn: this.jwtExpiresIn,
     });
-
-    const refreshToken = jwt.sign(payload, this.jwtRefreshSecret, {
+    const refreshToken = jwt.sign({ id: userId }, this.jwtRefreshSecret, {
       expiresIn: this.jwtRefreshExpiresIn,
     });
-
     return { accessToken, refreshToken };
   }
 
