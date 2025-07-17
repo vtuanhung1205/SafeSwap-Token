@@ -2,6 +2,7 @@ import { Aptos, AptosConfig, Network } from '@aptos-labs/ts-sdk';
 import { Wallet, IWallet } from '@/models/Wallet.model';
 import { logger } from '@/utils/logger';
 import { createError } from '@/middleware/errorHandler';
+import { PublicKey } from '@aptos-labs/ts-sdk';
 
 export class AptosService {
   private aptos: Aptos;
@@ -14,8 +15,6 @@ export class AptosService {
     
     const config = new AptosConfig({ 
       network: Network.TESTNET,
-      fullnode: this.nodeUrl,
-      faucet: this.faucetUrl,
     });
     
     this.aptos = new Aptos(config);
@@ -98,7 +97,8 @@ export class AptosService {
 
   public async getAccount(accountAddress: string): Promise<any> {
     try {
-      const account = await this.aptos.getAccount({ accountAddress });
+      // Correct way to call the account module
+      const account = await this.aptos.account.getAccount({ accountAddress });
       return account;
     } catch (error) {
       logger.error(`Failed to get account ${accountAddress}:`, error);
@@ -108,7 +108,8 @@ export class AptosService {
 
   public async getAccountTransactions(accountAddress: string, limit: number = 25): Promise<any[]> {
     try {
-      const transactions = await this.aptos.getAccountTransactions({
+      // Correct way to call the account module
+      const transactions = await this.aptos.account.getAccountTransactions({
         accountAddress,
         options: {
           limit,
@@ -159,19 +160,14 @@ export class AptosService {
     }
   }
 
-  public async fundAccount(address: string, amount: number = 10000000): Promise<any> {
+  public async fundAccount(address: string, amount: number): Promise<string> {
     try {
-      // This is for testnet only - fund account with APT tokens
-      const response = await this.aptos.fundAccount({
-        accountAddress: address,
-        amount,
-      });
-
-      logger.info(`Account ${address} funded with ${amount} octas`);
-      return response;
+      // The faucet is a separate utility
+      const hash = await this.aptos.fundAccount({ accountAddress: address, amount });
+      return hash;
     } catch (error) {
       logger.error(`Failed to fund account ${address}:`, error);
-      throw createError('Failed to fund account', 500);
+      throw createError(500, 'Failed to fund account');
     }
   }
 
@@ -188,16 +184,14 @@ export class AptosService {
 
   public async simulateTransaction(sender: IWallet, payload: any): Promise<any> {
     try {
-      const senderAccount = await this.aptos.getAccount({ accountAddress: sender.address });
-      
       const transaction = await this.aptos.transaction.build.simple({
         sender: sender.address,
         data: payload,
       });
 
-      // The method is likely part of transaction simulation utilities, not top-level
+      // Correct way to simulate
       const simulationResult = await this.aptos.transaction.simulate.simple({
-        signerPublicKey: sender.publicKey,
+        signerPublicKey: new PublicKey(sender.publicKey), // Create PublicKey instance
         transaction,
       });
 
@@ -208,10 +202,11 @@ export class AptosService {
     }
   }
 
-  public async getGasPrice(): Promise<number> {
+  public async getGasPrice(): Promise<any> {
     try {
-      const gasPrice = await this.aptos.getGasPrice();
-      return gasPrice;
+      // Correct way to get gas estimation
+      const gasEstimate = await this.aptos.getGasPriceEstimation();
+      return gasEstimate;
     } catch (error) {
       logger.error('Failed to get gas price:', error);
       throw createError(500, 'Failed to fetch gas price');

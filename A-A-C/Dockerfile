@@ -28,4 +28,4 @@ ENV PYTHONPATH /app
 # Gunicorn sẽ tìm đối tượng 'app' trong file 'src/app.py'
 # Render sẽ tự động sử dụng cổng được chỉ định bởi biến môi trường PORT,
 # nhưng việc chỉ định rõ ràng với --bind cũng rất tốt.
-CMD ["gunicorn", "--bind", "0.0.0.0:${PORT}", "--workers", "2", "src.app:app"]
+CMD gunicorn --bind 0.0.0.0:${PORT} --workers 2 src.app:app

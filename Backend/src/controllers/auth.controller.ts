@@ -4,6 +4,9 @@ import { AuthService } from '@/services/auth.service';
 import { logger } from '@/utils/logger';
 import { asyncHandler, createError } from '@/middleware/errorHandler';
 import { ApiResponse } from '@/types';
+import { IUser } from '@/types/user';
+import User from '@/models/User';
+import { NextFunction } from 'express';
 
 export class AuthController {
   private authService: AuthService;
@@ -182,12 +185,12 @@ export class AuthController {
   });
 
   public getProfile = asyncHandler(async (req: Request, res: Response) => {
-    const userId = (req as any).user.userId;
+    const user = req.user as IUser; // Assert user type
 
     try {
-      const user = await this.authService.getUserById(userId);
+      const userProfile = await User.findById(user._id).select('-password');
 
-      if (!user) {
+      if (!userProfile) {
         throw createError('User not found', 404);
       }
 
@@ -195,14 +198,14 @@ export class AuthController {
         success: true,
         data: {
           user: {
-            id: user._id,
-            email: user.email,
-            name: user.name,
-            avatar: user.avatar,
-            isVerified: user.isVerified,
-            walletAddress: user.walletAddress,
-            createdAt: user.createdAt,
-            updatedAt: user.updatedAt,
+            id: userProfile._id,
+            email: userProfile.email,
+            name: userProfile.name,
+            avatar: userProfile.avatar,
+            isVerified: userProfile.isVerified,
+            walletAddress: userProfile.walletAddress,
+            createdAt: userProfile.createdAt,
+            updatedAt: userProfile.updatedAt,
           },
         },
         timestamp: new Date().toISOString(),
@@ -289,7 +292,7 @@ export class AuthController {
   });
 
   public validateToken = asyncHandler(async (req: Request, res: Response) => {
-    const user = (req as any).user;
+    const user = req.user as IUser; // Assert user type
 
     const response: ApiResponse = {
       success: true,

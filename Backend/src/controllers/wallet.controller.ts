@@ -1,8 +1,9 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { AptosService } from '@/services/aptos.service';
 import { logger } from '@/utils/logger';
 import { asyncHandler, createError } from '@/middleware/errorHandler';
 import { ApiResponse } from '@/types';
+import { IUser } from '@/types/user';
 
 export class WalletController {
   private aptosService: AptosService;
@@ -58,41 +59,15 @@ export class WalletController {
     }
   });
 
-  public getWalletInfo = asyncHandler(async (req: Request, res: Response) => {
-    const userId = (req as any).user.userId;
+  public getWalletInfo = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user as IUser;
+    const wallet = await this.aptosService.getAccount(wallet.address);
+    if (!wallet) return next(createError(404, 'Wallet not found'));
 
-    try {
-      const wallet = await this.aptosService.getUserWallet(userId);
+    // Use the renamed method
+    const accountInfo = await this.aptosService.getAccount(wallet.address);
 
-      if (!wallet) {
-        throw createError('Wallet not found', 404);
-      }
-
-      const accountInfo = await this.aptosService.getAccountInfo(wallet.address);
-
-      const response: ApiResponse = {
-        success: true,
-        data: {
-          wallet: {
-            id: wallet._id,
-            address: wallet.address,
-            publicKey: wallet.publicKey,
-            chainId: wallet.chainId,
-            balance: wallet.balance,
-            isConnected: wallet.isConnected,
-            createdAt: wallet.createdAt,
-            updatedAt: wallet.updatedAt,
-          },
-          accountInfo,
-        },
-        timestamp: new Date().toISOString(),
-      };
-
-      res.status(200).json(response);
-    } catch (error) {
-      logger.error('Get wallet info failed:', error);
-      throw error;
-    }
+    res.json(new ApiResponse({ wallet, accountInfo }, 'Wallet information retrieved'));
   });
 
   public getBalance = asyncHandler(async (req: Request, res: Response) => {
@@ -147,37 +122,17 @@ export class WalletController {
     }
   });
 
-  public getTransactionHistory = asyncHandler(async (req: Request, res: Response) => {
-    const userId = (req as any).user.userId;
-    const { limit = 25 } = req.query;
+  public getTransactionHistory = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user as IUser;
+    const wallet = await this.aptosService.getAccountTransactions(wallet.address, parseInt(limit as string, 10));
+    if (!wallet) return next(createError(404, 'Wallet not found'));
 
-    try {
-      const wallet = await this.aptosService.getUserWallet(userId);
+    const { limit = '25' } = req.query;
 
-      if (!wallet) {
-        throw createError('Wallet not found', 404);
-      }
+    // Use the renamed method
+    const transactions = await this.aptosService.getAccountTransactions(wallet.address, parseInt(limit as string, 10));
 
-      const transactions = await this.aptosService.getTransactionHistory(
-        wallet.address,
-        parseInt(limit as string)
-      );
-
-      const response: ApiResponse = {
-        success: true,
-        data: {
-          transactions,
-          count: transactions.length,
-          address: wallet.address,
-        },
-        timestamp: new Date().toISOString(),
-      };
-
-      res.status(200).json(response);
-    } catch (error) {
-      logger.error('Get transaction history failed:', error);
-      throw error;
-    }
+    res.json(new ApiResponse({ transactions }, 'Transaction history retrieved'));
   });
 
   public validateAddress = asyncHandler(async (req: Request, res: Response) => {
