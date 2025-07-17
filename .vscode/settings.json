@@ -1,0 +1,19 @@
+{
+    "typescript.validate.enable": false,
+    "typescript.suggest.enabled": false,
+    "typescript.preferences.includePackageJsonAutoImports": "off",
+    "typescript.disableAutomaticTypeAcquisition": true,
+    "typescript.workspaceSymbols.enabled": false,
+    "typescript.implementationsCodeLens.enabled": false,
+    "typescript.referencesCodeLens.enabled": false,
+    "files.exclude": {
+        "**/*.d.ts": true,
+        "**/node_modules/**": true
+    },
+    "typescript.tsc.autoDetect": "off",
+    "typescript.preferences.detectTypeImports": false,
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/*.d.ts": true
+    }
+}

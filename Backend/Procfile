@@ -1,0 +1,2 @@
+# Render sử dụng start script trong package.json thay vì Procfile
+# File này có thể xóa nếu chỉ deploy lên Render
