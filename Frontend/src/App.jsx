@@ -38,6 +38,8 @@ import {
 } from "lucide-react";
 import Wallet from "./components/pages/Wallet";
 import Settings from "./components/pages/Settings";
+import Pricing from "./components/pages/Pricing";
+import Payment from "./components/pages/Payment";
 
 // --- Custom Hook to Track Mouse Position ---
 const useMousePosition = () => {
@@ -89,6 +91,8 @@ function App() {
               <Route path="/privacy-policy" element={<PagePrivacy />} />
               <Route path="/wallet" element={<Wallet />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/pricing" element={<Pricing />} />
+              <Route path="/payment" element={<Payment />} />
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </main>
