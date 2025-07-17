@@ -1,306 +1,98 @@
-import { Request, Response } from 'express';
-import passport from 'passport';
+import { Request, Response, NextFunction } from 'express';
 import { AuthService } from '@/services/auth.service';
-import { logger } from '@/utils/logger';
-import { asyncHandler, createError } from '@/middleware/errorHandler';
+import { IUser } from '@/models/User.model';
 import { ApiResponse } from '@/types';
-import { IUser } from '@/types/user';
-import User from '@/models/User';
-import { NextFunction } from 'express';
+import { asyncHandler, createError } from '@/middleware/errorHandler';
+import { User } from '@/models/User.model';
+
 
 export class AuthController {
-  private authService: AuthService;
+  private authService = new AuthService();
 
-  constructor() {
-    this.authService = new AuthService();
-  }
-
-  public googleAuth = asyncHandler(async (req: Request, res: Response) => {
-    passport.authenticate('google', { scope: ['profile', 'email'] })(req, res);
-  });
-
-  public googleCallback = asyncHandler(async (req: Request, res: Response) => {
-    passport.authenticate('google', { session: false }, async (err, user, info) => {
-      if (err) {
-        logger.error('Google OAuth error:', err);
-        return res.redirect(`${process.env.CORS_ORIGIN}/auth/error`);
-      }
-
-      if (!user) {
-        logger.warn('Google OAuth failed:', info);
-        return res.redirect(`${process.env.CORS_ORIGIN}/auth/error`);
-      }
-
-      try {
-        const tokens = this.authService.generateTokens({
-          userId: user._id.toString(),
-          email: user.email,
-          name: user.name,
-        });
-
-        // Set secure cookies
-        res.cookie('accessToken', tokens.accessToken, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'lax',
-          maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-        });
-
-        res.cookie('refreshToken', tokens.refreshToken, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'lax',
-          maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-        });
-
-        res.redirect(`${process.env.CORS_ORIGIN}/dashboard`);
-      } catch (error) {
-        logger.error('Token generation failed:', error);
-        res.redirect(`${process.env.CORS_ORIGIN}/auth/error`);
-      }
-    })(req, res);
-  });
-
-  public login = asyncHandler(async (req: Request, res: Response) => {
-    const { email, name } = req.body;
-
-    if (!email || !name) {
-      throw createError('Email and name are required', 400);
-    }
-
-    try {
-      // For demo purposes, we'll create user if not exists
-      let user = await this.authService.getUserByEmail(email);
-      
-      if (!user) {
-        user = await this.authService.createUser({ email, name });
-      }
-
-      const tokens = this.authService.generateTokens({
-        userId: user._id.toString(),
-        email: user.email,
-        name: user.name,
-      });
-
-      const response: ApiResponse = {
-        success: true,
-        message: 'Login successful',
-        data: {
-          user: {
-            id: user._id,
-            email: user.email,
-            name: user.name,
-            avatar: user.avatar,
-            isVerified: user.isVerified,
-            walletAddress: user.walletAddress,
-          },
-          tokens,
-        },
-        timestamp: new Date().toISOString(),
-      };
-
-      res.status(200).json(response);
-    } catch (error) {
-      logger.error('Login failed:', error);
-      throw error;
-    }
-  });
-
-  public register = asyncHandler(async (req: Request, res: Response) => {
+  public register = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const { email, name, avatar } = req.body;
 
-    if (!email || !name) {
-      throw createError('Email and name are required', 400);
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return next(createError(409, 'User with this email already exists'));
     }
 
-    try {
-      const user = await this.authService.createUser({ email, name, avatar });
+    const newUser = new User({ email, name, avatar });
+    await newUser.save();
 
-      const tokens = this.authService.generateTokens({
-        userId: user._id.toString(),
-        email: user.email,
-        name: user.name,
-      });
+    const { accessToken, refreshToken } = this.authService.generateTokens(newUser._id);
 
-      const response: ApiResponse = {
-        success: true,
-        message: 'Registration successful',
-        data: {
-          user: {
-            id: user._id,
-            email: user.email,
-            name: user.name,
-            avatar: user.avatar,
-            isVerified: user.isVerified,
-            walletAddress: user.walletAddress,
-          },
-          tokens,
-        },
-        timestamp: new Date().toISOString(),
-      };
-
-      res.status(201).json(response);
-    } catch (error) {
-      logger.error('Registration failed:', error);
-      throw error;
-    }
+    res.status(201).json(new ApiResponse({
+      user: newUser.toJSON(),
+      tokens: { accessToken, refreshToken },
+    }, 'User registered successfully'));
   });
 
-  public refreshToken = asyncHandler(async (req: Request, res: Response) => {
+  public login = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const { email, password } = req.body;
+    
+    const user = await this.authService.validateUser(email, password);
+    if (!user) {
+      return next(createError(401, 'Invalid credentials'));
+    }
+    
+    const { accessToken, refreshToken } = this.authService.generateTokens(user._id);
+    
+    res.json(new ApiResponse({
+      user: user.toJSON(),
+      tokens: { accessToken, refreshToken }
+    }, 'Login successful'));
+  });
+
+  public refreshToken = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const { refreshToken } = req.body;
-
     if (!refreshToken) {
-      throw createError('Refresh token is required', 400);
+      return next(createError(400, 'Refresh token is required'));
     }
 
     try {
-      const tokens = await this.authService.refreshAccessToken(refreshToken);
-
-      const response: ApiResponse = {
-        success: true,
-        message: 'Token refreshed successfully',
-        data: { tokens },
-        timestamp: new Date().toISOString(),
-      };
-
-      res.status(200).json(response);
-    } catch (error) {
-      logger.error('Token refresh failed:', error);
-      throw error;
-    }
-  });
-
-  public logout = asyncHandler(async (req: Request, res: Response) => {
-    // Clear cookies
-    res.clearCookie('accessToken');
-    res.clearCookie('refreshToken');
-
-    const response: ApiResponse = {
-      success: true,
-      message: 'Logout successful',
-      timestamp: new Date().toISOString(),
-    };
-
-    res.status(200).json(response);
-  });
-
-  public getProfile = asyncHandler(async (req: Request, res: Response) => {
-    const user = req.user as IUser; // Assert user type
-
-    try {
-      const userProfile = await User.findById(user._id).select('-password');
-
-      if (!userProfile) {
-        throw createError('User not found', 404);
-      }
-
-      const response: ApiResponse = {
-        success: true,
-        data: {
-          user: {
-            id: userProfile._id,
-            email: userProfile.email,
-            name: userProfile.name,
-            avatar: userProfile.avatar,
-            isVerified: userProfile.isVerified,
-            walletAddress: userProfile.walletAddress,
-            createdAt: userProfile.createdAt,
-            updatedAt: userProfile.updatedAt,
-          },
-        },
-        timestamp: new Date().toISOString(),
-      };
-
-      res.status(200).json(response);
-    } catch (error) {
-      logger.error('Get profile failed:', error);
-      throw error;
-    }
-  });
-
-  public updateProfile = asyncHandler(async (req: Request, res: Response) => {
-    const userId = (req as any).user.userId;
-    const { name, avatar } = req.body;
-
-    try {
-      const user = await this.authService.getUserById(userId);
+      const decoded = this.authService.verifyToken(refreshToken, true);
+      const user = await User.findById(decoded.id);
 
       if (!user) {
-        throw createError('User not found', 404);
+        return next(createError(401, 'Invalid refresh token'));
       }
 
-      if (name) user.name = name;
-      if (avatar) user.avatar = avatar;
-
-      await user.save();
-
-      const response: ApiResponse = {
-        success: true,
-        message: 'Profile updated successfully',
-        data: {
-          user: {
-            id: user._id,
-            email: user.email,
-            name: user.name,
-            avatar: user.avatar,
-            isVerified: user.isVerified,
-            walletAddress: user.walletAddress,
-          },
-        },
-        timestamp: new Date().toISOString(),
-      };
-
-      res.status(200).json(response);
+      const { accessToken } = this.authService.generateTokens(user._id);
+      res.json(new ApiResponse({ accessToken }, 'Token refreshed successfully'));
     } catch (error) {
-      logger.error('Update profile failed:', error);
-      throw error;
+      return next(createError(401, 'Invalid or expired refresh token'));
     }
   });
 
-  public connectWallet = asyncHandler(async (req: Request, res: Response) => {
-    const userId = (req as any).user.userId;
-    const { walletAddress } = req.body;
+  public getProfile = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    // req.user is populated by the 'authenticate' middleware
+    const user = req.user as IUser; 
+    
+    // The user object from the token might be stale, so we fetch the latest from DB
+    const userProfile = await User.findById(user._id).select('-password');
 
-    if (!walletAddress) {
-      throw createError('Wallet address is required', 400);
+    if (!userProfile) {
+      return next(createError(404, 'User not found'));
     }
 
-    try {
-      const user = await this.authService.updateUserWallet(userId, walletAddress);
+    res.json(new ApiResponse({ user: userProfile }, 'Profile retrieved successfully'));
+  });
 
-      const response: ApiResponse = {
-        success: true,
-        message: 'Wallet connected successfully',
-        data: {
-          user: {
-            id: user._id,
-            email: user.email,
-            name: user.name,
-            avatar: user.avatar,
-            isVerified: user.isVerified,
-            walletAddress: user.walletAddress,
-          },
-        },
-        timestamp: new Date().toISOString(),
-      };
+  public updateProfile = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user as IUser;
+    const updateData = req.body;
 
-      res.status(200).json(response);
-    } catch (error) {
-      logger.error('Connect wallet failed:', error);
-      throw error;
+    const updatedUser = await User.findByIdAndUpdate(user._id, updateData, { new: true }).select('-password');
+    
+    if (!updatedUser) {
+      return next(createError(404, 'User not found'));
     }
+    
+    res.json(new ApiResponse({ user: updatedUser }, 'Profile updated successfully'));
   });
 
-  public validateToken = asyncHandler(async (req: Request, res: Response) => {
-    const user = req.user as IUser; // Assert user type
-
-    const response: ApiResponse = {
-      success: true,
-      message: 'Token is valid',
-      data: { user },
-      timestamp: new Date().toISOString(),
-    };
-
-    res.status(200).json(response);
-  });
+  public validateToken(req: Request, res: Response) {
+    res.json(new ApiResponse({ valid: true }, 'Token is valid'));
+  }
 } 
