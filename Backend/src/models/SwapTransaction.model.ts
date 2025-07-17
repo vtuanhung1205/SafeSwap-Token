@@ -81,7 +81,7 @@ swapTransactionSchema.virtual('id').get(function () {
 swapTransactionSchema.set('toJSON', {
   virtuals: true,
   versionKey: false,
-  transform: (doc: any, ret: any) => {
+  transform: function(doc: any, ret: any) {
     delete ret._id;
   },
 });

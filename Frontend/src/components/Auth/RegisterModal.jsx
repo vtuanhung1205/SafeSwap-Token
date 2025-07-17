@@ -1,14 +1,18 @@
 import React, { useState } from 'react';
-import { X, Mail, User, UserPlus, Image } from 'lucide-react';
+import { X, Mail, User, UserPlus, Image, Lock } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import toast from 'react-hot-toast';
 
 const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
   const [formData, setFormData] = useState({
     email: '',
     name: '',
+    password: '',
+    confirmPassword: '',
     avatar: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState({});
   
   const { register } = useAuth();
 
@@ -18,25 +22,69 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
       ...prev,
       [name]: value,
     }));
+    
+    // Clear error when user types
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: '',
+      }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    
+    if (!formData.email) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Email is invalid';
+    }
+    
+    if (!formData.name) {
+      newErrors.name = 'Full name is required';
+    }
+    
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    } else if (formData.password.length < 8) {
+      newErrors.password = 'Password must be at least 8 characters';
+    }
+    
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = 'Please confirm your password';
+    } else if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match';
+    }
+    
+    if (formData.avatar && !formData.avatar.match(/^(http|https):\/\/[^ "]+$/)) {
+      newErrors.avatar = 'Please enter a valid URL';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!formData.email || !formData.name) {
+    if (!validateForm()) {
       return;
     }
     
     setIsSubmitting(true);
     
     try {
-      const result = await register(formData.email, formData.name, formData.avatar);
+      const result = await register(formData.email, formData.name, formData.password, formData.avatar);
       if (result.success) {
         onClose();
-        setFormData({ email: '', name: '', avatar: '' });
+        setFormData({ email: '', name: '', password: '', confirmPassword: '', avatar: '' });
+      } else if (result.error) {
+        toast.error(result.error);
       }
     } catch (error) {
       console.error('Register error:', error);
+      toast.error('Registration failed. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -51,7 +99,7 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-[#18181c] rounded-2xl border border-[#23232a] p-6 w-full max-w-md relative">
+      <div className="bg-[#18181c] rounded-2xl border border-[#23232a] p-6 w-full max-w-md relative max-h-[90vh] overflow-y-auto">
         {/* Close button */}
         <button
           onClick={onClose}
@@ -104,11 +152,11 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
-                className="w-full pl-10 pr-4 py-3 bg-[#111112] border border-[#23232a] rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-cyan-600 transition"
+                className={`w-full pl-10 pr-4 py-3 bg-[#111112] border ${errors.email ? 'border-red-500' : 'border-[#23232a]'} rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-cyan-600 transition`}
                 placeholder="Enter your email"
-                required
               />
             </div>
+            {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
           </div>
 
           <div>
@@ -122,11 +170,47 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
-                className="w-full pl-10 pr-4 py-3 bg-[#111112] border border-[#23232a] rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-cyan-600 transition"
+                className={`w-full pl-10 pr-4 py-3 bg-[#111112] border ${errors.name ? 'border-red-500' : 'border-[#23232a]'} rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-cyan-600 transition`}
                 placeholder="Enter your full name"
-                required
               />
             </div>
+            {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Password
+            </label>
+            <div className="relative">
+              <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleInputChange}
+                className={`w-full pl-10 pr-4 py-3 bg-[#111112] border ${errors.password ? 'border-red-500' : 'border-[#23232a]'} rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-cyan-600 transition`}
+                placeholder="Create a password"
+              />
+            </div>
+            {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Confirm Password
+            </label>
+            <div className="relative">
+              <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="password"
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleInputChange}
+                className={`w-full pl-10 pr-4 py-3 bg-[#111112] border ${errors.confirmPassword ? 'border-red-500' : 'border-[#23232a]'} rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-cyan-600 transition`}
+                placeholder="Confirm your password"
+              />
+            </div>
+            {errors.confirmPassword && <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>}
           </div>
 
           <div>
@@ -140,15 +224,16 @@ const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
                 name="avatar"
                 value={formData.avatar}
                 onChange={handleInputChange}
-                className="w-full pl-10 pr-4 py-3 bg-[#111112] border border-[#23232a] rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-cyan-600 transition"
+                className={`w-full pl-10 pr-4 py-3 bg-[#111112] border ${errors.avatar ? 'border-red-500' : 'border-[#23232a]'} rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-cyan-600 transition`}
                 placeholder="https://example.com/avatar.jpg"
               />
             </div>
+            {errors.avatar && <p className="text-red-500 text-sm mt-1">{errors.avatar}</p>}
           </div>
 
           <button
             type="submit"
-            disabled={isSubmitting || !formData.email || !formData.name}
+            disabled={isSubmitting}
             className="w-full py-3 bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-medium rounded-xl transition"
           >
             {isSubmitting ? 'Creating account...' : 'Create Account'}

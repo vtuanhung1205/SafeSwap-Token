@@ -81,11 +81,22 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const login = async (email, name) => {
+  const login = async (email, password) => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       
-      const response = await authAPI.login(email, name);
+      if (DEMO_MODE) {
+        // Simulate login for demo mode
+        if (email === 'demo@example.com' && password === 'password123') {
+          dispatch({ type: 'SET_USER', payload: mockUser });
+          toast.success('Demo login successful!');
+          return { success: true, user: mockUser };
+        } else {
+          throw new Error('Invalid credentials');
+        }
+      }
+      
+      const response = await authAPI.login(email, password);
       
       if (response.data.success) {
         const { user, tokens } = response.data.data;
@@ -107,11 +118,18 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (email, name, avatar) => {
+  const register = async (email, name, password, avatar) => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       
-      const response = await authAPI.register(email, name, avatar);
+      if (DEMO_MODE) {
+        // Simulate registration for demo mode
+        dispatch({ type: 'SET_USER', payload: { ...mockUser, email, name } });
+        toast.success('Demo registration successful!');
+        return { success: true, user: { ...mockUser, email, name } };
+      }
+      
+      const response = await authAPI.register(email, name, password, avatar);
       
       if (response.data.success) {
         const { user, tokens } = response.data.data;
@@ -135,7 +153,9 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      await authAPI.logout();
+      if (!DEMO_MODE) {
+        await authAPI.logout();
+      }
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
@@ -148,6 +168,14 @@ export const AuthProvider = ({ children }) => {
 
   const updateProfile = async (data) => {
     try {
+      if (DEMO_MODE) {
+        // Simulate profile update for demo mode
+        const updatedUser = { ...state.user, ...data };
+        dispatch({ type: 'SET_USER', payload: updatedUser });
+        toast.success('Profile updated successfully');
+        return { success: true };
+      }
+      
       const response = await authAPI.updateProfile(data);
       
       if (response.data.success) {

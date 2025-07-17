@@ -19,7 +19,12 @@ export class WalletController {
 
     const accountInfo = await this.aptosService.getAccount(wallet.address);
 
-    res.json(new ApiResponse({ wallet, accountInfo }, 'Wallet information retrieved'));
+    res.json({
+      success: true,
+      message: 'Wallet information retrieved',
+      data: { wallet, accountInfo },
+      timestamp: new Date().toISOString(),
+    });
   });
 
   public connectWallet = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
@@ -31,7 +36,12 @@ export class WalletController {
     }
 
     const wallet = await this.walletService.connectWallet(user._id.toString(), address, publicKey);
-    res.status(201).json(new ApiResponse({ wallet }, 'Wallet connected successfully'));
+    res.status(201).json({
+      success: true,
+      message: 'Wallet connected successfully',
+      data: { wallet },
+      timestamp: new Date().toISOString(),
+    });
   });
 
   public getTransactionHistory = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
@@ -45,7 +55,12 @@ export class WalletController {
     const { limit = '25' } = req.query;
     const transactions = await this.aptosService.getAccountTransactions(wallet.address, parseInt(limit as string, 10));
 
-    res.json(new ApiResponse({ transactions }, 'Transaction history retrieved'));
+    res.json({
+      success: true,
+      message: 'Transaction history retrieved',
+      data: { transactions },
+      timestamp: new Date().toISOString(),
+    });
   });
 
   public fundTestnetWallet = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
@@ -58,6 +73,11 @@ export class WalletController {
     }
 
     const transactionHash = await this.aptosService.fundAccount(wallet.address, amount || 100_000_000); // Default to 1 APT
-    res.json(new ApiResponse({ transactionHash }, 'Funding transaction sent'));
+    res.json({
+      success: true,
+      message: 'Funding transaction sent',
+      data: { transactionHash },
+      timestamp: new Date().toISOString(),
+    });
   });
 } 

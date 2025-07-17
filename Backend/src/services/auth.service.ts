@@ -1,57 +1,56 @@
 import jwt from 'jsonwebtoken';
 import { User, IUser } from '@/models/User.model';
-import { logger } from '@/utils/logger';
 import { createError } from '@/middleware/errorHandler';
-
-export interface JWTPayload {
-  userId: string;
-  email: string;
-  name: string;
-}
-
-export interface AuthTokens {
-  accessToken: string;
-  refreshToken: string;
-}
+import { logger } from '@/utils/logger';
 
 export class AuthService {
-  private readonly jwtSecret: string;
-  private readonly jwtRefreshSecret: string;
-  private readonly jwtExpiresIn: string;
-  private readonly jwtRefreshExpiresIn: string;
+  private jwtSecret: string;
+  private jwtExpiresIn: string;
+  private jwtRefreshSecret: string;
+  private jwtRefreshExpiresIn: string;
 
   constructor() {
-    this.jwtSecret = process.env.JWT_SECRET || 'default-secret';
-    this.jwtRefreshSecret = process.env.JWT_REFRESH_SECRET || 'default-refresh-secret';
-    this.jwtExpiresIn = process.env.JWT_EXPIRES_IN || '7d';
-    this.jwtRefreshExpiresIn = process.env.JWT_REFRESH_EXPIRES_IN || '30d';
+    this.jwtSecret = process.env.JWT_SECRET || 'default_secret_key';
+    this.jwtExpiresIn = process.env.JWT_EXPIRES_IN || '1h';
+    this.jwtRefreshSecret = process.env.JWT_REFRESH_SECRET || 'default_refresh_key';
+    this.jwtRefreshExpiresIn = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
   }
 
-  public generateTokens(userId: string): { accessToken: string; refreshToken: string } {
-    const accessToken = jwt.sign({ id: userId }, this.jwtSecret, {
-      expiresIn: this.jwtExpiresIn,
-    });
-    const refreshToken = jwt.sign({ id: userId }, this.jwtRefreshSecret, {
-      expiresIn: this.jwtRefreshExpiresIn,
-    });
-    return { accessToken, refreshToken };
-  }
-
-  public verifyAccessToken(token: string): JWTPayload {
+  public async validateUser(email: string, password: string): Promise<IUser | null> {
     try {
-      return jwt.verify(token, this.jwtSecret) as JWTPayload;
+      // For demo purposes, just find user by email (no password check)
+      return await User.findOne({ email });
     } catch (error) {
-      logger.error('Access token verification failed:', error);
-      throw createError('Invalid access token', 401);
+      logger.error('User validation failed:', error);
+      return null;
     }
   }
 
-  public verifyRefreshToken(token: string): JWTPayload {
+  public generateTokens(userId: string): { accessToken: string; refreshToken: string } {
+    // Create payload object
+    const payload = { id: userId };
+    
+    const accessToken = jwt.sign(
+      payload,
+      this.jwtSecret,
+      { expiresIn: this.jwtExpiresIn }
+    );
+    
+    const refreshToken = jwt.sign(
+      payload,
+      this.jwtRefreshSecret,
+      { expiresIn: this.jwtRefreshExpiresIn }
+    );
+
+    return { accessToken, refreshToken };
+  }
+
+  public verifyToken(token: string, isRefreshToken = false): any {
     try {
-      return jwt.verify(token, this.jwtRefreshSecret) as JWTPayload;
+      const secret = isRefreshToken ? this.jwtRefreshSecret : this.jwtSecret;
+      return jwt.verify(token, secret);
     } catch (error) {
-      logger.error('Refresh token verification failed:', error);
-      throw createError('Invalid refresh token', 401);
+      throw createError(401, 'Invalid or expired token');
     }
   }
 
@@ -161,20 +160,16 @@ export class AuthService {
     }
   }
 
-  public async refreshAccessToken(refreshToken: string): Promise<AuthTokens> {
+  public async refreshAccessToken(refreshToken: string): Promise<{ accessToken: string; refreshToken: string }> {
     try {
-      const decoded = this.verifyRefreshToken(refreshToken);
-      const user = await this.getUserById(decoded.userId);
+      const decoded = this.verifyToken(refreshToken, true);
+      const user = await this.getUserById(decoded.id);
 
       if (!user) {
         throw createError('User not found', 404);
       }
 
-      const newTokens = this.generateTokens({
-        userId: user._id.toString(),
-        email: user.email,
-        name: user.name,
-      });
+      const newTokens = this.generateTokens(user._id.toString());
 
       return newTokens;
     } catch (error) {
@@ -185,8 +180,8 @@ export class AuthService {
 
   public async validateTokenAndGetUser(token: string): Promise<IUser> {
     try {
-      const decoded = this.verifyAccessToken(token);
-      const user = await this.getUserById(decoded.userId);
+      const decoded = this.verifyToken(token);
+      const user = await this.getUserById(decoded.id);
 
       if (!user) {
         throw createError('User not found', 404);

@@ -1,10 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { AuthService } from '@/services/auth.service';
-import { IUser } from '@/models/User.model';
+import { User, IUser } from '@/models/User.model';
 import { ApiResponse } from '@/types';
 import { asyncHandler, createError } from '@/middleware/errorHandler';
-import { User } from '@/models/User.model';
-
 
 export class AuthController {
   private authService = new AuthService();
@@ -20,12 +18,17 @@ export class AuthController {
     const newUser = new User({ email, name, avatar });
     await newUser.save();
 
-    const { accessToken, refreshToken } = this.authService.generateTokens(newUser._id);
+    const { accessToken, refreshToken } = this.authService.generateTokens(newUser._id.toString());
 
-    res.status(201).json(new ApiResponse({
-      user: newUser.toJSON(),
-      tokens: { accessToken, refreshToken },
-    }, 'User registered successfully'));
+    res.status(201).json({
+      success: true,
+      message: 'User registered successfully',
+      data: {
+        user: newUser.toJSON(),
+        tokens: { accessToken, refreshToken },
+      },
+      timestamp: new Date().toISOString(),
+    });
   });
 
   public login = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
@@ -36,12 +39,17 @@ export class AuthController {
       return next(createError(401, 'Invalid credentials'));
     }
     
-    const { accessToken, refreshToken } = this.authService.generateTokens(user._id);
+    const { accessToken, refreshToken } = this.authService.generateTokens(user._id.toString());
     
-    res.json(new ApiResponse({
-      user: user.toJSON(),
-      tokens: { accessToken, refreshToken }
-    }, 'Login successful'));
+    res.json({
+      success: true,
+      message: 'Login successful',
+      data: {
+        user: user.toJSON(),
+        tokens: { accessToken, refreshToken }
+      },
+      timestamp: new Date().toISOString(),
+    });
   });
 
   public refreshToken = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
@@ -58,8 +66,13 @@ export class AuthController {
         return next(createError(401, 'Invalid refresh token'));
       }
 
-      const { accessToken } = this.authService.generateTokens(user._id);
-      res.json(new ApiResponse({ accessToken }, 'Token refreshed successfully'));
+      const { accessToken } = this.authService.generateTokens(user._id.toString());
+      res.json({
+        success: true,
+        message: 'Token refreshed successfully',
+        data: { accessToken },
+        timestamp: new Date().toISOString(),
+      });
     } catch (error) {
       return next(createError(401, 'Invalid or expired refresh token'));
     }
@@ -70,29 +83,44 @@ export class AuthController {
     const user = req.user as IUser; 
     
     // The user object from the token might be stale, so we fetch the latest from DB
-    const userProfile = await User.findById(user._id).select('-password');
+    const userProfile = await User.findById(user._id.toString()).select('-password');
 
     if (!userProfile) {
       return next(createError(404, 'User not found'));
     }
 
-    res.json(new ApiResponse({ user: userProfile }, 'Profile retrieved successfully'));
+    res.json({
+      success: true,
+      message: 'Profile retrieved successfully',
+      data: { user: userProfile },
+      timestamp: new Date().toISOString(),
+    });
   });
 
   public updateProfile = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user as IUser;
     const updateData = req.body;
 
-    const updatedUser = await User.findByIdAndUpdate(user._id, updateData, { new: true }).select('-password');
+    const updatedUser = await User.findByIdAndUpdate(user._id.toString(), updateData, { new: true }).select('-password');
     
     if (!updatedUser) {
       return next(createError(404, 'User not found'));
     }
     
-    res.json(new ApiResponse({ user: updatedUser }, 'Profile updated successfully'));
+    res.json({
+      success: true,
+      message: 'Profile updated successfully',
+      data: { user: updatedUser },
+      timestamp: new Date().toISOString(),
+    });
   });
 
   public validateToken(req: Request, res: Response) {
-    res.json(new ApiResponse({ valid: true }, 'Token is valid'));
+    res.json({
+      success: true,
+      message: 'Token is valid',
+      data: { valid: true },
+      timestamp: new Date().toISOString(),
+    });
   }
 } 

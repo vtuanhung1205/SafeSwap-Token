@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
-import { X, Mail, User, LogIn } from 'lucide-react';
+import { X, Mail, User, LogIn, Lock } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import toast from 'react-hot-toast';
 
 const LoginModal = ({ isOpen, onClose, onSwitchToRegister }) => {
   const [formData, setFormData] = useState({
     email: '',
-    name: '',
+    password: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState({});
   
   const { login } = useAuth();
 
@@ -17,25 +19,53 @@ const LoginModal = ({ isOpen, onClose, onSwitchToRegister }) => {
       ...prev,
       [name]: value,
     }));
+    
+    // Clear error when user types
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: '',
+      }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    
+    if (!formData.email) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Email is invalid';
+    }
+    
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!formData.email || !formData.name) {
+    if (!validateForm()) {
       return;
     }
     
     setIsSubmitting(true);
     
     try {
-      const result = await login(formData.email, formData.name);
+      const result = await login(formData.email, formData.password);
       if (result.success) {
         onClose();
-        setFormData({ email: '', name: '' });
+        setFormData({ email: '', password: '' });
+      } else if (result.error) {
+        toast.error(result.error);
       }
     } catch (error) {
       console.error('Login error:', error);
+      toast.error('Login failed. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -103,34 +133,40 @@ const LoginModal = ({ isOpen, onClose, onSwitchToRegister }) => {
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
-                className="w-full pl-10 pr-4 py-3 bg-[#111112] border border-[#23232a] rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-cyan-600 transition"
+                className={`w-full pl-10 pr-4 py-3 bg-[#111112] border ${errors.email ? 'border-red-500' : 'border-[#23232a]'} rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-cyan-600 transition`}
                 placeholder="Enter your email"
-                required
               />
             </div>
+            {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
-              Full Name
+              Password
             </label>
             <div className="relative">
-              <User size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
-                type="text"
-                name="name"
-                value={formData.name}
+                type="password"
+                name="password"
+                value={formData.password}
                 onChange={handleInputChange}
-                className="w-full pl-10 pr-4 py-3 bg-[#111112] border border-[#23232a] rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-cyan-600 transition"
-                placeholder="Enter your full name"
-                required
+                className={`w-full pl-10 pr-4 py-3 bg-[#111112] border ${errors.password ? 'border-red-500' : 'border-[#23232a]'} rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-cyan-600 transition`}
+                placeholder="Enter your password"
               />
             </div>
+            {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
+          </div>
+
+          <div className="flex justify-end">
+            <button type="button" className="text-sm text-cyan-600 hover:text-cyan-500">
+              Forgot password?
+            </button>
           </div>
 
           <button
             type="submit"
-            disabled={isSubmitting || !formData.email || !formData.name}
+            disabled={isSubmitting}
             className="w-full py-3 bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-medium rounded-xl transition"
           >
             {isSubmitting ? 'Signing in...' : 'Sign In'}

@@ -60,11 +60,11 @@ api.interceptors.response.use(
 
 // API endpoints
 export const authAPI = {
-  login: (email, name) => 
-    api.post('/auth/login', { email, name }),
+  login: (email, password) => 
+    api.post('/auth/login', { email, password }),
   
-  register: (email, name, avatar) => 
-    api.post('/auth/register', { email, name, avatar }),
+  register: (email, name, password, avatar) => 
+    api.post('/auth/register', { email, name, password, avatar }),
   
   getProfile: () => 
     api.get('/auth/profile'),
@@ -77,6 +77,12 @@ export const authAPI = {
   
   validateToken: () => 
     api.get('/auth/validate'),
+    
+  forgotPassword: (email) =>
+    api.post('/auth/forgot-password', { email }),
+    
+  resetPassword: (token, password) =>
+    api.post('/auth/reset-password', { token, password }),
 };
 
 export const walletAPI = {

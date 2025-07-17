@@ -1,8 +1,7 @@
-import { Aptos, AptosConfig, Network } from '@aptos-labs/ts-sdk';
+import { Aptos, AptosConfig, Network, Types } from '@aptos-labs/ts-sdk';
 import { Wallet, IWallet } from '@/models/Wallet.model';
 import { logger } from '@/utils/logger';
 import { createError } from '@/middleware/errorHandler';
-import { PublicKey } from '@aptos-labs/ts-sdk';
 
 export class AptosService {
   private aptos: Aptos;
@@ -15,6 +14,8 @@ export class AptosService {
     
     const config = new AptosConfig({ 
       network: Network.TESTNET,
+      fullnode: this.nodeUrl,
+      faucet: this.faucetUrl,
     });
     
     this.aptos = new Aptos(config);
@@ -97,8 +98,8 @@ export class AptosService {
 
   public async getAccount(accountAddress: string): Promise<any> {
     try {
-      // Correct way to call the account module
-      const account = await this.aptos.account.getAccount({ accountAddress });
+      // Use the correct method to get account info
+      const account = await this.aptos.account.getAccountInfo({ accountAddress });
       return account;
     } catch (error) {
       logger.error(`Failed to get account ${accountAddress}:`, error);
@@ -108,21 +109,19 @@ export class AptosService {
 
   public async getAccountTransactions(accountAddress: string, limit: number = 25): Promise<any[]> {
     try {
-      // Correct way to call the account module
-      const transactions = await this.aptos.account.getAccountTransactions({
+      const transactions = await this.aptos.getAccountTransactions({
         accountAddress,
         options: {
-          limit,
-          // orderBy is not a valid property here, so we remove it
+          limit: limit.toString(),
         },
       });
+      
       return transactions.map((tx: any) => ({
         hash: tx.hash,
         version: tx.version,
         success: tx.success,
         gas_used: tx.gas_used,
         timestamp: tx.timestamp,
-        // Adapt to the correct payload structure
         payload: tx.payload,
       }));
     } catch (error) {
@@ -160,11 +159,16 @@ export class AptosService {
     }
   }
 
-  public async fundAccount(address: string, amount: number): Promise<string> {
+  public async fundAccount(address: string, amount: number = 100_000_000): Promise<any> {
     try {
-      // The faucet is a separate utility
-      const hash = await this.aptos.fundAccount({ accountAddress: address, amount });
-      return hash;
+      // Fund account with testnet tokens
+      const result = await this.aptos.faucet.fundAccount({
+        accountAddress: address,
+        amount: amount.toString(),
+      });
+      
+      logger.info(`Account ${address} funded with ${amount} octas`);
+      return result;
     } catch (error) {
       logger.error(`Failed to fund account ${address}:`, error);
       throw createError(500, 'Failed to fund account');
@@ -189,9 +193,9 @@ export class AptosService {
         data: payload,
       });
 
-      // Correct way to simulate
-      const simulationResult = await this.aptos.transaction.simulate.simple({
-        signerPublicKey: new PublicKey(sender.publicKey), // Create PublicKey instance
+      // Use string for public key instead of PublicKey instance
+      const simulationResult = await this.aptos.transaction.simulate({
+        signerPublicKey: sender.publicKey,
         transaction,
       });
 
@@ -204,7 +208,7 @@ export class AptosService {
 
   public async getGasPrice(): Promise<any> {
     try {
-      // Correct way to get gas estimation
+      // Get gas price estimation
       const gasEstimate = await this.aptos.getGasPriceEstimation();
       return gasEstimate;
     } catch (error) {

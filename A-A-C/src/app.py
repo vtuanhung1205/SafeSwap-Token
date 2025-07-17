@@ -5,7 +5,7 @@ import joblib
 import requests
 
 # IMPORT CÁC HÀM TỪ FILE UTILS.PY
-from utils import create_feature_dataframe, cyclical_encoder
+from src.utils import create_feature_dataframe, cyclical_encoder
 
 app = Flask(__name__)
 

@@ -65,7 +65,7 @@ userSchema.virtual('id').get(function () {
 userSchema.set('toJSON', {
   virtuals: true,
   versionKey: false,
-  transform: (doc: any, ret: any) => {
+  transform: function(doc: any, ret: any) {
     delete ret._id;
     delete ret.password; // Ensure password hash is not sent
   },

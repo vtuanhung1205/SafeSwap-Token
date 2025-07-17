@@ -60,7 +60,7 @@ walletSchema.virtual('id').get(function () {
 walletSchema.set('toJSON', {
   virtuals: true,
   versionKey: false,
-  transform: (doc: any, ret: any) => {
+  transform: function(doc: any, ret: any) {
     delete ret._id;
   },
 });
