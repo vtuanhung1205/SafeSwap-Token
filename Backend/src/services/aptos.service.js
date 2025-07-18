@@ -1,10 +1,12 @@
-const { logger } = require('../utils/logger');
-const { createError } = require('../middleware/errorHandler');
 const { Wallet } = require('../models/Wallet.model');
-const axios = require('axios');
-const { PriceFeedService } = require('./priceFeed.service'); // Import PriceFeedService
+const { createError } = require('../middleware/errorHandler');
+const { logger } = require('../utils/logger');
+const mongoose = require('mongoose');
+
 // Correct import based on official documentation for new versions
 const { Aptos, AptosConfig, Network } = require("@aptos-labs/ts-sdk");
+const axios = require('axios');
+const { PriceFeedService } = require('./priceFeed.service'); // Import PriceFeedService
 
 class AptosService {
   constructor() {
@@ -45,17 +47,18 @@ class AptosService {
     try {
       const { address, publicKey } = walletData;
 
-      // Check if userId is 'guest' (non-authenticated user)
-      const isGuestUser = userId === 'guest';
+      // Ensure userId is a valid MongoDB ObjectId
+      if (!mongoose.Types.ObjectId.isValid(userId)) {
+        throw createError(401, 'Valid user authentication required');
+      }
 
       // 1. Check if the wallet address is already registered
       const existingWallet = await Wallet.findOne({ address });
 
       if (existingWallet) {
-        // 2. If it exists, check if it belongs to the current user or is a guest wallet
-        if (existingWallet.userId.toString() === userId || 
-            (isGuestUser && existingWallet.userId === 'guest')) {
-          // It's the same user or a guest wallet, just update the connection status and public key
+        // 2. If it exists, check if it belongs to the current user
+        if (existingWallet.userId.toString() === userId.toString()) {
+          // It's the same user, just update the connection status and public key
           existingWallet.publicKey = publicKey;
           existingWallet.isConnected = true;
           existingWallet.lastSyncAt = new Date();
@@ -247,15 +250,17 @@ class AptosService {
         normalizedAddress = `0x${normalizedAddress}`;
       }
       
-      // Basic format validation
-      const aptosAddressRegex = /^0x[a-fA-F0-9]{1,64}$/;
+      // Basic format validation - be more lenient with length for development
+      const aptosAddressRegex = process.env.NODE_ENV === 'production' 
+        ? /^0x[a-fA-F0-9]{64}$/ // Strict validation for production
+        : /^0x[a-fA-F0-9]{1,64}$/; // More lenient for development
+      
       if (!aptosAddressRegex.test(normalizedAddress)) {
         return false;
       }
 
-      // For production environments, we might want to skip the network call
-      // and just validate the format
-      if (process.env.NODE_ENV === 'production') {
+      // For development or test environments, skip the network call
+      if (process.env.NODE_ENV !== 'production') {
         return true;
       }
       

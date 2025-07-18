@@ -87,8 +87,19 @@ export const authAPI = {
 };
 
 export const walletAPI = {
-  connect: (address, publicKey) => 
-    api.post('/wallet/connect', { address, publicKey }),
+  connect: (address, publicKey) => {
+    // Check if user is authenticated before making the API call
+    const token = localStorage.getItem('token');
+    if (!token) {
+      return Promise.reject({ 
+        response: { 
+          status: 401, 
+          data: { message: 'Authentication required to connect wallet' } 
+        } 
+      });
+    }
+    return api.post('/wallet/connect', { address, publicKey });
+  },
   
   disconnect: () => 
     api.post('/wallet/disconnect'),

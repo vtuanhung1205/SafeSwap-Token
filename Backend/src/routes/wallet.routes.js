@@ -13,6 +13,8 @@ const walletController = new WalletController();
  *   post:
  *     summary: Connect wallet to user account
  *     tags: [Wallet]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -36,8 +38,10 @@ const walletController = new WalletController();
  *         description: Wallet connected successfully.
  *       400:
  *         description: Invalid wallet data.
+ *       401:
+ *         description: Unauthorized, login required.
  */
-router.post('/connect', standardRateLimiter, optionalAuth, asyncHandler(walletController.connectWallet.bind(walletController)));
+router.post('/connect', standardRateLimiter, verifyToken, asyncHandler(walletController.connectWallet.bind(walletController)));
 
 /**
  * @swagger

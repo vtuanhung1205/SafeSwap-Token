@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import { authAPI, handleApiError } from '../utils/api';
+import { authAPI, handleApiError, walletAPI } from '../utils/api';
 import toast from 'react-hot-toast';
 
 const AuthContext = createContext();
@@ -9,6 +9,8 @@ const initialState = {
   isAuthenticated: false,
   isLoading: true,
   error: null,
+  wallet: null,
+  isWalletConnected: false,
 };
 
 const authReducer = (state, action) => {
@@ -29,6 +31,12 @@ const authReducer = (state, action) => {
         error: action.payload,
         isLoading: false,
       };
+    case 'SET_WALLET':
+      return {
+        ...state,
+        wallet: action.payload,
+        isWalletConnected: !!action.payload,
+      };
     case 'LOGOUT':
       return {
         ...initialState,
@@ -46,6 +54,13 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     checkAuthStatus();
   }, []);
+
+  // Check wallet status when user is authenticated
+  useEffect(() => {
+    if (state.isAuthenticated) {
+      checkWalletStatus();
+    }
+  }, [state.isAuthenticated]);
 
   const checkAuthStatus = async () => {
     try {
@@ -71,6 +86,20 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const checkWalletStatus = async () => {
+    try {
+      if (!state.isAuthenticated) return;
+      
+      const response = await walletAPI.getInfo();
+      if (response.data.success && response.data.data.wallet) {
+        dispatch({ type: 'SET_WALLET', payload: response.data.data.wallet });
+      }
+    } catch (error) {
+      console.error('Wallet check failed:', error);
+      // Don't show error notification for wallet check
+    }
+  };
+
   const login = async (email, password) => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
@@ -86,6 +115,9 @@ export const AuthProvider = ({ children }) => {
         
         dispatch({ type: 'SET_USER', payload: user });
         toast.success('Login successful!');
+        
+        // Check wallet status after login
+        await checkWalletStatus();
         
         return { success: true, user };
       }
@@ -125,6 +157,16 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
+      // Disconnect wallet if connected
+      if (state.isWalletConnected) {
+        try {
+          await walletAPI.disconnect();
+        } catch (error) {
+          console.error('Wallet disconnect error:', error);
+        }
+        dispatch({ type: 'SET_WALLET', payload: null });
+      }
+      
       await authAPI.logout();
     } catch (error) {
       console.error('Logout error:', error);
@@ -152,16 +194,60 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const connectWallet = async (walletData) => {
+    try {
+      if (!state.isAuthenticated) {
+        toast.error('Please login before connecting your wallet');
+        return { success: false, error: 'Authentication required' };
+      }
+      
+      const response = await walletAPI.connect(walletData.address, walletData.publicKey);
+      
+      if (response.data.success) {
+        dispatch({ type: 'SET_WALLET', payload: response.data.data.wallet });
+        toast.success('Wallet connected successfully');
+        return { success: true, wallet: response.data.data.wallet };
+      }
+    } catch (error) {
+      const errorMessage = handleApiError(error);
+      toast.error(errorMessage);
+      return { success: false, error: errorMessage };
+    }
+  };
+
+  const disconnectWallet = async () => {
+    try {
+      if (!state.isWalletConnected) return { success: true };
+      
+      const response = await walletAPI.disconnect();
+      
+      if (response.data.success) {
+        dispatch({ type: 'SET_WALLET', payload: null });
+        toast.success('Wallet disconnected successfully');
+        return { success: true };
+      }
+    } catch (error) {
+      const errorMessage = handleApiError(error);
+      toast.error(errorMessage);
+      return { success: false, error: errorMessage };
+    }
+  };
+
   const value = {
     user: state.user,
     isAuthenticated: state.isAuthenticated,
     isLoading: state.isLoading,
     error: state.error,
+    wallet: state.wallet,
+    isWalletConnected: state.isWalletConnected,
     login,
     register,
     logout,
     updateProfile,
     checkAuthStatus,
+    connectWallet,
+    disconnectWallet,
+    checkWalletStatus,
   };
 
   return (

@@ -2,21 +2,30 @@ import React, { useState, useEffect } from 'react';
 import { useWallet } from '@aptos-labs/wallet-adapter-react';
 import { Button, Modal } from 'antd';
 import { WalletSelector } from '@aptos-labs/wallet-adapter-ant-design';
-import { walletAPI } from '../utils/api';
 import toast from 'react-hot-toast';
 import '@aptos-labs/wallet-adapter-ant-design/dist/index.css';
 import { useAuth } from '../contexts/AuthContext';
 
 const WalletConnect = ({ onWalletConnected }) => {
   const { connected, account, disconnect, wallet } = useWallet();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, connectWallet, isWalletConnected } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
 
   useEffect(() => {
     const syncWallet = async () => {
+      // Only proceed if user is logged in
+      if (!isAuthenticated) {
+        if (connected) {
+          // Disconnect wallet if user is not authenticated
+          disconnect();
+          toast.error("Please login before connecting your wallet", { duration: 3000 });
+        }
+        return;
+      }
+      
       // Ensure we have a valid account object with address and public key
-      if (connected && account && !isConnecting) {
+      if (connected && account && !isConnecting && isAuthenticated) {
         try {
           setIsConnecting(true);
           
@@ -46,9 +55,12 @@ const WalletConnect = ({ onWalletConnected }) => {
           
           console.log("Syncing wallet with backend:", { address: addressString, publicKey: publicKeyString });
           
-          const response = await walletAPI.connect(addressString, publicKeyString);
+          const result = await connectWallet({
+            address: addressString,
+            publicKey: publicKeyString
+          });
           
-          if (response.data?.success) {
+          if (result.success) {
             // Only show notification when explicitly requested via onWalletConnected
             if (onWalletConnected) {
               onWalletConnected({...account, address: addressString, publicKey: publicKeyString});
@@ -58,17 +70,7 @@ const WalletConnect = ({ onWalletConnected }) => {
           }
         } catch (error) {
           console.error("Wallet sync error:", error);
-          
-          // Only show error notification for critical errors
-          if (error.response?.status !== 500) {
-            const errorMessage = error.response?.data?.message || error.message || "Connection error";
-            toast.error(errorMessage, { duration: 3000 });
-          } else {
-            // For server errors, still connect locally without notification
-            if (onWalletConnected) {
-              onWalletConnected(account);
-            }
-          }
+          // Error notifications are handled by the AuthContext
         } finally {
           setIsConnecting(false);
           setIsModalOpen(false);
@@ -76,9 +78,14 @@ const WalletConnect = ({ onWalletConnected }) => {
       }
     };
     syncWallet();
-  }, [connected, account, wallet, onWalletConnected, isConnecting, isAuthenticated]);
+  }, [connected, account, wallet, onWalletConnected, isConnecting, isAuthenticated, disconnect, connectWallet]);
 
   const handleConnectClick = () => {
+    if (!isAuthenticated) {
+      toast.error("Please login before connecting your wallet", { duration: 3000 });
+      return;
+    }
+    
     if (!connected) {
       setIsModalOpen(true);
     }
@@ -120,8 +127,9 @@ const WalletConnect = ({ onWalletConnected }) => {
           onClick={handleConnectClick}
           className="connect-wallet-btn"
           loading={isConnecting}
+          disabled={!isAuthenticated}
         >
-          Connect Wallet
+          {isAuthenticated ? "Connect Wallet" : "Login Required"}
         </Button>
       ) : (
         <div className="wallet-info flex items-center space-x-2">

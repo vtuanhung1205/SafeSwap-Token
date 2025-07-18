@@ -13,9 +13,12 @@ class WalletController {
       console.log("Received wallet connect request:", req.body); // Log the request body
       let { address, publicKey, signature } = req.body;
       
-      // Get userId from authenticated user or use 'guest' for unauthenticated users
-      const userId = req.user ? req.user._id : 'guest';
+      // Get userId from authenticated user - guest users are no longer allowed
+      if (!req.user || !req.user._id) {
+        throw createError(401, 'Authentication required to connect wallet');
+      }
       
+      const userId = req.user._id;
       console.log(`Connecting wallet for user: ${userId}`);
 
       // Normalize address and publicKey
@@ -64,41 +67,11 @@ class WalletController {
           data: { wallet },
         });
       } catch (error) {
-        // If the error is related to MongoDB validation for guest users
-        if (error.message && error.message.includes('Cast to ObjectId failed for value "guest"')) {
-          // Try to find existing wallet by address
-          let wallet = await Wallet.findOne({ address });
-          
-          if (!wallet) {
-            // Create a new wallet with guest userId as string
-            wallet = new Wallet({
-              userId: 'guest',
-              address,
-              publicKey,
-              chainId: `aptos-${aptosService.network}`,
-              isConnected: true,
-            });
-            
-            await wallet.save();
-          } else {
-            // Update existing wallet
-            wallet.publicKey = publicKey;
-            wallet.isConnected = true;
-            wallet.lastSyncAt = new Date();
-            await wallet.save();
-          }
-          
-          logger.info(`Guest wallet connected: ${address}`);
-          
-          res.json({
-            success: true,
-            message: 'Guest wallet connected successfully',
-            data: { wallet },
-          });
-        } else {
-          // Re-throw other errors
-          throw error;
+        // Handle specific errors
+        if (error.status === 409) {
+          return next(createError(409, 'This wallet is already linked to another account'));
         }
+        throw error;
       }
     } catch (error) {
       logger.error('Wallet connection error:', {
@@ -111,7 +84,7 @@ class WalletController {
 
   async disconnectWallet(req, res, next) {
     try {
-      const userId = req.userId;
+      const userId = req.user._id;
 
       const wallet = await Wallet.findOne({ userId });
       if (!wallet) {
@@ -133,7 +106,7 @@ class WalletController {
 
   async getWalletInfo(req, res, next) {
     try {
-      const userId = req.userId;
+      const userId = req.user._id;
 
       const wallet = await Wallet.findOne({ userId });
       if (!wallet) {
@@ -197,7 +170,7 @@ class WalletController {
 
   async getBalance(req, res, next) {
     try {
-      const userId = req.userId;
+      const userId = req.user._id;
       const { coinType } = req.query;
 
       const wallet = await Wallet.findOne({ userId });
@@ -231,7 +204,7 @@ class WalletController {
 
   async getTransactionHistory(req, res, next) {
     try {
-      const userId = req.userId;
+      const userId = req.user._id;
       const { limit = 25, offset = 0 } = req.query;
 
       const wallet = await Wallet.findOne({ userId });
@@ -259,7 +232,7 @@ class WalletController {
 
   async getAccountResources(req, res, next) {
     try {
-      const userId = req.userId;
+      const userId = req.user._id;
 
       const wallet = await Wallet.findOne({ userId });
       if (!wallet) {
@@ -282,7 +255,7 @@ class WalletController {
 
   async validateAddress(req, res, next) {
     try {
-      const { address } = req.params;
+      const { address } = req.body;
 
       if (!address) {
         throw createError(400, 'Address parameter is required');
@@ -304,7 +277,7 @@ class WalletController {
 
   async fundAccount(req, res, next) {
     try {
-      const userId = req.userId;
+      const userId = req.user._id;
       const { amount } = req.body;
 
       const wallet = await Wallet.findOne({ userId });
@@ -343,7 +316,7 @@ class WalletController {
 
   async getAccountInfo(req, res, next) {
     try {
-      const userId = req.userId;
+      const userId = req.user._id;
 
       const wallet = await Wallet.findOne({ userId });
       if (!wallet) {
