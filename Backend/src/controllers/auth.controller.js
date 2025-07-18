@@ -215,6 +215,48 @@ class AuthController {
       next(error);
     }
   }
+
+  async validateToken(req, res, next) {
+    try {
+      // The verifyToken middleware already handles validation
+      // If it passes, req.user will be set
+      res.json({
+        success: true,
+        message: 'Token is valid',
+        data: {
+          user: req.user.toJSON(),
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async forgotPassword(req, res, next) {
+    try {
+      const { email } = req.body;
+      await authService.sendPasswordResetEmail(email);
+      res.json({
+        success: true,
+        message: 'Password reset email sent successfully',
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async resetPassword(req, res, next) {
+    try {
+      const { token, password } = req.body;
+      await authService.resetPassword(token, password);
+      res.json({
+        success: true,
+        message: 'Password has been reset successfully',
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = { AuthController };

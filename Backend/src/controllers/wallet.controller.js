@@ -248,13 +248,20 @@ class WalletController {
         success: true,
         data: {
           wallet: {
-            address: wallet.address,
-            chainId: wallet.chainId,
-            isConnected: wallet.isConnected,
+            ...wallet.toJSON(),
+            ...accountInfo,
           },
-          accountInfo,
         },
       });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateBalance(req, res, next) {
+    try {
+      // Placeholder for now
+      res.json({ success: true, message: 'Balance update initiated' });
     } catch (error) {
       next(error);
     }

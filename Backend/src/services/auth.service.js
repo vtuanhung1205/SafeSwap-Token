@@ -244,6 +244,18 @@ class AuthService {
     }
   }
 
+  async sendPasswordResetEmail(email) {
+    // In a real application, you would send an email with a password reset link
+    // For this example, we'll just log the action
+    logger.info(`Password reset email sent to: ${email}`);
+  }
+
+  async resetPassword(token, password) {
+    // In a real application, you would verify the password reset token
+    // and then update the user's password
+    logger.info(`Password reset for token: ${token}`);
+  }
+
   async validateTokenAndGetUser(token) {
     try {
       if (!token) {

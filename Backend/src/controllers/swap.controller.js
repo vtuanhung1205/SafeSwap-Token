@@ -241,6 +241,15 @@ class SwapController {
     }
   }
 
+  async getSwapDetails(req, res, next) {
+    try {
+      // Placeholder
+      res.json({ success: true, details: {} });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async cancelSwap(req, res, next) {
     try {
       const { transactionId } = req.params;
