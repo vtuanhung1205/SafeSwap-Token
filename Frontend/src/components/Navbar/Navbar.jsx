@@ -121,9 +121,6 @@ const Navbar = () => {
 
           {/* User and Wallet Section */}
           <div className="flex items-center space-x-4">
-            {/* Wallet Connect Button */}
-            <WalletConnect onWalletConnected={handleWalletConnected} />
-
             {/* Notification Bell */}
             <div className="relative">
               <button
@@ -142,25 +139,11 @@ const Navbar = () => {
                   className="absolute right-0 mt-2 w-80 bg-[#18181c] border border-[#23232a] rounded-xl shadow-lg py-2 z-50"
                   onMouseLeave={() => setShowNotifications(false)}
                 >
-                  <div className="px-4 py-2 border-b border-[#23232a] text-white font-semibold">
-                    Notifications
-                  </div>
-                  {notifications.length > 0 ? (
-                    <ul className="max-h-60 overflow-y-auto">
-                      {notifications.map((n) => (
-                        <li
-                          key={n.id}
-                          className="px-4 py-3 text-gray-200 hover:bg-[#23232a] transition border-b border-[#23232a] last:border-b-0"
-                        >
-                          {n.message}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                     <div className="px-4 py-4 text-gray-400 text-center">
-                      No notifications
+                  {notifications.map((notification) => (
+                    <div key={notification.id} className="px-4 py-2 text-gray-300 text-sm">
+                      {notification.message}
                     </div>
-                  )}
+                  ))}
                 </div>
               )}
             </div>
@@ -168,69 +151,56 @@ const Navbar = () => {
             {!isLoading && (
               <>
                 {isAuthenticated ? (
-                  <div className="relative">
-                    <button
-                      onClick={() => setShowUserMenu(!showUserMenu)}
-                      className="flex items-center space-x-3 bg-[#111112] px-4 py-2 rounded-xl border border-[#23232a] hover:border-cyan-600 transition"
-                    >
-                      {user?.avatar ? (
-                        <img
-                          src={user.avatar}
-                          alt={user.name}
-                          className="w-8 h-8 rounded-full"
-                        />
-                      ) : (
-                        <div className="w-8 h-8 bg-cyan-600 rounded-full flex items-center justify-center">
-                          <User size={16} className="text-white" />
+                  <div className="flex items-center space-x-4">
+                    <WalletConnect onWalletConnected={handleWalletConnected} />
+                    <div className="relative">
+                      <button
+                        onClick={() => setShowUserMenu(!showUserMenu)}
+                        className="flex items-center space-x-3 bg-[#111112] px-4 py-2 rounded-xl border border-[#23232a] hover:border-cyan-600 transition"
+                      >
+                        {/* User Avatar and Info */}
+                        {user?.avatar ? (
+                          <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full" />
+                        ) : (
+                          <div className="w-8 h-8 bg-cyan-600 rounded-full flex items-center justify-center">
+                            <User size={16} className="text-white" />
+                          </div>
+                        )}
+                        <div className="text-left">
+                          <p className="text-white font-medium text-sm">{user?.name || "User"}</p>
+                          <p className="text-gray-400 text-xs">{user?.email}</p>
+                        </div>
+                        <ChevronDown size={16} className="text-gray-400" />
+                      </button>
+                      {showUserMenu && (
+                        <div className="absolute right-0 mt-2 w-64 bg-[#18181c] border border-[#23232a] rounded-xl shadow-lg py-2 z-50">
+                          {/* Dropdown Content */}
+                          <Link
+                            to="/dashboard"
+                            className="w-full px-4 py-2 text-left text-gray-300 hover:bg-[#23232a] transition flex items-center space-x-2"
+                            onClick={() => setShowUserMenu(false)}
+                          >
+                            <BarChart3 size={16} />
+                            <span>Dashboard</span>
+                          </Link>
+                          <Link
+                            to="/settings"
+                            className="w-full px-4 py-2 text-left text-gray-300 hover:bg-[#23232a] transition flex items-center space-x-2"
+                            onClick={() => setShowUserMenu(false)}
+                          >
+                            <Settings size={16} />
+                            <span>Settings</span>
+                          </Link>
+                          <button
+                            onClick={handleLogout}
+                            className="w-full px-4 py-2 text-left text-red-400 hover:bg-[#23232a] transition flex items-center space-x-2"
+                          >
+                            <LogOut size={16} />
+                            <span>Logout</span>
+                          </button>
                         </div>
                       )}
-                      <div className="text-left">
-                        <p className="text-white font-medium text-sm">
-                          {user?.name || "User"}
-                        </p>
-                        <p className="text-gray-400 text-xs">
-                          {user?.email}
-                        </p>
-                      </div>
-                      <ChevronDown size={16} className="text-gray-400" />
-                    </button>
-
-                    {showUserMenu && (
-                      <div className="absolute right-0 mt-2 w-64 bg-[#18181c] border border-[#23232a] rounded-xl shadow-lg py-2 z-50">
-                        <div className="px-4 py-2 border-b border-[#23232a]">
-                          <p className="text-white font-medium">
-                            {user?.name}
-                          </p>
-                          <p className="text-gray-400 text-sm">
-                            {user?.email}
-                          </p>
-                        </div>
-
-                        <Link
-                          to="/dashboard"
-                          className="w-full px-4 py-2 text-left text-gray-300 hover:bg-[#23232a] transition flex items-center space-x-2"
-                          onClick={() => setShowUserMenu(false)}
-                        >
-                          <BarChart3 size={16} />
-                          <span>Dashboard</span>
-                        </Link>
-                        <Link
-                          to="/settings"
-                          className="w-full px-4 py-2 text-left text-gray-300 hover:bg-[#23232a] transition flex items-center space-x-2"
-                          onClick={() => setShowUserMenu(false)}
-                        >
-                          <Settings size={16} />
-                          <span>Settings</span>
-                        </Link>
-                        <button
-                          onClick={handleLogout}
-                          className="w-full px-4 py-2 text-left text-red-400 hover:bg-[#23232a] transition flex items-center space-x-2"
-                        >
-                          <LogOut size={16} />
-                          <span>Logout</span>
-                        </button>
-                      </div>
-                    )}
+                    </div>
                   </div>
                 ) : (
                   <div className="flex items-center space-x-4">
@@ -257,12 +227,14 @@ const Navbar = () => {
       {/* Modals */}
       {showLoginModal && (
         <LoginModal
+          isOpen={showLoginModal}
           onClose={() => setShowLoginModal(false)}
           onSwitchToRegister={switchToRegister}
         />
       )}
       {showRegisterModal && (
         <RegisterModal
+          isOpen={showRegisterModal}
           onClose={() => setShowRegisterModal(false)}
           onSwitchToLogin={switchToLogin}
         />

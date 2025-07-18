@@ -45,29 +45,11 @@ class AptosService {
     try {
       const { address, publicKey } = walletData;
 
-      // If the user is a guest, do not perform database operations
-      if (userId === 'guest') {
-        logger.info(`Guest wallet connected: ${address}`);
-        // Return a mock wallet object for guests
-        return {
-          address,
-          publicKey,
-          isConnected: true,
-          userId: 'guest'
-        };
-      }
-
-      // Check if wallet already exists
-      const existingWallet = await Wallet.findOne({ address });
+      // Since the frontend now requires login, userId will always be valid.
+      // The 'guest' check is no longer needed.
       
-      if (existingWallet && existingWallet.userId.toString() !== userId) {
-        throw createError(400, 'Wallet is already connected to another user');
-      }
-
-      // Get account balance
       const balance = await this.getAccountBalance(address);
 
-      // Update or create wallet for logged-in users
       const wallet = await Wallet.findOneAndUpdate(
         { userId },
         {
@@ -77,15 +59,22 @@ class AptosService {
           chainId: `aptos-${this.network}`,
           balance,
           isConnected: true,
+          lastSyncAt: new Date(),
         },
         { upsert: true, new: true }
       );
 
-      logger.info(`Wallet connected and synced for user ${userId}: ${address}`);
+      logger.info(`Wallet synced for user ${userId}: ${address}`);
       return wallet;
+
     } catch (error) {
-      logger.error('Failed to connect wallet:', error);
-      throw error;
+      logger.error('Failed to connect wallet:', {
+        message: error.message,
+        stack: error.stack,
+        userId,
+        address: walletData.address,
+      });
+      throw createError(500, 'Could not connect wallet due to a server error.');
     }
   }
 

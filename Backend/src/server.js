@@ -24,6 +24,7 @@ const { schedulePriceUpdates } = require('./jobs/updatePrices.job'); // Import c
 dotenv.config();
 
 const app = express();
+app.set('trust proxy', 1); // Trust the first proxy (e.g., Render)
 const server = createServer(app);
 
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:3000,http://localhost:5173,https://safeswap-token.vercel.app').split(',');
