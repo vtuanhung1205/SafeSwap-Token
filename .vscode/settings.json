@@ -12,10 +12,10 @@
     "typescript.check.npmIsInstalled": false,
     "files.exclude": {
         "**/*.d.ts": true,
-        "**/node_modules/**": true
+        "**/node_modules/**": false
     },
     "search.exclude": {
-        "**/node_modules": true,
+        "**/node_modules": false,
         "**/*.d.ts": true
     },
     "files.associations": {

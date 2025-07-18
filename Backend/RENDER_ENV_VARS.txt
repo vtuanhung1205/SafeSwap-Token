@@ -2,7 +2,7 @@
 
 NODE_ENV=production
 PORT=10000
-MONGODB_URI=mongodb+srv://safeswap:12345@safeswap.6pk7wds.mongodb.net/safeswap?retryWrites=true&w=majority&appName=SafeSwap
+MONGODB_URI=mongodb+srv://safeswap_user:12345@safeswap.6pk7wds.mongodb.net/safeswap?retryWrites=true&w=majority&appName=SafeSwap
 JWT_SECRET=SafeSwap2025SecureJWTSecretKeyForProductionUse!@#$%
 JWT_REFRESH_SECRET=SafeSwap2025RefreshTokenSecretKeyForProductionUse!@#$%
 JWT_EXPIRES_IN=24h

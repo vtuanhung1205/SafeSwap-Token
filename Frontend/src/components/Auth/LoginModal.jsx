@@ -73,7 +73,7 @@ const LoginModal = ({ isOpen, onClose, onSwitchToRegister }) => {
 
   const handleGoogleLogin = () => {
     // Redirect to Google OAuth endpoint
-    window.location.href = `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1'}/auth/google`;
+    window.location.href = `${import.meta.env.VITE_API_URL || 'https://safeswap-backend-service.onrender.com/api'}/auth/google`;
   };
 
   if (!isOpen) return null;

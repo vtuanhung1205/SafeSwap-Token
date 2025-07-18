@@ -24,7 +24,7 @@ const APIReference = () => {
       </p>
       <div className="max-w-3xl mx-auto bg-[#18181c] rounded-2xl shadow-lg p-8 mb-10">
         <h2 className="text-2xl font-bold mb-4 text-cyan-400">
-          POST /api/v1/swap/quote
+          POST /api/swap/quote
         </h2>
         <p className="text-gray-400 mb-2">Request parameters:</p>
         <ul className="list-disc list-inside text-gray-300 mb-2 space-y-1">
@@ -39,7 +39,7 @@ const APIReference = () => {
           </li>
         </ul>
         <pre className="bg-[#23232a] p-4 rounded-lg mb-2 text-sm text-gray-200 shadow-inner overflow-x-auto">{`
-POST /api/v1/swap/quote
+POST /api/swap/quote
 {
   "fromToken": "ETH",
   "toToken": "USDT",
@@ -56,7 +56,7 @@ POST /api/v1/swap/quote
 }
 `}</pre>
         <h2 className="text-2xl font-bold mt-10 mb-4 text-pink-400">
-          POST /api/v1/swap/execute
+          POST /api/swap/execute
         </h2>
         <p className="text-gray-400 mb-2">Request parameters:</p>
         <ul className="list-disc list-inside text-gray-300 mb-2 space-y-1">
@@ -77,7 +77,7 @@ POST /api/v1/swap/quote
           </li>
         </ul>
         <pre className="bg-[#23232a] p-4 rounded-lg mb-2 text-sm text-gray-200 shadow-inner overflow-x-auto">{`
-POST /api/v1/swap/execute
+POST /api/swap/execute
 {
   "fromToken": "ETH",
   "toToken": "USDT",

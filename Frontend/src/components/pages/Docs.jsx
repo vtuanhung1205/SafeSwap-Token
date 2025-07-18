@@ -28,23 +28,23 @@ const Docs = () => {
         <ul className="list-disc list-inside text-gray-300 mb-6 space-y-1">
           <li>
             <span className="text-cyan-400 font-semibold">POST</span>{" "}
-            /api/v1/auth/login - User login
+            /api/auth/login - User login
           </li>
           <li>
             <span className="text-cyan-400 font-semibold">POST</span>{" "}
-            /api/v1/auth/register - User registration
+            /api/auth/register - User registration
           </li>
           <li>
             <span className="text-cyan-400 font-semibold">POST</span>{" "}
-            /api/v1/swap/quote - Get swap quote
+            /api/swap/quote - Get swap quote
           </li>
           <li>
             <span className="text-cyan-400 font-semibold">POST</span>{" "}
-            /api/v1/swap/execute - Execute swap
+            /api/swap/execute - Execute swap
           </li>
           <li>
             <span className="text-cyan-400 font-semibold">GET</span>{" "}
-            /api/v1/price - Get token prices
+            /api/price - Get token prices
           </li>
         </ul>
         <h2 className="text-xl font-semibold mt-8 mb-2 text-pink-400">
@@ -67,7 +67,7 @@ const Docs = () => {
           Example: Get a Swap Quote
         </h2>
         <pre className="bg-[#23232a] p-4 rounded-lg mb-2 text-sm text-gray-200 shadow-inner overflow-x-auto">{`
-POST /api/v1/swap/quote
+POST /api/swap/quote
 {
   "fromToken": "ETH",
   "toToken": "USDT",
