@@ -3,23 +3,62 @@
 from flask import Flask, request, jsonify
 import joblib
 import requests
+import os
 
 # IMPORT CÁC HÀM TỪ FILE UTILS.PY
-from src.utils import create_feature_dataframe, cyclical_encoder
+try:
+    from src.utils import create_feature_dataframe, cyclical_encoder
+except ImportError:
+    from utils import create_feature_dataframe, cyclical_encoder
 
 app = Flask(__name__)
 
-# Đường dẫn tới pipeline
-# Lưu ý: Đường dẫn này là tương đối so với thư mục gốc của dự án, không phải thư mục src
-PIPELINE_PATH = '../models/aptos_pro_pipeline.joblib'
+# Đường dẫn tới pipeline - thử nhiều đường dẫn có thể
+PIPELINE_PATHS = [
+    '../models/aptos_pro_pipeline.joblib',
+    'models/aptos_pro_pipeline.joblib',
+    './models/aptos_pro_pipeline.joblib',
+    'A-A-C/models/aptos_pro_pipeline.joblib'
+]
+
 pipeline = None
 
 # Dùng try-except để xử lý việc tải mô hình một cách an toàn
-try:
-    pipeline = joblib.load(PIPELINE_PATH)
-    print("✅ AI Model loaded successfully!")
-except Exception as e:
-    print(f"❌ ERROR: Could not load model. {e}")
+for path in PIPELINE_PATHS:
+    try:
+        pipeline = joblib.load(path)
+        print(f"✅ AI Model loaded successfully from: {path}")
+        break
+    except Exception as e:
+        print(f"❌ Failed to load from {path}: {e}")
+        continue
+
+if pipeline is None:
+    print("❌ ERROR: Could not load model from any path")
+
+
+@app.route('/', methods=['GET'])
+def home():
+    return jsonify({
+        'message': 'SafeSwap AI Service',
+        'status': 'running',
+        'version': '1.0.0',
+        'model_loaded': pipeline is not None,
+        'endpoints': {
+            'health': '/health',
+            'predict': '/predict (POST)'
+        }
+    })
+
+
+@app.route('/health', methods=['GET'])
+def health():
+    return jsonify({
+        'status': 'OK',
+        'service': 'SafeSwap AI Service',
+        'model_loaded': pipeline is not None,
+        'version': '1.0.0'
+    })
 
 
 @app.route('/predict', methods=['POST'])
@@ -56,5 +95,6 @@ def predict():
 
 
 if __name__ == '__main__':
-    # Chạy ứng dụng trên cổng 5000
-    app.run(host='0.0.0.0', port=5000, debug=False)  # Tắt debug khi chạy thật
+    # Chạy ứng dụng trên cổng từ environment hoặc 5000
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)  # Tắt debug khi chạy thật
