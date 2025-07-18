@@ -3,8 +3,11 @@
 **A Secure Web3 Token Swap UI for the Aptos Blockchain**  
 
 ![Vietnam Aptos Hackathon 2025](https://img.shields.io/badge/Vietnam%20Aptos%20Hackathon-2025-blue)
+
 **Team Name:** RTS 
+
 **Date:** July 11, 2025
+
 [Overview](#overview) | [Features](#features) | [Team](#team) | [Technical Details](#technical-details) | [Installation](#installation) | [Usage](#usage) | [Impact](#impact)
 ---
 ## 🚀 Project Overview  
@@ -59,12 +62,12 @@ SafeSwap is a groundbreaking Web3 Token Swap UI built on the **Aptos blockchain*
 ### Folder Structure  
 ```
 SafeSwap/
-├── A-A-C/                   # Source code for model
-├── Backend             #  Back end source code
-├── Frontend                 # Front end source code
-├── node_modules                  # Node file
-├── Description.md         # Description for product
-└── README.md              # Project README
+├── A-A-C/                  # Source code for model
+├── Backend/                # Back end source code
+├── Frontend/               # Front end source code
+├── node_modules/           # Node file
+├── Description.md/         # Description for product
+└── README.md/              # Project README
 ```
 
 ### Data Model  
