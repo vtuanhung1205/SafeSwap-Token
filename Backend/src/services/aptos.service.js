@@ -2,12 +2,57 @@ const { logger } = require('../utils/logger');
 const { createError } = require('../middleware/errorHandler');
 const { Wallet } = require('../models/Wallet.model');
 const axios = require('axios');
+const { PriceFeedService } = require('./priceFeed.service'); // Import PriceFeedService
+
+// Correct import for Aptos SDK
+let AptosClient;
+try {
+  const aptosSDK = require('@aptos-labs/ts-sdk');
+  AptosClient = aptosSDK.AptosClient;
+} catch (error) {
+  logger.warn('Aptos SDK not available, using fallback implementation');
+  // Fallback implementation if SDK is not available
+  AptosClient = class MockAptosClient {
+    constructor(url) {
+      this.url = url;
+    }
+  };
+}
 
 class AptosService {
   constructor() {
     this.nodeUrl = process.env.APTOS_NODE_URL || 'https://fullnode.testnet.aptoslabs.com/v1';
     this.faucetUrl = process.env.APTOS_FAUCET_URL || 'https://faucet.testnet.aptoslabs.com';
     this.network = process.env.APTOS_NETWORK || 'testnet';
+    this.priceFeedService = new PriceFeedService(); // Khởi tạo PriceFeedService
+    
+    // Initialize client with fallback
+    try {
+      this.client = new AptosClient(this.nodeUrl);
+    } catch (error) {
+      logger.error('Failed to initialize AptosClient:', error);
+      this.client = null;
+    }
+    
+    // Liquidswap contract addresses
+    this.liquidswapModuleAddress = '0x190d44266241744264b964a37b8f09863167a12d3e70cda39376cfb4e3561e12';
+    this.liquidswapScriptsAddress = '0x190d44266241744264b964a37b8f09863167a12d3e70cda39376cfb4e3561e12';
+    
+    // Common token addresses
+    this.tokens = {
+      APT: {
+        address: '0x1::aptos_coin::AptosCoin',
+        decimals: 8
+      },
+      USDC: {
+        address: '0xf22bede237a07e121b56d91a491eb7bcdfd1f5907926a9e58338f964a01b17fa::asset::USDC',
+        decimals: 6
+      },
+      USDT: {
+        address: '0xf22bede237a07e121b56d91a491eb7bcdfd1f5907926a9e58338f964a01b17fa::asset::USDT',
+        decimals: 6
+      }
+    };
   }
 
   async connectWallet(userId, walletData) {
@@ -250,14 +295,154 @@ class AptosService {
   }
 
   getHealthStatus() {
-    return {
-      service: 'AptosService',
-      network: this.network,
-      nodeUrl: this.nodeUrl,
-      faucetUrl: this.faucetUrl,
-      status: 'operational'
-    };
+    try {
+      return {
+        status: 'healthy',
+        network: this.network,
+        nodeUrl: this.nodeUrl,
+        faucetUrl: this.faucetUrl
+      };
+    } catch (error) {
+      return {
+        status: 'error',
+        message: error.message
+      };
+    }
+  }
+
+  // New methods for Aptos integration
+  
+  /**
+   * Calculate swap rates between two tokens
+   * @param {Object} params - Swap parameters
+   * @param {string} params.fromToken - Source token symbol (e.g., "APT")
+   * @param {string} params.toToken - Target token symbol (e.g., "USDC")
+   * @param {number} params.amount - Amount to swap in source token units
+   * @returns {Promise<Object>} Swap rate information
+   */
+  async calculateSwapRates({ fromToken, toToken, amount }) {
+    try {
+      // Validate tokens
+      if (!this.tokens[fromToken] || !this.tokens[toToken]) {
+        // Mở rộng hỗ trợ token động
+        logger.info(`Token ${fromToken} or ${toToken} not in predefined list. Attempting to fetch price dynamically.`);
+      }
+
+      // Lấy giá token động từ PriceFeedService
+      const fromTokenData = await this.priceFeedService.getPrice(fromToken);
+      const toTokenData = await this.priceFeedService.getPrice(toToken);
+
+      if (!fromTokenData || !toTokenData) {
+        throw createError(404, `Could not retrieve price for ${fromToken} or ${toToken}`);
+      }
+      
+      const fromPrice = fromTokenData.price;
+      const toPrice = toTokenData.price;
+
+      if (fromPrice === 0 || toPrice === 0) {
+        throw createError(400, 'Token price cannot be zero, unable to calculate rate.');
+      }
+      
+      const exchangeRate = fromPrice / toPrice;
+      
+      // Calculate output amount (with 0.3% fee)
+      const fee = amount * 0.003;
+      const outputAmount = (amount - fee) * exchangeRate;
+      
+      // Generate a unique quote ID
+      const quoteId = `q_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+      
+      return {
+        quoteId,
+        fromToken,
+        toToken,
+        fromAmount: amount,
+        toAmount: outputAmount,
+        exchangeRate,
+        fee,
+        expiresAt: new Date(Date.now() + 30000).toISOString() // Quote expires in 30 seconds
+      };
+    } catch (error) {
+      logger.error('Failed to calculate swap rates:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Create a swap transaction payload
+   * @param {Object} params - Swap parameters
+   * @param {string} params.fromToken - Source token symbol
+   * @param {string} params.toToken - Target token symbol
+   * @param {number} params.fromAmount - Amount to swap in source token units
+   * @param {number} params.toAmount - Expected output amount
+   * @param {number} params.slippage - Allowed slippage percentage (e.g., 0.5 for 0.5%)
+   * @returns {Promise<Object>} Transaction payload
+   */
+  async createSwapTransactionPayload({ fromToken, toToken, fromAmount, toAmount, slippage = 0.5 }) {
+    try {
+      // In a real implementation, this would create a proper Aptos transaction payload
+      // For this demo, we'll return a simplified payload structure
+      
+      const fromTokenInfo = this.tokens[fromToken];
+      const toTokenInfo = this.tokens[toToken];
+      
+      if (!fromTokenInfo || !toTokenInfo) {
+        throw createError(400, 'Unsupported token');
+      }
+      
+      // Convert amount to on-chain units based on decimals
+      const fromAmountRaw = Math.floor(fromAmount * Math.pow(10, fromTokenInfo.decimals));
+      
+      // Calculate minimum output with slippage
+      const minOutputAmount = Math.floor(toAmount * (1 - slippage/100) * Math.pow(10, toTokenInfo.decimals));
+      
+      // Create a simplified transaction payload
+      // In a real implementation, this would use the Aptos SDK to create a proper payload
+      return {
+        function: `${this.liquidswapModuleAddress}::scripts::swap`,
+        type_arguments: [
+          fromTokenInfo.address,
+          toTokenInfo.address,
+          '0x1::aptos_coin::AptosCoin' // Curve type (simplified)
+        ],
+        arguments: [
+          fromAmountRaw.toString(),
+          minOutputAmount.toString()
+        ]
+      };
+    } catch (error) {
+      logger.error('Failed to create swap transaction payload:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch token list from Panora Exchange API
+   * @returns {Promise<Array>} List of tokens
+   */
+  async getTokenList() {
+    try {
+      const response = await axios.get('https://api.panora.exchange/tokens', {
+        timeout: 10000
+      });
+      
+      return response.data || [];
+    } catch (error) {
+      logger.error('Failed to fetch token list:', error);
+      
+      // Return basic tokens if API fails
+      return Object.entries(this.tokens).map(([symbol, data]) => ({
+        symbol,
+        name: symbol,
+        tokenAddress: data.address,
+        decimals: data.decimals,
+        logoUrl: `https://example.com/logos/${symbol.toLowerCase()}.png`,
+        panoraTags: ['Native']
+      }));
+    }
   }
 }
 
-module.exports = { AptosService };
+module.exports = {
+  AptosService
+};

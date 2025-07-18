@@ -17,49 +17,91 @@ class SwapController {
 
       // Validation
       if (!fromToken || !toToken || !amount) {
-        throw createError(400, 'fromToken, toToken, and amount are required');
+        return res.status(400).json({
+          success: false,
+          message: 'fromToken, toToken, and amount are required',
+          data: null
+        });
       }
 
       const fromAmount = parseFloat(amount);
-      if (fromAmount <= 0) {
-        throw createError(400, 'Amount must be greater than 0');
+      if (isNaN(fromAmount) || fromAmount <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Amount must be a positive number',
+          data: null
+        });
       }
 
-      // Get current prices
-      const fromPrice = priceFeedService.getPrice(fromToken);
-      const toPrice = priceFeedService.getPrice(toToken);
-
-      if (!fromPrice || !toPrice) {
-        throw createError(400, 'Unable to get price for one or both tokens');
+      // Use the new Aptos service to calculate swap rates
+      let swapQuote;
+      try {
+        swapQuote = await aptosService.calculateSwapRates({
+          fromToken,
+          toToken,
+          amount: fromAmount
+        });
+      } catch (error) {
+        logger.error(`Failed to calculate swap rates using primary method: ${error.message}`);
+        
+        // Fallback to simple calculation if Aptos service fails
+        try {
+          const fromPriceData = await priceFeedService.getPrice(fromToken);
+          const toPriceData = await priceFeedService.getPrice(toToken);
+          
+          if (!fromPriceData || !toPriceData) {
+            return res.status(400).json({
+              success: false,
+              message: 'Fallback failed: Unable to get price for one or both tokens.',
+              data: null
+            });
+          }
+          
+          const exchangeRate = fromPriceData.price / toPriceData.price;
+          const fee = fromAmount * 0.003;
+          const outputAmount = (fromAmount - fee) * exchangeRate;
+          
+          swapQuote = {
+            quoteId: `q_${Date.now()}_fallback_${Math.floor(Math.random() * 1000)}`,
+            fromToken,
+            toToken,
+            fromAmount,
+            toAmount: outputAmount,
+            exchangeRate,
+            fee,
+            expiresAt: new Date(Date.now() + 30000).toISOString()
+          };
+        } catch (fallbackError) {
+          logger.error(`Fallback method for getQuote also failed: ${fallbackError.message}`);
+          // Ném lỗi ra ngoài để middleware xử lý lỗi chung có thể bắt được
+          return next(fallbackError);
+        }
       }
 
-      // Calculate exchange rate and amounts
-      const exchangeRate = fromPrice.price / toPrice.price;
-      const toAmount = fromAmount * exchangeRate;
-
-      // Simulate fees (0.3% swap fee)
-      const feeRate = 0.003;
-      const fee = fromAmount * feeRate;
-      const toAmountAfterFee = toAmount * (1 - feeRate);
+      // Get current prices for additional info
+      const fromPriceInfo = (await priceFeedService.getPrice(fromToken)) || { symbol: fromToken, price: 0 };
+      const toPriceInfo = (await priceFeedService.getPrice(toToken)) || { symbol: toToken, price: 0 };
 
       res.json({
         success: true,
         data: {
           quote: {
+            quoteId: swapQuote.quoteId,
             fromToken,
             toToken,
             fromAmount,
-            toAmount: parseFloat(toAmountAfterFee.toFixed(8)),
-            exchangeRate: parseFloat(exchangeRate.toFixed(8)),
-            fee: parseFloat(fee.toFixed(8)),
-            feeRate,
+            toAmount: swapQuote.toAmount,
+            exchangeRate: swapQuote.exchangeRate,
+            fee: swapQuote.fee,
+            feeRate: 0.003, // 0.3%
             priceImpact: 0.1, // Simulated price impact
-            slippage: 0.5, // Simulated slippage
+            slippage: 0.5, // Default slippage
             estimatedGas: 100, // Simulated gas cost
+            expiresAt: swapQuote.expiresAt
           },
           prices: {
-            [fromToken]: fromPrice,
-            [toToken]: toPrice,
+            [fromToken]: fromPriceInfo,
+            [toToken]: toPriceInfo,
           },
         },
       });
@@ -76,12 +118,12 @@ class SwapController {
         toToken,
         fromAmount,
         toAmount,
+        quoteId,
         slippage = 0.5,
-        deadline,
       } = req.body;
 
       // Validation
-      if (!fromToken || !toToken || !fromAmount || !toAmount) {
+      if (!fromToken || !toToken || !fromAmount || !toAmount || !quoteId) {
         throw createError(400, 'All swap parameters are required');
       }
 
@@ -103,6 +145,15 @@ class SwapController {
         throw createError(403, `Transaction blocked: ${scamRisk.reason}`);
       }
 
+      // Create swap transaction payload using Aptos service
+      const transactionPayload = await aptosService.createSwapTransactionPayload({
+        fromToken,
+        toToken,
+        fromAmount: parseFloat(fromAmount),
+        toAmount: parseFloat(toAmount),
+        slippage
+      });
+
       // Calculate exchange rate
       const exchangeRate = parseFloat(toAmount) / parseFloat(fromAmount);
 
@@ -119,10 +170,11 @@ class SwapController {
         walletAddress: wallet.address,
         scamRisk: scamRisk.riskScore,
         metadata: {
+          quoteId,
           slippage,
-          deadline,
           gasLimit: 100,
           gasPrice: 100,
+          payload: transactionPayload
         },
       });
 
@@ -166,6 +218,8 @@ class SwapController {
             scamRisk: transaction.scamRisk,
             createdAt: transaction.createdAt,
           },
+          // Include the transaction payload that would be sent to the blockchain
+          payload: transactionPayload
         },
       });
     } catch (error) {
@@ -243,8 +297,39 @@ class SwapController {
 
   async getSwapDetails(req, res, next) {
     try {
-      // Placeholder
-      res.json({ success: true, details: {} });
+      const { transactionId } = req.params;
+      const userId = req.userId;
+
+      const transaction = await SwapTransaction.findOne({
+        _id: transactionId,
+        userId,
+      }).lean();
+
+      if (!transaction) {
+        throw createError(404, 'Transaction not found');
+      }
+
+      // If this is a real blockchain transaction, we would fetch additional details
+      // from the blockchain using the transaction hash
+      let onChainDetails = {};
+      
+      if (transaction.transactionHash && !transaction.transactionHash.startsWith('sim_')) {
+        try {
+          // Try to get on-chain transaction details
+          onChainDetails = await aptosService.getTransaction(transaction.transactionHash);
+        } catch (error) {
+          logger.error(`Failed to get on-chain details for ${transaction.transactionHash}:`, error.message);
+          // Continue without on-chain details
+        }
+      }
+
+      res.json({
+        success: true,
+        data: {
+          transaction,
+          onChainDetails
+        }
+      });
     } catch (error) {
       next(error);
     }
@@ -258,25 +343,23 @@ class SwapController {
       const transaction = await SwapTransaction.findOne({
         _id: transactionId,
         userId,
+        status: 'pending',
       });
 
       if (!transaction) {
-        throw createError(404, 'Transaction not found');
-      }
-
-      if (transaction.status !== 'pending') {
-        throw createError(400, 'Only pending transactions can be cancelled');
+        throw createError(404, 'Pending transaction not found');
       }
 
       transaction.status = 'cancelled';
+      transaction.updatedAt = new Date();
       await transaction.save();
 
-      logger.info(`Swap cancelled by user ${userId}: ${transactionId}`);
+      logger.info(`Swap cancelled: ${transactionId} by user ${userId}`);
 
       res.json({
         success: true,
-        message: 'Swap transaction cancelled',
-        data: { transaction },
+        message: 'Transaction cancelled successfully',
+        data: { transactionId },
       });
     } catch (error) {
       next(error);
@@ -286,58 +369,133 @@ class SwapController {
   async getSwapStats(req, res, next) {
     try {
       const userId = req.userId;
-      const { period = '24h' } = req.query;
 
-      let startDate;
-      switch (period) {
-        case '24h':
-          startDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
-          break;
-        case '7d':
-          startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-          break;
-        case '30d':
-          startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-          break;
-        default:
-          startDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
-      }
-
+      // Get user's transaction stats
       const stats = await SwapTransaction.aggregate([
-        {
-          $match: {
-            userId: userId,
-            createdAt: { $gte: startDate },
-          },
-        },
+        { $match: { userId } },
         {
           $group: {
-            _id: null,
-            totalTransactions: { $sum: 1 },
-            completedTransactions: {
-              $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] },
-            },
-            totalVolume: {
-              $sum: { $cond: [{ $eq: ['$status', 'completed'] }, '$fromAmount', 0] },
-            },
-            avgTransactionSize: { $avg: '$fromAmount' },
+            _id: '$status',
+            count: { $sum: 1 },
+            totalFromAmount: { $sum: '$fromAmount' },
+            totalToAmount: { $sum: '$toAmount' },
           },
         },
       ]);
 
-      const result = stats[0] || {
-        totalTransactions: 0,
-        completedTransactions: 0,
-        totalVolume: 0,
-        avgTransactionSize: 0,
+      // Format stats by status
+      const formattedStats = {
+        total: 0,
+        completed: 0,
+        pending: 0,
+        failed: 0,
+        cancelled: 0,
+        totalFromAmount: 0,
+        totalToAmount: 0,
       };
+
+      stats.forEach((stat) => {
+        formattedStats[stat._id] = stat.count;
+        formattedStats.total += stat.count;
+
+        if (stat._id === 'completed') {
+          formattedStats.totalFromAmount = stat.totalFromAmount;
+          formattedStats.totalToAmount = stat.totalToAmount;
+        }
+      });
+
+      // Get most used tokens
+      const tokenStats = await SwapTransaction.aggregate([
+        { $match: { userId } },
+        {
+          $group: {
+            _id: {
+              fromToken: '$fromToken',
+              toToken: '$toToken',
+            },
+            count: { $sum: 1 },
+          },
+        },
+        { $sort: { count: -1 } },
+        { $limit: 5 },
+      ]);
+
+      const tokenPairs = tokenStats.map((stat) => ({
+        fromToken: stat._id.fromToken,
+        toToken: stat._id.toToken,
+        count: stat.count,
+      }));
+
+      // Calculate success rate
+      const successRate =
+        formattedStats.total > 0
+          ? (formattedStats.completed / formattedStats.total) * 100
+          : 0;
 
       res.json({
         success: true,
         data: {
-          period,
-          stats: result,
+          stats: formattedStats,
+          successRate: parseFloat(successRate.toFixed(2)),
+          mostUsedTokenPairs: tokenPairs,
         },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // New method to calculate swap rates
+  async calculateSwapRates(req, res, next) {
+    try {
+      const { fromToken, toToken, amount } = req.body;
+
+      if (!fromToken || !toToken || !amount) {
+        throw createError(400, 'fromToken, toToken, and amount are required');
+      }
+
+      const fromAmount = parseFloat(amount);
+      if (fromAmount <= 0) {
+        throw createError(400, 'Amount must be greater than 0');
+      }
+
+      const rates = await aptosService.calculateSwapRates({
+        fromToken,
+        toToken,
+        amount: fromAmount
+      });
+
+      res.json({
+        success: true,
+        data: rates
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // New method to create swap transaction payload
+  async createSwapTransaction(req, res, next) {
+    try {
+      const { fromToken, toToken, fromAmount, toAmount, slippage } = req.body;
+
+      if (!fromToken || !toToken || !fromAmount || !toAmount) {
+        throw createError(400, 'fromToken, toToken, fromAmount, and toAmount are required');
+      }
+
+      const payload = await aptosService.createSwapTransactionPayload({
+        fromToken,
+        toToken,
+        fromAmount: parseFloat(fromAmount),
+        toAmount: parseFloat(toAmount),
+        slippage: slippage || 0.5
+      });
+
+      res.json({
+        success: true,
+        data: {
+          payload
+        }
       });
     } catch (error) {
       next(error);

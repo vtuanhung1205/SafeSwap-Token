@@ -199,4 +199,116 @@ router.get('/history/:transactionId', verifyToken, asyncHandler(swapController.g
  */
 router.get('/stats', verifyToken, asyncHandler(swapController.getSwapStats.bind(swapController)));
 
+/**
+ * @swagger
+ * /api/swap/calculate-rates:
+ *   post:
+ *     summary: Calculate swap rates between two tokens
+ *     tags: [Swap]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - fromToken
+ *               - toToken
+ *               - amount
+ *             properties:
+ *               fromToken:
+ *                 type: string
+ *                 description: Symbol of the source token
+ *                 example: APT
+ *               toToken:
+ *                 type: string
+ *                 description: Symbol of the target token
+ *                 example: USDC
+ *               amount:
+ *                 type: number
+ *                 description: Amount of source token to swap
+ *                 example: 10
+ *     responses:
+ *       200:
+ *         description: Swap rates calculated successfully.
+ *       400:
+ *         description: Invalid request parameters.
+ */
+router.post('/calculate-rates', asyncHandler(swapController.calculateSwapRates.bind(swapController)));
+
+/**
+ * @swagger
+ * /api/swap/create-transaction:
+ *   post:
+ *     summary: Create a swap transaction payload
+ *     tags: [Swap]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - fromToken
+ *               - toToken
+ *               - fromAmount
+ *               - toAmount
+ *             properties:
+ *               fromToken:
+ *                 type: string
+ *                 description: Symbol of the source token
+ *                 example: APT
+ *               toToken:
+ *                 type: string
+ *                 description: Symbol of the target token
+ *                 example: USDC
+ *               fromAmount:
+ *                 type: number
+ *                 description: Amount of source token to swap
+ *                 example: 10
+ *               toAmount:
+ *                 type: number
+ *                 description: Amount of target token to receive
+ *                 example: 50
+ *               slippage:
+ *                 type: number
+ *                 description: Allowed slippage percentage
+ *                 example: 0.5
+ *     responses:
+ *       200:
+ *         description: Transaction payload created successfully.
+ *       400:
+ *         description: Invalid request parameters.
+ *       401:
+ *         description: Unauthorized, token is missing or invalid.
+ */
+router.post('/create-transaction', verifyToken, asyncHandler(swapController.createSwapTransaction.bind(swapController)));
+
+/**
+ * @swagger
+ * /api/swap/cancel/{transactionId}:
+ *   post:
+ *     summary: Cancel a pending swap transaction
+ *     tags: [Swap]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: transactionId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the swap transaction to cancel
+ *     responses:
+ *       200:
+ *         description: Transaction cancelled successfully.
+ *       401:
+ *         description: Unauthorized, token is missing or invalid.
+ *       404:
+ *         description: Pending transaction not found.
+ */
+router.post('/cancel/:transactionId', verifyToken, asyncHandler(swapController.cancelSwap.bind(swapController)));
+
 module.exports = router;

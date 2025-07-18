@@ -22,7 +22,7 @@
   "author": "RTS Team",
   "license": "MIT",
   "dependencies": {
-    "@aptos-labs/ts-sdk": "^1.8.0",
+    "@aptos-labs/ts-sdk": "^1.39.0",
     "axios": "^1.6.2",
     "bcryptjs": "^2.4.3",
     "ccxt": "^4.2.14",

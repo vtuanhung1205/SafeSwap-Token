@@ -10,8 +10,24 @@ import {
 import { useAuth } from "../contexts/AuthContext";
 import { useWebSocket } from "../hooks/useWebSocket";
 import { swapAPI, priceAPI, handleApiError } from "../utils/api";
-import { mockPrices } from "../utils/mockData";
 import toast from "react-hot-toast";
+
+// --- Custom Hook for Debouncing ---
+const useDebounce = (value, delay) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+};
 
 // --- Helper Hook for On-Scroll Animations (from OurStory) ---
 const useInView = (options) => {
@@ -41,13 +57,22 @@ const useInView = (options) => {
 
   return [ref, isInView];
 };
-import { DEMO_MODE } from '../config/demo';
 
 const tokens = [
+  {
+    symbol: "BTC",
+    name: "Bitcoin",
+    icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Bitcoin.svg/800px-Bitcoin.svg.png",
+  },
   {
     symbol: "ETH",
     name: "Ethereum",
     icon: "https://static1.tokenterminal.com//ethereum/logo.png?logo_hash=fd8f54cab23f8f4980041f4e74607cac0c7ab880",
+  },
+  {
+    symbol: "SOL",
+    name: "Solana",
+    icon: "https://s2.coinmarketcap.com/static/img/coins/64x64/5426.png",
   },
   {
     symbol: "APT",
@@ -55,19 +80,14 @@ const tokens = [
     icon: "https://s2.coinmarketcap.com/static/img/coins/200x200/21794.png",
   },
   {
-    symbol: "USDT",
-    name: "Tether",
-    icon: "https://public.bnbstatic.com/static/academy/uploads-original/2fd4345d8c3a46278941afd9ab7ad225.png",
-  },
-  {
     symbol: "USDC",
     name: "USD Coin",
     icon: "https://s2.coinmarketcap.com/static/img/coins/200x200/3408.png",
   },
   {
-    symbol: "BTC",
-    name: "Bitcoin",
-    icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Bitcoin.svg/800px-Bitcoin.svg.png",
+    symbol: "USDT",
+    name: "Tether",
+    icon: "https://public.bnbstatic.com/static/academy/uploads-original/2fd4345d8c3a46278941afd9ab7ad225.png",
   },
 ];
 
@@ -80,9 +100,10 @@ const SwapForm = () => {
     subscribeToTokens,
   } = useWebSocket();
 
-  const [fromToken, setFromToken] = useState(tokens[0]);
-  const [toToken, setToToken] = useState(tokens[1]);
+  const [fromToken, setFromToken] = useState(tokens[0]); // APT
+  const [toToken, setToToken] = useState(tokens[1]); // USDC
   const [fromAmount, setFromAmount] = useState("");
+  const debouncedFromAmount = useDebounce(fromAmount, 500); // 500ms delay
   const [toAmount, setToAmount] = useState("");
   const [quote, setQuote] = useState(null);
   const [isLoadingQuote, setIsLoadingQuote] = useState(false);
@@ -101,48 +122,30 @@ const SwapForm = () => {
   }, [subscribeToTokens]);
 
   useEffect(() => {
-    if (fromAmount && parseFloat(fromAmount) > 0 && fromToken && toToken) {
+    if (debouncedFromAmount && parseFloat(debouncedFromAmount) > 0 && fromToken && toToken) {
       getSwapQuote();
     } else {
       setToAmount("");
       setQuote(null);
     }
-  }, [fromAmount, fromToken, toToken]);
+  }, [debouncedFromAmount, fromToken, toToken]);
 
   const getSwapQuote = async () => {
-    if (!fromAmount || !fromToken || !toToken) return;
+    if (!debouncedFromAmount || !fromToken || !toToken) return;
     setIsLoadingQuote(true);
     try {
-      if (DEMO_MODE) {
-        const fromPrice = mockPrices[fromToken.symbol]?.price || 1;
-        const toPrice = mockPrices[toToken.symbol]?.price || 1;
-        const rate = fromPrice / toPrice;
-        const calculatedAmount = parseFloat(fromAmount) * rate * 0.997;
-        const mockQuote = {
-          fromAmount: parseFloat(fromAmount),
-          toAmount: calculatedAmount,
-          exchangeRate: rate,
-          slippage: 0.5,
-          fee: parseFloat(fromAmount) * 0.003,
-          priceImpact: 0.1,
-          feeUsd: parseFloat(fromAmount) * 0.003 * fromPrice,
-        };
-        await new Promise((resolve) => setTimeout(resolve, 800));
-        setQuote(mockQuote);
-        setToAmount(calculatedAmount.toFixed(6));
+      const response = await swapAPI.getQuote(fromToken.symbol, toToken.symbol, debouncedFromAmount);
+      if (response.data.success) {
+        const quoteData = response.data.data.quote;
+        setQuote(quoteData);
+        setToAmount(quoteData.toAmount.toFixed(6));
         analyzeToken(toToken.symbol);
-      } else {
-        const response = await swapAPI.getQuote(fromToken.symbol, toToken.symbol, fromAmount);
-        if (response.data.success) {
-          const quoteData = response.data.data.quote;
-          setQuote(quoteData);
-          setToAmount(quoteData.toAmount.toFixed(6));
-          analyzeToken(toToken.symbol);
-        }
       }
     } catch (error) {
       console.error("Quote error:", error);
       toast.error(handleApiError(error));
+      // Clear output amount on error
+      setToAmount("");
     } finally {
       setIsLoadingQuote(false);
     }
@@ -150,25 +153,33 @@ const SwapForm = () => {
 
   const analyzeToken = async (symbol) => {
     try {
-      if (DEMO_MODE) {
-        const mockAnalysis = {
-          isScam: Math.random() > 0.8,
-          riskScore: Math.floor(Math.random() * 100),
-          confidence: Math.floor(Math.random() * 30) + 70,
-          reasons: ["Price volatility detected", "Low liquidity warning"],
-          recommendation: "Proceed with caution",
-        };
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        setScamAnalysis(mockAnalysis);
-      } else {
-        const mockAddress = `0x${symbol.toLowerCase()}${"0".repeat(40)}`;
-        const response = await priceAPI.analyzeToken(mockAddress, symbol, symbol);
-        if (response.data.success) {
-          setScamAnalysis(response.data.data.analysis);
-        }
+      // Chỉ phân tích token nếu không phải là USDC hoặc USDT (stablecoin)
+      if (symbol === 'USDC' || symbol === 'USDT') {
+        setScamAnalysis({
+          isScam: false,
+          riskScore: 5,
+          confidence: 95,
+          reasons: ["Verified stablecoin"],
+          recommendation: "Safe to trade"
+        });
+        return;
+      }
+
+      const mockAddress = `0x${symbol.toLowerCase()}${"0".repeat(40)}`;
+      const response = await priceAPI.analyzeToken(mockAddress, symbol, symbol);
+      if (response.data.success) {
+        setScamAnalysis(response.data.data.analysis);
       }
     } catch (error) {
       console.error("Token analysis error:", error);
+      // Fallback nếu API thất bại
+      setScamAnalysis({
+        isScam: false,
+        riskScore: 20,
+        confidence: 80,
+        reasons: ["Limited data available"],
+        recommendation: "Proceed with caution"
+      });
     }
   };
 
@@ -188,31 +199,14 @@ const SwapForm = () => {
     }
     setIsSwapping(true);
     try {
-      if (DEMO_MODE) {
-        const mockTransaction = {
-          hash: "0x" + Math.random().toString(16).substr(2, 64),
-          status: "pending",
-          fromToken: fromToken.symbol,
-          toToken: toToken.symbol,
-          fromAmount: quote.fromAmount,
-          toAmount: quote.toAmount,
-        };
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        toast.success(`Swap initiated! Transaction: ${mockTransaction.hash.slice(0, 10)}...`);
+      const response = await swapAPI.executeSwap(fromToken.symbol, toToken.symbol, quote.fromAmount, quote.toAmount, "quote_id");
+      if (response.data.success) {
+        const transaction = response.data.data.transaction;
+        toast.success(`Swap initiated! Transaction: ${transaction.hash.slice(0, 10)}...`);
         setFromAmount("");
         setToAmount("");
         setQuote(null);
         setScamAnalysis(null);
-      } else {
-        const response = await swapAPI.executeSwap(fromToken.symbol, toToken.symbol, quote.fromAmount, quote.toAmount, "quote_id");
-        if (response.data.success) {
-          const transaction = response.data.data.transaction;
-          toast.success(`Swap initiated! Transaction: ${transaction.hash.slice(0, 10)}...`);
-          setFromAmount("");
-          setToAmount("");
-          setQuote(null);
-          setScamAnalysis(null);
-        }
       }
     } catch (error) {
       console.error("Swap error:", error);
@@ -230,170 +224,293 @@ const SwapForm = () => {
     setToAmount("");
   };
 
-  const selectToken = (token, type) => {
-    if (type === "from") {
-      setFromToken(token);
-    } else {
-      setToToken(token);
-    }
-    setShowTokenModal(null);
-  };
-
-  const getRiskColor = (riskScore) => {
-    if (riskScore < 30) return "text-green-500";
-    if (riskScore < 70) return "text-yellow-500";
-    return "text-red-500";
-  };
-
   return (
-    <div ref={formRef} className={`flex flex-col items-center justify-center min-h-[80vh] bg-transparent px-4 transition-all duration-700 ease-out ${animationClasses}`}>
-      <h2 className="text-4xl font-bold text-center text-white mb-6">
-        Swap anytime,
-        <br />
-        anywhere.
-      </h2>
-
-      <div className="mb-4 flex items-center space-x-2">
-        <div className={`w-3 h-3 rounded-full ${isConnected ? "bg-green-500" : "bg-red-500"}`}></div>
-        <span className="text-sm text-gray-400">
-          {isConnected ? "Live prices connected" : "Price feed offline"}
-        </span>
-      </div>
-
-      <div className="relative group bg-[#18181c] rounded-3xl shadow-2xl p-6 w-full max-w-md border border-[#23232a]">
-        <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-600 to-pink-600 rounded-3xl blur-lg opacity-0 group-hover:opacity-50 transition duration-500 -z-10"></div>
-
-        <div className="rounded-2xl bg-[#111112] p-5 mb-2">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-gray-300 text-sm">Sell</span>
-            <span className="text-xs text-gray-500">Balance: {user?.walletAddress ? "0.00" : "--"}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            {/* --- CHANGE IS HERE --- */}
-            <input
-              type="number"
-              min="0"
-              step="any"
-              value={fromAmount}
-              onChange={(e) => setFromAmount(e.target.value)}
-              className="bg-transparent text-3xl font-semibold text-white outline-none w-1/2 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              placeholder="0.0"
-            />
-            <button onClick={() => setShowTokenModal("from")} className="flex items-center bg-cyan-600 hover:bg-cyan-700 transition text-white rounded-full px-4 py-2 ml-2 font-medium text-lg">
-              <img src={fromToken.icon} alt={fromToken.symbol} className="w-6 h-6 mr-2" />
-              {fromToken.symbol}
-              <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" /></svg>
-            </button>
-          </div>
-          <div className="flex justify-between mt-2">
-            <span className="text-xs text-gray-500">{getFormattedPrice(fromToken.symbol)}</span>
-            <span className={`text-xs ${getFormattedPriceChange(fromToken.symbol).className}`}>{getFormattedPriceChange(fromToken.symbol).formatted}</span>
-          </div>
+    <div className="flex flex-col items-center justify-center min-h-[80vh] bg-transparent px-4">
+      <div
+        ref={formRef}
+        className={`w-full max-w-md transition-all duration-700 ease-out ${animationClasses}`}
+      >
+        <div className="text-center mb-8">
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-3">
+            Swap Anytime
+          </h2>
+          <p className="text-lg text-gray-400">
+            Secure, fast, and decentralized.
+          </p>
         </div>
 
-        <div className="flex justify-center -my-2">
-          <button onClick={swapTokens} className="bg-[#18181c] border border-[#23232a] rounded-full w-10 h-10 flex items-center justify-center hover:border-cyan-600 transition">
-            <ArrowUpDown size={20} className="text-white" />
-          </button>
-        </div>
-
-        <div className="rounded-2xl bg-[#111112] p-5 mt-2">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-gray-300 text-sm">Buy</span>
-            {isLoadingQuote && <Loader2 size={16} className="animate-spin text-cyan-500" />}
-          </div>
-          <div className="flex items-center justify-between">
-            <input type="number" min="0" value={toAmount} readOnly className="bg-transparent text-3xl font-semibold text-white outline-none w-1/2" placeholder="0.0" />
-            <button onClick={() => setShowTokenModal("to")} className="flex items-center bg-pink-500 hover:bg-pink-600 transition text-white rounded-full px-4 py-2 ml-2 font-medium text-lg">
-              {toToken ? (<><img src={toToken.icon} alt={toToken.symbol} className="w-6 h-6 mr-2" />{toToken.symbol}</>) : ("Select token")}
-              <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" /></svg>
-            </button>
-          </div>
-          <div className="flex justify-between mt-2">
-            <span className="text-xs text-gray-500">{getFormattedPrice(toToken?.symbol)}</span>
-            <span className={`text-xs ${getFormattedPriceChange(toToken?.symbol).className}`}>{getFormattedPriceChange(toToken?.symbol).formatted}</span>
-          </div>
-        </div>
-
-        {quote && (
-          <div className="mt-4 p-4 bg-[#111112] rounded-2xl">
-            <div className="flex justify-between text-sm text-gray-300 mb-2">
-              <span>Exchange Rate</span>
-              <span>1 {fromToken.symbol} = {quote.exchangeRate.toFixed(6)} {toToken.symbol}</span>
-            </div>
-            <div className="flex justify-between text-sm text-gray-300 mb-2">
-              <span>Price Impact</span>
-              <span className={quote.priceImpact > 5 ? "text-red-400" : "text-green-400"}>{quote.priceImpact.toFixed(2)}%</span>
-            </div>
-            <div className="flex justify-between text-sm text-gray-300">
-              <span>Fee</span>
-              <span>{quote.fee.toFixed(6)} {fromToken.symbol} (${quote.feeUsd.toFixed(2)})</span>
-            </div>
-          </div>
-        )}
-
-        {scamAnalysis && scamAnalysis.riskScore > 30 && (
-          <div className="mt-4 p-4 bg-red-900/20 border border-red-500/30 rounded-2xl">
-            <div className="flex items-center space-x-2 mb-2">
-              <AlertTriangle size={20} className="text-red-400" />
-              <span className="text-red-400 font-medium">Security Warning</span>
-            </div>
-            <p className="text-sm text-gray-300 mb-2">Risk Score: <span className={getRiskColor(scamAnalysis.riskScore)}>{scamAnalysis.riskScore}/100</span></p>
-            <ul className="text-xs text-gray-400 space-y-1">
-              {scamAnalysis.reasons.slice(0, 3).map((reason, index) => (<li key={index}>• {reason}</li>))}
-            </ul>
-          </div>
-        )}
-
-        {scamAnalysis && scamAnalysis.riskScore <= 30 && (
-          <div className="mt-4 p-3 bg-green-900/20 border border-green-500/30 rounded-2xl">
-            <div className="flex items-center space-x-2">
-              <CheckCircle size={16} className="text-green-400" />
-              <span className="text-green-400 text-sm font-medium">Token appears safe</span>
-              <span className="text-xs text-gray-400">({scamAnalysis.riskScore}/100 risk)</span>
-            </div>
-          </div>
-        )}
-
-        <button
-          onClick={handleSwap}
-          disabled={!isAuthenticated || !quote || isSwapping || isLoadingQuote}
-          className="w-full mt-6 py-3 rounded-2xl bg-gradient-to-r from-cyan-500 to-pink-500 hover:from-cyan-600 hover:to-pink-600 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white font-bold text-lg shadow-lg transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-2"
-        >
-          {!isAuthenticated ? (<><Wallet size={20} /><span>Connect Wallet to Swap</span></>) : isSwapping ? (<><Loader2 size={20} className="animate-spin" /><span>Swapping...</span></>) : (<><TrendingUp size={20} /><span>Swap</span></>)}
-        </button>
-      </div>
-
-      <p className="text-gray-400 text-center mt-6 max-w-md">
-        The safest token swap platform on Aptos with real-time scam detection
-        and live price feeds.
-      </p>
-
-      {showTokenModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#18181c] rounded-2xl border border-[#23232a] p-6 w-full max-w-md">
-            <h3 className="text-xl font-bold text-white mb-4">Select {showTokenModal === "from" ? "source" : "destination"} token</h3>
-            <div className="space-y-2 max-h-80 overflow-y-auto">
-              {tokens.map((token) => (
-                <button key={token.symbol} onClick={() => selectToken(token, showTokenModal)} className="w-full flex items-center space-x-3 p-3 rounded-xl hover:bg-[#23232a] transition">
-                  <img src={token.icon} alt={token.symbol} className="w-8 h-8 rounded-full" />
-                  <div className="flex-1 text-left">
-                    <div className="text-white font-medium">{token.symbol}</div>
-                    <div className="text-gray-400 text-sm">{token.name}</div>
+        <div className="relative group">
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-600 to-pink-600 rounded-2xl blur-lg opacity-20 group-hover:opacity-40 transition duration-500"></div>
+          <div
+            className={`relative bg-[#18181c] border border-[#23232a] rounded-2xl shadow-lg p-6 md:p-8`}
+          >
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-white">Swap Tokens</h3>
+              <div className="flex items-center gap-2">
+                {isConnected ? (
+                  <div className="flex items-center gap-2 text-green-400">
+                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                    <span className="text-xs">Live</span>
                   </div>
-                  <div className="text-right">
-                    <div className="text-white text-sm">{getFormattedPrice(token.symbol)}</div>
-                    <div className={`text-xs ${getFormattedPriceChange(token.symbol).className}`}>{getFormattedPriceChange(token.symbol).formatted}</div>
+                ) : (
+                  <div className="flex items-center gap-2 text-yellow-400">
+                    <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
+                    <span className="text-xs">Connecting</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* From Token */}
+            <div className="mb-4">
+              <label className="block text-gray-400 text-sm mb-2">From</label>
+              <div className="flex bg-[#23232a] rounded-lg p-4 focus-within:ring-1 focus-within:ring-cyan-500 transition-all">
+                <button
+                  className="flex items-center gap-2 bg-[#2a2a32] px-3 py-2 rounded-lg mr-4 hover:bg-[#31313a] transition-colors"
+                  onClick={() => setShowTokenModal("from")}
+                >
+                  <img
+                    src={fromToken.icon}
+                    alt={fromToken.name}
+                    className="w-6 h-6 rounded-full"
+                  />
+                  <span className="font-semibold text-white">{fromToken.symbol}</span>
+                  <ChevronDown className="w-4 h-4 text-gray-400" />
+                </button>
+                <input
+                  type="number"
+                  placeholder="0.0"
+                  value={fromAmount}
+                  onChange={(e) => setFromAmount(e.target.value)}
+                  className="flex-1 bg-transparent text-white text-xl font-semibold focus:outline-none"
+                />
+              </div>
+              <div className="flex justify-between text-sm mt-2 px-1">
+                <span className="text-gray-400">
+                  {fromToken.symbol} Price: {getFormattedPrice(fromToken.symbol)}
+                </span>
+                <PriceChange symbol={fromToken.symbol} />
+              </div>
+            </div>
+
+            {/* Swap Button */}
+            <div className="flex justify-center -my-2 relative z-10">
+              <button
+                className="bg-[#23232a] p-3 rounded-full hover:bg-[#31313a] transition-colors border border-[#3a3a42] shadow-lg"
+                onClick={swapTokens}
+              >
+                <ArrowUpDown className="w-5 h-5 text-cyan-400" />
+              </button>
+            </div>
+
+            {/* To Token */}
+            <div className="mb-6">
+              <label className="block text-gray-400 text-sm mb-2">To</label>
+              <div className="flex bg-[#23232a] rounded-lg p-4 focus-within:ring-1 focus-within:ring-cyan-500 transition-all">
+                <button
+                  className="flex items-center gap-2 bg-[#2a2a32] px-3 py-2 rounded-lg mr-4 hover:bg-[#31313a] transition-colors"
+                  onClick={() => setShowTokenModal("to")}
+                >
+                  <img
+                    src={toToken.icon}
+                    alt={toToken.name}
+                    className="w-6 h-6 rounded-full"
+                  />
+                  <span className="font-semibold text-white">{toToken.symbol}</span>
+                  <ChevronDown className="w-4 h-4 text-gray-400" />
+                </button>
+                <input
+                  type="number"
+                  placeholder="0.0"
+                  value={toAmount}
+                  readOnly
+                  className="flex-1 bg-transparent text-white text-xl font-semibold focus:outline-none"
+                />
+              </div>
+              <div className="flex justify-between text-sm mt-2 px-1">
+                <span className="text-gray-400">
+                  {toToken.symbol} Price: {getFormattedPrice(toToken.symbol)}
+                </span>
+                <PriceChange symbol={toToken.symbol} />
+              </div>
+            </div>
+
+            {/* Scam Warning */}
+            {scamAnalysis && scamAnalysis.riskScore > 50 && (
+              <div className="mb-6 bg-red-500/10 border border-red-500/20 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h4 className="font-semibold text-red-400">
+                      Potential Scam Warning
+                    </h4>
+                    <p className="text-sm text-gray-300 mt-1">
+                      This token has a risk score of {scamAnalysis.riskScore}%.
+                      {scamAnalysis.reasons?.length > 0 && (
+                        <span>
+                          {" "}
+                          Reasons:{" "}
+                          {scamAnalysis.reasons.map((r) => r.toLowerCase()).join(", ")}
+                          .
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Quote Info */}
+            {quote && (
+              <div className="mb-6 bg-[#23232a] rounded-lg p-4">
+                <h4 className="font-semibold text-gray-300 mb-2">Swap Summary</h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Exchange Rate</span>
+                    <span className="text-white">
+                      1 {fromToken.symbol} = {quote.exchangeRate.toFixed(6)}{" "}
+                      {toToken.symbol}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Price Impact</span>
+                    <span className="text-white">{quote.priceImpact}%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Network Fee</span>
+                    <span className="text-white">
+                      {quote.fee.toFixed(6)} {fromToken.symbol}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Slippage Tolerance</span>
+                    <span className="text-white">{quote.slippage || 0.5}%</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Swap Button */}
+            <button
+              className={`w-full py-4 rounded-xl font-bold text-white transition-all ${
+                isAuthenticated
+                  ? "bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600"
+                  : "bg-gray-600"
+              }`}
+              onClick={handleSwap}
+              disabled={
+                !fromAmount ||
+                parseFloat(fromAmount) <= 0 ||
+                !toAmount ||
+                isLoadingQuote ||
+                isSwapping
+              }
+            >
+              {isSwapping ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Swapping...
+                </span>
+              ) : !isAuthenticated ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Wallet className="w-5 h-5" />
+                  Connect Wallet to Swap
+                </span>
+              ) : isLoadingQuote ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Getting Quote...
+                </span>
+              ) : (
+                <span>Swap Tokens</span>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Token Selection Modal */}
+      {showTokenModal && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div
+            className="absolute inset-0"
+            onClick={() => setShowTokenModal(null)}
+          ></div>
+          <div className="bg-[#18181c] rounded-2xl p-6 w-full max-w-md relative z-10">
+            <h3 className="text-xl font-bold text-white mb-4">
+              Select a Token
+            </h3>
+            <div className="space-y-2 max-h-96 overflow-y-auto">
+              {tokens.map((token) => (
+                <button
+                  key={token.symbol}
+                  className="flex items-center gap-3 w-full p-3 hover:bg-[#23232a] rounded-lg transition-colors"
+                  onClick={() => {
+                    if (showTokenModal === "from") {
+                      if (token.symbol === toToken.symbol) {
+                        setToToken(fromToken);
+                      }
+                      setFromToken(token);
+                    } else {
+                      if (token.symbol === fromToken.symbol) {
+                        setFromToken(toToken);
+                      }
+                      setToToken(token);
+                    }
+                    setShowTokenModal(null);
+                  }}
+                >
+                  <img
+                    src={token.icon}
+                    alt={token.name}
+                    className="w-8 h-8 rounded-full"
+                  />
+                  <div className="text-left">
+                    <div className="font-semibold text-white">
+                      {token.symbol}
+                    </div>
+                    <div className="text-sm text-gray-400">{token.name}</div>
+                  </div>
+                  <div className="ml-auto text-right">
+                    <div className="font-mono text-white">
+                      {getFormattedPrice(token.symbol)}
+                    </div>
+                    <PriceChange symbol={token.symbol} />
                   </div>
                 </button>
               ))}
             </div>
-            <button onClick={() => setShowTokenModal(null)} className="w-full mt-4 py-2 text-gray-400 hover:text-white transition">Cancel</button>
           </div>
         </div>
       )}
     </div>
   );
 };
+
+// Price change component with color coding
+const PriceChange = ({ symbol }) => {
+  const { getFormattedPriceChange } = useWebSocket();
+  const change = getFormattedPriceChange(symbol);
+
+  return <span className={change.className}>{change.formatted}</span>;
+};
+
+// Helper for the token dropdown button
+const ChevronDown = (props) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <polyline points="6 9 12 15 18 9"></polyline>
+  </svg>
+);
 
 export default SwapForm;

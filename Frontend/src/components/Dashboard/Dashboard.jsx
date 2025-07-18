@@ -1,10 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import api from '../../utils/api';
-import { mockAPI } from '../../utils/mockData';
-
-// Toggle this for demo mode
-const DEMO_MODE = true;
 
 // --- Helper Components for a cleaner structure ---
 
@@ -38,7 +34,7 @@ const Dashboard = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (user || DEMO_MODE) { // Allow fetching in demo mode without a user
+    if (user) {
       fetchDashboardData();
     }
   }, [user]);
@@ -48,9 +44,9 @@ const Dashboard = () => {
       setLoading(true);
       setError(null);
       
-      const fetcher = DEMO_MODE ? mockAPI : {
-        getSwapHistory: () => api.get('/api/swap/history'),
-        getSwapStats: () => api.get('/api/swap/stats'),
+      const fetcher = {
+        getSwapHistory: () => api.get('/swap/history'),
+        getSwapStats: () => api.get('/swap/stats'),
       };
 
       const [historyRes, statsRes] = await Promise.all([

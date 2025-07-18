@@ -1,9 +1,11 @@
 const { TokenPrice } = require('../models/TokenPrice.model');
 const { PriceFeedService } = require('../services/priceFeed.service');
+const { AptosService } = require('../services/aptos.service');
 const { createError } = require('../middleware/errorHandler');
 const { logger } = require('../utils/logger');
 
 const priceFeedService = new PriceFeedService();
+const aptosService = new AptosService();
 
 class PriceController {
   async getCurrentPrice(req, res, next) {
@@ -261,8 +263,30 @@ class PriceController {
 
   async getExchangeRate(req, res, next) {
     try {
-      // Placeholder
-      res.json({ success: true, rate: 1.0 });
+      const { from, to } = req.query;
+
+      if (!from || !to) {
+        throw createError(400, 'Both "from" and "to" parameters are required');
+      }
+
+      const fromPrice = priceFeedService.getPrice(from);
+      const toPrice = priceFeedService.getPrice(to);
+
+      if (!fromPrice || !toPrice) {
+        throw createError(400, 'Price not found for one or both tokens');
+      }
+
+      const rate = fromPrice.price / toPrice.price;
+
+      res.json({
+        success: true,
+        data: {
+          from: from.toUpperCase(),
+          to: to.toUpperCase(),
+          rate: parseFloat(rate.toFixed(8)),
+          lastUpdated: new Date(),
+        },
+      });
     } catch (error) {
       next(error);
     }
@@ -270,8 +294,30 @@ class PriceController {
 
   async analyzeToken(req, res, next) {
     try {
-      // Placeholder
-      res.json({ success: true, analysis: {} });
+      const { tokenAddress, tokenName, tokenSymbol } = req.body;
+
+      if (!tokenAddress) {
+        throw createError(400, 'Token address is required');
+      }
+
+      // Mock token analysis
+      const analysis = {
+        tokenAddress,
+        tokenName: tokenName || 'Unknown Token',
+        tokenSymbol: tokenSymbol || 'UNKNOWN',
+        scamProbability: Math.random() * 0.2, // 0-20% chance
+        risk: 'low',
+        warnings: [],
+        liquidityScore: 85,
+        holderDistribution: 'good',
+        contractVerified: true,
+        analysisTimestamp: new Date(),
+      };
+
+      res.json({
+        success: true,
+        data: { analysis },
+      });
     } catch (error) {
       next(error);
     }
@@ -279,32 +325,119 @@ class PriceController {
 
   async batchAnalyzeTokens(req, res, next) {
     try {
-      // Placeholder
-      res.json({ success: true, analyses: [] });
+      const { tokenAddresses } = req.body;
+
+      if (!tokenAddresses || !Array.isArray(tokenAddresses)) {
+        throw createError(400, 'Token addresses array is required');
+      }
+
+      // Mock batch analysis
+      const results = tokenAddresses.map((address) => ({
+        tokenAddress: address,
+        scamProbability: Math.random() * 0.2,
+        risk: 'low',
+        analysisTimestamp: new Date(),
+      }));
+
+      res.json({
+        success: true,
+        data: { results },
+      });
     } catch (error) {
       next(error);
     }
   }
 
-  // Helper method to generate mock historical data
-  generateMockHistoricalData(symbol, days) {
-    const prices = [];
-    const currentPrice = 8.45; // Mock current price for APT
-    const now = Date.now();
-
-    for (let i = days; i >= 0; i--) {
-      const timestamp = now - i * 24 * 60 * 60 * 1000;
-      const randomChange = (Math.random() - 0.5) * 0.1; // ±5% random change
-      const price = currentPrice * (1 + randomChange);
-
-      prices.push({
-        timestamp,
-        price: parseFloat(price.toFixed(6)),
-        date: new Date(timestamp).toISOString(),
+  // New method to get token list from Panora Exchange
+  async getTokenList(req, res, next) {
+    try {
+      const { filter, limit = 100 } = req.query;
+      
+      // Get token list from Aptos service
+      const tokens = await aptosService.getTokenList();
+      
+      // Apply filtering if needed
+      let filteredTokens = tokens;
+      if (filter) {
+        filteredTokens = tokens.filter(token => {
+          // Filter by tag if specified
+          if (token.panoraTags && token.panoraTags.includes(filter)) {
+            return true;
+          }
+          // Filter by name or symbol
+          return token.name.toLowerCase().includes(filter.toLowerCase()) || 
+                 token.symbol.toLowerCase().includes(filter.toLowerCase());
+        });
+      }
+      
+      // Apply limit
+      const limitedTokens = filteredTokens.slice(0, parseInt(limit));
+      
+      res.json({
+        success: true,
+        data: {
+          tokens: limitedTokens,
+          total: tokens.length,
+          filtered: filteredTokens.length,
+          showing: limitedTokens.length
+        }
       });
+    } catch (error) {
+      logger.error('Failed to get token list:', error);
+      next(error);
+    }
+  }
+
+  generateMockHistoricalData(symbol, days) {
+    const data = [];
+    const now = Date.now();
+    const msPerDay = 24 * 60 * 60 * 1000;
+    
+    // Get base price for the symbol
+    let basePrice;
+    switch (symbol.toUpperCase()) {
+      case 'APT':
+        basePrice = 8.5;
+        break;
+      case 'BTC':
+        basePrice = 45000;
+        break;
+      case 'ETH':
+        basePrice = 3000;
+        break;
+      case 'USDC':
+      case 'USDT':
+        basePrice = 1;
+        break;
+      default:
+        basePrice = 10;
     }
 
-    return prices;
+    // Generate hourly data points
+    for (let i = 0; i < days * 24; i++) {
+      const timestamp = now - (days * msPerDay) + (i * msPerDay / 24);
+      
+      // Add some randomness to price (more for volatile assets, less for stablecoins)
+      let volatility;
+      if (['USDC', 'USDT'].includes(symbol.toUpperCase())) {
+        volatility = 0.001; // 0.1% for stablecoins
+      } else {
+        volatility = 0.02; // 2% for other assets
+      }
+      
+      const randomFactor = 1 + (Math.random() * volatility * 2 - volatility);
+      const price = basePrice * randomFactor;
+      
+      data.push({
+        timestamp: new Date(timestamp).toISOString(),
+        price: parseFloat(price.toFixed(6)),
+      });
+      
+      // Update base price for next iteration (simulate price movement)
+      basePrice = price;
+    }
+
+    return data;
   }
 }
 

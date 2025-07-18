@@ -18,6 +18,7 @@ const { WebSocketService } = require('./services/websocket.service');
 const { PriceFeedService } = require('./services/priceFeed.service');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./config/swagger.config');
+const { schedulePriceUpdates } = require('./jobs/updatePrices.job'); // Import cron job
 
 // Load environment variables
 dotenv.config();
@@ -25,7 +26,7 @@ dotenv.config();
 const app = express();
 const server = createServer(app);
 
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:3000,http://localhost:5173').split(',');
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:3000,http://localhost:5173,https://safeswap-token.vercel.app').split(',');
 
 const corsOptions = {
   origin: (origin, callback) => {
@@ -42,11 +43,19 @@ const corsOptions = {
 
 
 const io = new Server(server, {
-  cors: corsOptions
+  cors: {
+    origin: allowedOrigins,
+    methods: ["GET", "POST"],
+    credentials: true
+  },
+  path: '/socket.io'
 });
 
 // Middleware
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false
+}));
 app.use(cors(corsOptions));
 app.use(morgan(process.env.LOG_FORMAT || 'combined'));
 app.use(express.json({ limit: '10mb' }));
@@ -136,6 +145,9 @@ const startServer = async () => {
     const priceFeedService = new PriceFeedService();
     await priceFeedService.initialize();
     logger.info('Price feed service initialized');
+
+    // Start the price update cron job
+    schedulePriceUpdates();
 
     const PORT = process.env.PORT || 5000;
     

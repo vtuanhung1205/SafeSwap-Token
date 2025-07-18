@@ -114,6 +114,20 @@ class PriceFeedService {
 
   async getPriceFromBinance(symbol) {
     try {
+      // Nếu là stablecoin, trả về giá là 1 USD
+      const stablecoins = ['USDT', 'USDC', 'BUSD', 'DAI'];
+      if (stablecoins.includes(symbol.toUpperCase())) {
+        return {
+          symbol: symbol.toUpperCase(),
+          price: 1.0,
+          change24h: 0,
+          marketCap: 0, // Dữ liệu này không quá quan trọng cho stablecoin
+          volume24h: 0,
+          source: 'hardcoded',
+          timestamp: Date.now()
+        };
+      }
+
       const binanceSymbol = `${symbol.toUpperCase()}USDT`;
       
       const [priceResponse, statsResponse] = await Promise.all([
@@ -173,41 +187,14 @@ class PriceFeedService {
     }
   }
 
-  getPrice(symbol) {
-    const cached = this.cache.get(`price_${symbol.toLowerCase()}`);
-    if (cached && Date.now() - cached.timestamp < this.cacheExpiry) {
-      return cached.data;
-    }
-    
-    // Return mock data if no cached price
-    const mockPrices = {
-      'APT': { symbol: 'APT', price: 8.45, change24h: 2.3 },
-      'USDC': { symbol: 'USDC', price: 1.0, change24h: 0.1 },
-      'USDT': { symbol: 'USDT', price: 0.999, change24h: -0.1 }
-    };
-    
-    return mockPrices[symbol.toUpperCase()] || null;
+  async getPrice(symbol) {
+    // Luôn gọi getTokenPrice để lấy giá mới nhất, bỏ qua mock data
+    return this.getTokenPrice(symbol);
   }
 
-  getAllPrices() {
-    const allPrices = {};
-    this.cache.forEach((cached, key) => {
-      if (key.startsWith('price_') && Date.now() - cached.timestamp < this.cacheExpiry) {
-        const symbol = cached.data.symbol;
-        allPrices[symbol] = cached.data;
-      }
-    });
-    
-    // Add mock prices if cache is empty
-    if (Object.keys(allPrices).length === 0) {
-      return {
-        'APT': { symbol: 'APT', price: 8.45, change24h: 2.3 },
-        'USDC': { symbol: 'USDC', price: 1.0, change24h: 0.1 },
-        'USDT': { symbol: 'USDT', price: 0.999, change24h: -0.1 }
-      };
-    }
-    
-    return allPrices;
+  async getAllPrices(symbols = ['BTC', 'ETH', 'APT', 'SOL', 'USDC', 'USDT']) {
+    // Lấy giá cho một danh sách các token phổ biến
+    return this.getMultiplePrices(symbols);
   }
 
   clearCache() {

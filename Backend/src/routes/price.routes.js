@@ -208,4 +208,70 @@ router.post('/analyze', asyncHandler(priceController.analyzeToken.bind(priceCont
  */
 router.post('/batch-analyze', asyncHandler(priceController.batchAnalyzeTokens.bind(priceController)));
 
+/**
+ * @swagger
+ * /api/price/token-list:
+ *   get:
+ *     summary: Get list of tokens on Aptos blockchain
+ *     tags: [Price]
+ *     parameters:
+ *       - in: query
+ *         name: filter
+ *         schema:
+ *           type: string
+ *         description: Filter tokens by name, symbol, or tag
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 100
+ *         description: Maximum number of tokens to return
+ *     responses:
+ *       200:
+ *         description: Token list retrieved successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     tokens:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           symbol:
+ *                             type: string
+ *                             example: APT
+ *                           name:
+ *                             type: string
+ *                             example: Aptos
+ *                           tokenAddress:
+ *                             type: string
+ *                             example: 0x1::aptos_coin::AptosCoin
+ *                           faAddress:
+ *                             type: string
+ *                             example: null
+ *                           decimals:
+ *                             type: integer
+ *                             example: 8
+ *                           logoUrl:
+ *                             type: string
+ *                             format: uri
+ *                             example: https://example.com/logos/apt.png
+ *                           panoraTags:
+ *                             type: array
+ *                             items:
+ *                               type: string
+ *                             example: ["Native"]
+ *       500:
+ *         description: Server error while retrieving token list.
+ */
+router.get('/token-list', asyncHandler(priceController.getTokenList.bind(priceController)));
+
 module.exports = router;
