@@ -7,10 +7,10 @@ const { standardRateLimiter } = require('../middleware/rateLimiter');
 const router = express.Router();
 const swapController = new SwapController();
 
-// @route   GET /api/swap/quote
+// @route   POST /api/swap/quote
 // @desc    Get swap quote
 // @access  Public
-router.get('/quote', asyncHandler(swapController.getQuote.bind(swapController)));
+router.post('/quote', asyncHandler(swapController.getQuote.bind(swapController)));
 
 // @route   POST /api/swap/execute
 // @desc    Execute swap transaction
@@ -22,15 +22,10 @@ router.post('/execute', verifyToken, standardRateLimiter, asyncHandler(swapContr
 // @access  Private
 router.get('/history', verifyToken, asyncHandler(swapController.getSwapHistory.bind(swapController)));
 
-// @route   GET /api/swap/transaction/:transactionId
-// @desc    Get swap transaction status
+// @route   GET /api/swap/history/:transactionId
+// @desc    Get swap transaction details
 // @access  Private
-router.get('/transaction/:transactionId', verifyToken, asyncHandler(swapController.getTransactionStatus.bind(swapController)));
-
-// @route   POST /api/swap/cancel/:transactionId
-// @desc    Cancel pending swap transaction
-// @access  Private
-router.post('/cancel/:transactionId', verifyToken, asyncHandler(swapController.cancelSwap.bind(swapController)));
+router.get('/history/:transactionId', verifyToken, asyncHandler(swapController.getSwapDetails.bind(swapController)));
 
 // @route   GET /api/swap/stats
 // @desc    Get user swap statistics

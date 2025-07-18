@@ -42,4 +42,20 @@ router.put('/profile', verifyToken, asyncHandler(authController.updateProfile.bi
 // @access  Private
 router.post('/logout', verifyToken, asyncHandler(authController.logout.bind(authController)));
 
+// @route   GET /api/auth/validate
+// @desc    Validate user token
+// @access  Private
+router.get('/validate', verifyToken, asyncHandler(authController.validateToken.bind(authController)));
+
+// @route   POST /api/auth/forgot-password
+// @desc    Request password reset
+// @access  Public
+router.post('/forgot-password', strictRateLimiter, asyncHandler(authController.forgotPassword.bind(authController)));
+
+// @route   POST /api/auth/reset-password
+// @desc    Reset password with token
+// @access  Public
+router.post('/reset-password', strictRateLimiter, asyncHandler(authController.resetPassword.bind(authController)));
+
+
 module.exports = router;

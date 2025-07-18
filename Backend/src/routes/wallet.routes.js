@@ -27,6 +27,11 @@ router.get('/info', verifyToken, asyncHandler(walletController.getWalletInfo.bin
 // @access  Private
 router.get('/balance', verifyToken, asyncHandler(walletController.getBalance.bind(walletController)));
 
+// @route   POST /api/wallet/update-balance
+// @desc    Update wallet balance
+// @access  Private
+router.post('/update-balance', verifyToken, asyncHandler(walletController.updateBalance.bind(walletController)));
+
 // @route   GET /api/wallet/transactions
 // @desc    Get wallet transaction history
 // @access  Private
@@ -37,10 +42,10 @@ router.get('/transactions', verifyToken, asyncHandler(walletController.getTransa
 // @access  Private
 router.get('/resources', verifyToken, asyncHandler(walletController.getAccountResources.bind(walletController)));
 
-// @route   GET /api/wallet/validate/:address
+// @route   POST /api/wallet/validate-address
 // @desc    Validate wallet address
 // @access  Public
-router.get('/validate/:address', asyncHandler(walletController.validateAddress.bind(walletController)));
+router.post('/validate-address', asyncHandler(walletController.validateAddress.bind(walletController)));
 
 // @route   POST /api/wallet/fund
 // @desc    Fund wallet from faucet (testnet only)
