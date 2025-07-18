@@ -3,7 +3,6 @@ import {
   ChevronDown,
   User,
   LogOut,
-  Wallet,
   Settings,
   Shield,
   BarChart3,
@@ -14,6 +13,8 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useWebSocket } from "../../hooks/useWebSocket";
 import LoginModal from "../Auth/LoginModal";
 import RegisterModal from "../Auth/RegisterModal";
+import WalletConnect from "../WalletConnect";
+import toast from "react-hot-toast";
 
 const Navbar = () => {
   const { user, isAuthenticated, logout, isLoading } = useAuth();
@@ -33,6 +34,10 @@ const Navbar = () => {
     logout();
     setShowUserMenu(false);
   };
+  
+  const handleWalletConnected = (account) => {
+    toast.success(`Wallet connected: ${account.address.slice(0, 6)}...`);
+  };
 
   const switchToRegister = () => {
     setShowLoginModal(false);
@@ -48,7 +53,7 @@ const Navbar = () => {
     <>
       <nav className="bg-[#18181c] border-b border-[#23232a] px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          {/* Logo */}
+          {/* Logo and WebSocket Status */}
           <div className="flex items-center space-x-3">
             <Link to="/" className="flex items-center space-x-3">
               <div className="w-8 h-8 bg-cyan-600 rounded-full flex items-center justify-center">
@@ -56,7 +61,6 @@ const Navbar = () => {
               </div>
               <span className="text-xl font-bold text-white">SafeSwap</span>
             </Link>
-            {/* WebSocket Status */}
             <div className="flex items-center space-x-2">
               <div
                 className={`w-2 h-2 rounded-full ${
@@ -92,16 +96,6 @@ const Navbar = () => {
               Swap
             </Link>
             <Link
-              to="/feature"
-              className={`px-3 py-2 rounded-lg transition ${
-                location.pathname === "/feature"
-                  ? "text-cyan-400 bg-cyan-600/10"
-                  : "text-gray-300 hover:text-cyan-400"
-              }`}
-            >
-              Feature
-            </Link>
-            <Link
               to="/pricing"
               className={`px-3 py-2 rounded-lg transition ${
                 location.pathname === "/pricing"
@@ -125,15 +119,16 @@ const Navbar = () => {
             )}
           </div>
 
-          {/* User Section */}
+          {/* User and Wallet Section */}
           <div className="flex items-center space-x-4">
+            {/* Wallet Connect Button */}
+            <WalletConnect onWalletConnected={handleWalletConnected} />
+
             {/* Notification Bell */}
             <div className="relative">
               <button
                 className="relative p-2 rounded-full hover:bg-[#23232a] focus:outline-none"
                 onClick={() => setShowNotifications((prev) => !prev)}
-                onMouseEnter={() => setShowNotifications(true)}
-                onMouseLeave={() => setShowNotifications(false)}
               >
                 <Bell className="w-6 h-6 text-cyan-400" />
                 {notifications.length > 0 && (
@@ -142,21 +137,15 @@ const Navbar = () => {
                   </span>
                 )}
               </button>
-              {/* Notification Dropdown */}
               {showNotifications && (
                 <div
                   className="absolute right-0 mt-2 w-80 bg-[#18181c] border border-[#23232a] rounded-xl shadow-lg py-2 z-50"
-                  onMouseEnter={() => setShowNotifications(true)}
                   onMouseLeave={() => setShowNotifications(false)}
                 >
                   <div className="px-4 py-2 border-b border-[#23232a] text-white font-semibold">
                     Notifications
                   </div>
-                  {notifications.length === 0 ? (
-                    <div className="px-4 py-4 text-gray-400 text-center">
-                      No notifications
-                    </div>
-                  ) : (
+                  {notifications.length > 0 ? (
                     <ul className="max-h-60 overflow-y-auto">
                       {notifications.map((n) => (
                         <li
@@ -167,10 +156,15 @@ const Navbar = () => {
                         </li>
                       ))}
                     </ul>
+                  ) : (
+                     <div className="px-4 py-4 text-gray-400 text-center">
+                      No notifications
+                    </div>
                   )}
                 </div>
               )}
             </div>
+
             {!isLoading && (
               <>
                 {isAuthenticated ? (
@@ -192,25 +186,24 @@ const Navbar = () => {
                       )}
                       <div className="text-left">
                         <p className="text-white font-medium text-sm">
-                          {user?.name}
+                          {user?.name || "User"}
                         </p>
-                        <p className="text-gray-400 text-xs">{user?.email}</p>
+                        <p className="text-gray-400 text-xs">
+                          {user?.email}
+                        </p>
                       </div>
                       <ChevronDown size={16} className="text-gray-400" />
                     </button>
 
-                    {/* User Dropdown */}
                     {showUserMenu && (
                       <div className="absolute right-0 mt-2 w-64 bg-[#18181c] border border-[#23232a] rounded-xl shadow-lg py-2 z-50">
                         <div className="px-4 py-2 border-b border-[#23232a]">
-                          <p className="text-white font-medium">{user?.name}</p>
-                          <p className="text-gray-400 text-sm">{user?.email}</p>
-                          {user?.walletAddress && (
-                            <p className="text-cyan-500 text-xs mt-1">
-                              {user.walletAddress.slice(0, 6)}...
-                              {user.walletAddress.slice(-4)}
-                            </p>
-                          )}
+                          <p className="text-white font-medium">
+                            {user?.name}
+                          </p>
+                          <p className="text-gray-400 text-sm">
+                            {user?.email}
+                          </p>
                         </div>
 
                         <Link
@@ -221,16 +214,6 @@ const Navbar = () => {
                           <BarChart3 size={16} />
                           <span>Dashboard</span>
                         </Link>
-
-                        <Link
-                          to="/wallet"
-                          className="w-full px-4 py-2 text-left text-gray-300 hover:bg-[#23232a] transition flex items-center space-x-2"
-                          onClick={() => setShowUserMenu(false)}
-                        >
-                          <Wallet size={16} />
-                          <span>Wallet</span>
-                        </Link>
-
                         <Link
                           to="/settings"
                           className="w-full px-4 py-2 text-left text-gray-300 hover:bg-[#23232a] transition flex items-center space-x-2"
@@ -239,30 +222,27 @@ const Navbar = () => {
                           <Settings size={16} />
                           <span>Settings</span>
                         </Link>
-
-                        <hr className="border-[#23232a] my-2" />
-
                         <button
                           onClick={handleLogout}
                           className="w-full px-4 py-2 text-left text-red-400 hover:bg-[#23232a] transition flex items-center space-x-2"
                         >
                           <LogOut size={16} />
-                          <span>Sign Out</span>
+                          <span>Logout</span>
                         </button>
                       </div>
                     )}
                   </div>
                 ) : (
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-4">
                     <button
                       onClick={() => setShowLoginModal(true)}
-                      className="px-4 py-2 text-cyan-600 hover:text-cyan-500 font-medium transition"
+                      className="px-4 py-2 rounded-lg text-gray-300 hover:text-cyan-400 transition"
                     >
                       Sign In
                     </button>
                     <button
                       onClick={() => setShowRegisterModal(true)}
-                      className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white font-medium rounded-xl transition"
+                      className="px-4 py-2 rounded-lg bg-cyan-600 text-white hover:bg-cyan-700 transition"
                     >
                       Sign Up
                     </button>
@@ -272,28 +252,21 @@ const Navbar = () => {
             )}
           </div>
         </div>
-
-        {/* Click outside to close user menu */}
-        {showUserMenu && (
-          <div
-            className="fixed inset-0 z-40"
-            onClick={() => setShowUserMenu(false)}
-          />
-        )}
       </nav>
 
-      {/* Auth Modals */}
-      <LoginModal
-        isOpen={showLoginModal}
-        onClose={() => setShowLoginModal(false)}
-        onSwitchToRegister={switchToRegister}
-      />
-
-      <RegisterModal
-        isOpen={showRegisterModal}
-        onClose={() => setShowRegisterModal(false)}
-        onSwitchToLogin={switchToLogin}
-      />
+      {/* Modals */}
+      {showLoginModal && (
+        <LoginModal
+          onClose={() => setShowLoginModal(false)}
+          onSwitchToRegister={switchToRegister}
+        />
+      )}
+      {showRegisterModal && (
+        <RegisterModal
+          onClose={() => setShowRegisterModal(false)}
+          onSwitchToLogin={switchToLogin}
+        />
+      )}
     </>
   );
 };

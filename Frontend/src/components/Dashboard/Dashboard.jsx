@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import api from '../../utils/api';
+import { swapAPI, handleApiError } from '../../utils/api';
+import toast from 'react-hot-toast';
+import { useWallet } from '@aptos-labs/wallet-adapter-react';
 
 // --- Helper Components for a cleaner structure ---
 
@@ -27,39 +29,52 @@ const StatCard = ({ icon, title, value }) => (
 // --- Main Dashboard Component ---
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
+  const { connected } = useWallet();
   const [swapHistory, setSwapHistory] = useState([]);
   const [stats, setStats] = useState({ totalSwaps: 0, totalVolume: 0, successRate: 0, avgAmount: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (user) {
+    if (isAuthenticated) {
       fetchDashboardData();
+    } else {
+      setLoading(false);
     }
-  }, [user]);
+  }, [isAuthenticated, connected]);
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      const fetcher = {
-        getSwapHistory: () => api.get('/swap/history'),
-        getSwapStats: () => api.get('/swap/stats'),
-      };
-
-      const [historyRes, statsRes] = await Promise.all([
-        fetcher.getSwapHistory(),
-        fetcher.getSwapStats()
+      // Use Promise.all to fetch data in parallel
+      const [historyResponse, statsResponse] = await Promise.all([
+        swapAPI.getHistory(),
+        swapAPI.getStats()
       ]);
 
-      setSwapHistory(historyRes.data.swaps || []);
-      setStats(statsRes.data || { totalSwaps: 0, totalVolume: 0, successRate: 0, avgAmount: 0 });
+      if (historyResponse.data.success) {
+        setSwapHistory(historyResponse.data.data?.swaps || []);
+      } else {
+        toast.error('Failed to load swap history');
+      }
 
+      if (statsResponse.data.success) {
+        setStats(statsResponse.data.data || { 
+          totalSwaps: 0, 
+          totalVolume: 0, 
+          successRate: 0, 
+          avgAmount: 0 
+        });
+      } else {
+        toast.error('Failed to load swap statistics');
+      }
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
-      setError('Failed to load dashboard data. Please try again later.');
+      setError(handleApiError(err) || 'Failed to load dashboard data. Please try again later.');
+      toast.error('Failed to load dashboard data');
     } finally {
       setLoading(false);
     }
@@ -71,7 +86,7 @@ const Dashboard = () => {
   const formatDate = (dateString) => new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
   const getStatusClasses = (status) => {
-    switch (status) {
+    switch (status?.toLowerCase()) {
       case 'completed': return 'bg-green-500/10 text-green-400';
       case 'pending': return 'bg-yellow-500/10 text-yellow-400';
       case 'failed': return 'bg-red-500/10 text-red-400';
@@ -87,12 +102,40 @@ const Dashboard = () => {
 
   // --- Render Logic ---
 
+  if (!isAuthenticated) {
+    return (
+      <div className="flex flex-col items-center justify-center h-96 text-center p-8">
+        <div className="text-5xl mb-4">🔒</div>
+        <h2 className="text-2xl font-bold text-white mb-2">Authentication Required</h2>
+        <p className="text-gray-400 mb-6">Please sign in to view your dashboard.</p>
+        <button 
+          onClick={() => document.querySelector('button')?.click()}
+          className="px-6 py-2 bg-cyan-600 text-white font-semibold rounded-lg hover:bg-cyan-700 transition-colors"
+        >
+          Sign In
+        </button>
+      </div>
+    );
+  }
+
   if (loading) {
     return <div className="flex items-center justify-center h-96 text-gray-400">Loading Dashboard...</div>;
   }
 
   if (error) {
-    return <div className="flex items-center justify-center h-96 text-red-400 bg-red-500/10 rounded-lg p-8">{error}</div>;
+    return (
+      <div className="flex flex-col items-center justify-center h-96 text-red-400 bg-red-500/10 rounded-lg p-8">
+        <div className="text-3xl mb-4">❌</div>
+        <h3 className="text-xl font-bold mb-2">Error Loading Dashboard</h3>
+        <p className="text-center mb-4">{error}</p>
+        <button 
+          onClick={fetchDashboardData}
+          className="px-4 py-2 bg-cyan-600 text-white font-semibold rounded-lg hover:bg-cyan-700 transition-colors"
+        >
+          Try Again
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -116,8 +159,8 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-12">
         <StatCard icon="🔄" title="Total Swaps" value={stats.totalSwaps} />
         <StatCard icon="💰" title="Total Volume" value={formatCurrency(stats.totalVolume)} />
-        <StatCard icon="📊" title="Success Rate" value={`${stats.successRate.toFixed(1)}%`} />
-        <StatCard icon="📈" title="Avg. Amount" value={formatCurrency(stats.avgAmount)} />
+        <StatCard icon="📊" title="Success Rate" value={`${stats.successRate?.toFixed(1) || 0}%`} />
+        <StatCard icon="📈" title="Avg. Amount" value={formatCurrency(stats.avgAmount || 0)} />
       </div>
 
       {/* Swap History Section */}
@@ -153,8 +196,8 @@ const Dashboard = () => {
               </thead>
               <tbody>
                 {swapHistory.map((swap, index) => (
-                  <tr key={swap._id || index} className="border-b border-[#23232a] last:border-none hover:bg-gray-800/50 transition-colors">
-                    <td className="p-4 text-gray-300">{formatDate(swap.createdAt)}</td>
+                  <tr key={swap._id || swap.id || index} className="border-b border-[#23232a] last:border-none hover:bg-gray-800/50 transition-colors">
+                    <td className="p-4 text-gray-300">{formatDate(swap.createdAt || swap.timestamp || new Date())}</td>
                     <td className="p-4">
                       <div className="flex items-center">
                         <span className="font-semibold">{swap.fromAmount} {swap.fromToken}</span>
@@ -165,7 +208,7 @@ const Dashboard = () => {
                     <td className="p-4 font-mono">{formatCurrency(swap.usdValue || 0)}</td>
                     <td className="p-4">
                       <span className={`px-3 py-1 text-xs font-semibold rounded-full capitalize ${getStatusClasses(swap.status)}`}>
-                        {swap.status}
+                        {swap.status || 'pending'}
                       </span>
                     </td>
                     <td className="p-4">

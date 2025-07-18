@@ -1,48 +1,60 @@
 import React, { useState, useEffect } from "react";
 import { Copy, ArrowDownCircle, ArrowUpCircle, Shield } from "lucide-react";
-
-const transactions = [
-  {
-    id: 1,
-    type: "Deposit",
-    amount: 500,
-    currency: "USDT",
-    date: "2024-06-01",
-    status: "Completed",
-  },
-  {
-    id: 2,
-    type: "Withdraw",
-    amount: 200,
-    currency: "USDT",
-    date: "2024-05-28",
-    status: "Completed",
-  },
-  {
-    id: 3,
-    type: "Deposit",
-    amount: 950,
-    currency: "USDT",
-    date: "2024-05-20",
-    status: "Completed",
-  },
-];
+import { useAuth } from "../../contexts/AuthContext";
+import { walletAPI, handleApiError } from "../../utils/api";
+import { useWallet } from "@aptos-labs/wallet-adapter-react";
+import toast from "react-hot-toast";
 
 const Wallet = () => {
+  const { user } = useAuth();
+  const { connected, account } = useWallet();
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
-  const walletAddress = "0x1234...abcd";
-  const balance = 1250.0;
+  const [walletInfo, setWalletInfo] = useState(null);
+  const [transactions, setTransactions] = useState([]);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 800);
-    return () => clearTimeout(timer);
-  }, []);
+    if (connected && account) {
+      fetchWalletData();
+    } else {
+      setLoading(false);
+    }
+  }, [connected, account]);
+
+  const fetchWalletData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const [walletInfoResponse, transactionsResponse] = await Promise.all([
+        walletAPI.getInfo(),
+        walletAPI.getTransactions(),
+      ]);
+
+      if (walletInfoResponse.data.success) {
+        setWalletInfo(walletInfoResponse.data.data.wallet);
+      }
+      
+      if (transactionsResponse.data.success) {
+        setTransactions(transactionsResponse.data.data.transactions || []);
+      }
+    } catch (err) {
+      console.error("Error fetching wallet data:", err);
+      setError(handleApiError(err));
+      toast.error("Failed to load wallet data");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(walletAddress);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1200);
+    if (account?.address) {
+      navigator.clipboard.writeText(account.address);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1200);
+      toast.success("Address copied to clipboard");
+    }
   };
 
   if (loading) {
@@ -52,6 +64,35 @@ const Wallet = () => {
       </div>
     );
   }
+
+  if (!connected || !account) {
+    return (
+      <div className="min-h-screen from-[#18181c] to-[#23232a] text-white px-4 py-12 md:px-12 lg:px-48">
+        <div className="max-w-3xl mx-auto text-center">
+          <div className="w-20 h-20 mx-auto rounded-full bg-cyan-600/20 flex items-center justify-center mb-6">
+            <Shield size={36} className="text-cyan-400" />
+          </div>
+          <h2 className="text-2xl font-bold mb-4">Wallet Not Connected</h2>
+          <p className="text-gray-400 mb-6">
+            Please connect your wallet to view your balance and transaction history.
+          </p>
+          <button 
+            onClick={() => document.querySelector('.connect-wallet-btn')?.click()}
+            className="bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-3 rounded-xl font-semibold shadow transition"
+          >
+            Connect Wallet
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const walletAddress = account?.address || "";
+  const formattedAddress = walletAddress ? 
+    `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}` : 
+    "Unknown";
+  
+  const balance = walletInfo?.balance || 0;
 
   return (
     <div className="min-h-screen from-[#18181c] to-[#23232a] text-white px-4 py-12 md:px-12 lg:px-48">
@@ -65,7 +106,7 @@ const Wallet = () => {
             <div>
               <div className="text-gray-300 text-sm mb-1 flex items-center gap-2">
                 <span>Wallet Address:</span>
-                <span className="font-mono text-cyan-200">{walletAddress}</span>
+                <span className="font-mono text-cyan-200">{formattedAddress}</span>
                 <button
                   onClick={handleCopy}
                   className="ml-1 p-1 rounded hover:bg-cyan-800/30 transition"
@@ -79,7 +120,7 @@ const Wallet = () => {
               </div>
               <div className="text-3xl md:text-4xl font-bold text-white">
                 {balance.toLocaleString()}{" "}
-                <span className="text-cyan-400">USDT</span>
+                <span className="text-cyan-400">APT</span>
               </div>
               <div className="text-gray-400 text-xs mt-1">
                 Available Balance
@@ -103,51 +144,57 @@ const Wallet = () => {
           Transaction History
         </h2>
         <div className="overflow-x-auto">
-          <table className="min-w-full text-left text-gray-300">
-            <thead>
-              <tr className="border-b border-[#23232a]">
-                <th className="py-2 px-3">Type</th>
-                <th className="py-2 px-3">Amount</th>
-                <th className="py-2 px-3">Date</th>
-                <th className="py-2 px-3">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {transactions.map((tx) => (
-                <tr
-                  key={tx.id}
-                  className="hover:bg-[#23232a]/60 transition rounded-lg"
-                >
-                  <td className="py-2 px-3 flex items-center gap-2">
-                    {tx.type === "Deposit" ? (
-                      <ArrowDownCircle className="text-green-400" size={18} />
-                    ) : (
-                      <ArrowUpCircle className="text-pink-400" size={18} />
-                    )}
-                    <span
-                      className={
-                        tx.type === "Deposit"
-                          ? "text-green-400 font-semibold"
-                          : "text-pink-400 font-semibold"
-                      }
-                    >
-                      {tx.type}
-                    </span>
-                  </td>
-                  <td className="py-2 px-3">
-                    {tx.type === "Deposit" ? "+" : "-"}
-                    {tx.amount} {tx.currency}
-                  </td>
-                  <td className="py-2 px-3">{tx.date}</td>
-                  <td className="py-2 px-3">
-                    <span className="bg-cyan-900/40 text-cyan-300 px-3 py-1 rounded-full text-xs font-semibold">
-                      {tx.status}
-                    </span>
-                  </td>
+          {transactions.length === 0 ? (
+            <div className="text-center py-10 text-gray-400">
+              No transaction history available
+            </div>
+          ) : (
+            <table className="min-w-full text-left text-gray-300">
+              <thead>
+                <tr className="border-b border-[#23232a]">
+                  <th className="py-2 px-3">Type</th>
+                  <th className="py-2 px-3">Amount</th>
+                  <th className="py-2 px-3">Date</th>
+                  <th className="py-2 px-3">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {transactions.map((tx) => (
+                  <tr
+                    key={tx.id || tx.hash}
+                    className="hover:bg-[#23232a]/60 transition rounded-lg"
+                  >
+                    <td className="py-2 px-3 flex items-center gap-2">
+                      {tx.type === "Deposit" ? (
+                        <ArrowDownCircle className="text-green-400" size={18} />
+                      ) : (
+                        <ArrowUpCircle className="text-pink-400" size={18} />
+                      )}
+                      <span
+                        className={
+                          tx.type === "Deposit"
+                            ? "text-green-400 font-semibold"
+                            : "text-pink-400 font-semibold"
+                        }
+                      >
+                        {tx.type}
+                      </span>
+                    </td>
+                    <td className="py-2 px-3">
+                      {tx.type === "Deposit" ? "+" : "-"}
+                      {tx.amount} {tx.currency || "APT"}
+                    </td>
+                    <td className="py-2 px-3">{new Date(tx.timestamp || tx.date).toLocaleDateString()}</td>
+                    <td className="py-2 px-3">
+                      <span className="bg-cyan-900/40 text-cyan-300 px-3 py-1 rounded-full text-xs font-semibold">
+                        {tx.status || "Completed"}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
 

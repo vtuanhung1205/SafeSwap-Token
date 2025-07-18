@@ -48,7 +48,7 @@ class SwapController {
         try {
           const fromPriceData = await priceFeedService.getPrice(fromToken);
           const toPriceData = await priceFeedService.getPrice(toToken);
-          
+
           if (!fromPriceData || !toPriceData) {
             return res.status(400).json({
               success: false,

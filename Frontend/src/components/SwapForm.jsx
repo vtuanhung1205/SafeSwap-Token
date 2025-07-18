@@ -11,6 +11,8 @@ import { useAuth } from "../contexts/AuthContext";
 import { useWebSocket } from "../hooks/useWebSocket";
 import { swapAPI, priceAPI, handleApiError } from "../utils/api";
 import toast from "react-hot-toast";
+import { useWallet } from "@aptos-labs/wallet-adapter-react"; // Import useWallet
+import WalletConnect from "./WalletConnect"; // Updated import path
 
 // --- Custom Hook for Debouncing ---
 const useDebounce = (value, delay) => {
@@ -93,6 +95,7 @@ const tokens = [
 
 const SwapForm = () => {
   const { user, isAuthenticated } = useAuth();
+  const { connected: isWalletConnected } = useWallet(); // Lấy trạng thái kết nối ví
   const {
     isConnected,
     getFormattedPrice,
@@ -135,11 +138,11 @@ const SwapForm = () => {
     setIsLoadingQuote(true);
     try {
       const response = await swapAPI.getQuote(fromToken.symbol, toToken.symbol, debouncedFromAmount);
-      if (response.data.success) {
-        const quoteData = response.data.data.quote;
-        setQuote(quoteData);
-        setToAmount(quoteData.toAmount.toFixed(6));
-        analyzeToken(toToken.symbol);
+        if (response.data.success) {
+          const quoteData = response.data.data.quote;
+          setQuote(quoteData);
+          setToAmount(quoteData.toAmount.toFixed(6));
+          analyzeToken(toToken.symbol);
       }
     } catch (error) {
       console.error("Quote error:", error);
@@ -165,10 +168,10 @@ const SwapForm = () => {
         return;
       }
 
-      const mockAddress = `0x${symbol.toLowerCase()}${"0".repeat(40)}`;
-      const response = await priceAPI.analyzeToken(mockAddress, symbol, symbol);
-      if (response.data.success) {
-        setScamAnalysis(response.data.data.analysis);
+        const mockAddress = `0x${symbol.toLowerCase()}${"0".repeat(40)}`;
+        const response = await priceAPI.analyzeToken(mockAddress, symbol, symbol);
+        if (response.data.success) {
+          setScamAnalysis(response.data.data.analysis);
       }
     } catch (error) {
       console.error("Token analysis error:", error);
@@ -188,6 +191,10 @@ const SwapForm = () => {
       toast.error("Please sign in to swap tokens");
       return;
     }
+    if (!isWalletConnected) {
+      toast.error("Please connect your wallet to swap tokens");
+      return;
+    }
     if (!quote) {
       toast.error("Please get a quote first");
       return;
@@ -199,14 +206,15 @@ const SwapForm = () => {
     }
     setIsSwapping(true);
     try {
-      const response = await swapAPI.executeSwap(fromToken.symbol, toToken.symbol, quote.fromAmount, quote.toAmount, "quote_id");
-      if (response.data.success) {
-        const transaction = response.data.data.transaction;
-        toast.success(`Swap initiated! Transaction: ${transaction.hash.slice(0, 10)}...`);
-        setFromAmount("");
-        setToAmount("");
-        setQuote(null);
-        setScamAnalysis(null);
+      // Sửa lỗi: Gửi quote.quoteId thật thay vì chuỗi hardcoded
+      const response = await swapAPI.executeSwap(fromToken.symbol, toToken.symbol, quote.fromAmount, quote.toAmount, quote.quoteId);
+        if (response.data.success) {
+          const transaction = response.data.data.transaction;
+          toast.success(`Swap initiated! Transaction: ${transaction.hash.slice(0, 10)}...`);
+          setFromAmount("");
+          setToAmount("");
+          setQuote(null);
+          setScamAnalysis(null);
       }
     } catch (error) {
       console.error("Swap error:", error);
@@ -233,11 +241,11 @@ const SwapForm = () => {
         <div className="text-center mb-8">
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-3">
             Swap Anytime
-          </h2>
+      </h2>
           <p className="text-lg text-gray-400">
             Secure, fast, and decentralized.
           </p>
-        </div>
+      </div>
 
         <div className="relative group">
           <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-600 to-pink-600 rounded-2xl blur-lg opacity-20 group-hover:opacity-40 transition duration-500"></div>
@@ -259,7 +267,7 @@ const SwapForm = () => {
                   </div>
                 )}
               </div>
-            </div>
+          </div>
 
             {/* From Token */}
             <div className="mb-4">
@@ -277,21 +285,21 @@ const SwapForm = () => {
                   <span className="font-semibold text-white">{fromToken.symbol}</span>
                   <ChevronDown className="w-4 h-4 text-gray-400" />
                 </button>
-                <input
-                  type="number"
+            <input
+              type="number"
                   placeholder="0.0"
-                  value={fromAmount}
-                  onChange={(e) => setFromAmount(e.target.value)}
+              value={fromAmount}
+              onChange={(e) => setFromAmount(e.target.value)}
                   className="flex-1 bg-transparent text-white text-xl font-semibold focus:outline-none"
-                />
-              </div>
+            />
+          </div>
               <div className="flex justify-between text-sm mt-2 px-1">
                 <span className="text-gray-400">
                   {fromToken.symbol} Price: {getFormattedPrice(fromToken.symbol)}
                 </span>
                 <PriceChange symbol={fromToken.symbol} />
-              </div>
-            </div>
+          </div>
+        </div>
 
             {/* Swap Button */}
             <div className="flex justify-center -my-2 relative z-10">
@@ -300,8 +308,8 @@ const SwapForm = () => {
                 onClick={swapTokens}
               >
                 <ArrowUpDown className="w-5 h-5 text-cyan-400" />
-              </button>
-            </div>
+          </button>
+        </div>
 
             {/* To Token */}
             <div className="mb-6">
@@ -318,7 +326,7 @@ const SwapForm = () => {
                   />
                   <span className="font-semibold text-white">{toToken.symbol}</span>
                   <ChevronDown className="w-4 h-4 text-gray-400" />
-                </button>
+            </button>
                 <input
                   type="number"
                   placeholder="0.0"
@@ -326,14 +334,14 @@ const SwapForm = () => {
                   readOnly
                   className="flex-1 bg-transparent text-white text-xl font-semibold focus:outline-none"
                 />
-              </div>
+          </div>
               <div className="flex justify-between text-sm mt-2 px-1">
                 <span className="text-gray-400">
                   {toToken.symbol} Price: {getFormattedPrice(toToken.symbol)}
                 </span>
                 <PriceChange symbol={toToken.symbol} />
-              </div>
-            </div>
+          </div>
+        </div>
 
             {/* Scam Warning */}
             {scamAnalysis && scamAnalysis.riskScore > 50 && (
@@ -355,10 +363,10 @@ const SwapForm = () => {
                         </span>
                       )}
                     </p>
-                  </div>
-                </div>
-              </div>
-            )}
+            </div>
+            </div>
+          </div>
+        )}
 
             {/* Quote Info */}
             {quote && (
@@ -381,29 +389,30 @@ const SwapForm = () => {
                     <span className="text-white">
                       {quote.fee.toFixed(6)} {fromToken.symbol}
                     </span>
-                  </div>
+            </div>
                   <div className="flex justify-between">
                     <span className="text-gray-400">Slippage Tolerance</span>
                     <span className="text-white">{quote.slippage || 0.5}%</span>
-                  </div>
-                </div>
-              </div>
-            )}
+          </div>
+            </div>
+          </div>
+        )}
 
             {/* Swap Button */}
-            <button
+        <button
               className={`w-full py-4 rounded-xl font-bold text-white transition-all ${
-                isAuthenticated
+                isWalletConnected
                   ? "bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600"
                   : "bg-gray-600"
               }`}
-              onClick={handleSwap}
+          onClick={handleSwap}
               disabled={
                 !fromAmount ||
                 parseFloat(fromAmount) <= 0 ||
                 !toAmount ||
                 isLoadingQuote ||
-                isSwapping
+                isSwapping ||
+                !isWalletConnected // Vô hiệu hóa nếu ví chưa kết nối
               }
             >
               {isSwapping ? (
@@ -411,7 +420,7 @@ const SwapForm = () => {
                   <Loader2 className="w-5 h-5 animate-spin" />
                   Swapping...
                 </span>
-              ) : !isAuthenticated ? (
+              ) : !isWalletConnected ? ( // Thay đổi điều kiện kiểm tra
                 <span className="flex items-center justify-center gap-2">
                   <Wallet className="w-5 h-5" />
                   Connect Wallet to Swap
@@ -424,7 +433,7 @@ const SwapForm = () => {
               ) : (
                 <span>Swap Tokens</span>
               )}
-            </button>
+        </button>
           </div>
         </div>
       </div>

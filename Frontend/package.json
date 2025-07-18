@@ -22,8 +22,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@aptos-labs/wallet-adapter-ant-design": "^5.1.0",
+    "@aptos-labs/wallet-adapter-core": "^6.0.1",
+    "@aptos-labs/wallet-adapter-react": "^7.0.1",
+    "@martianwallet/aptos-wallet-adapter": "^0.0.5",
+    "@pontem/aptos-wallet-adapter": "^0.10.1",
+    "@rise-wallet/wallet-adapter": "^0.1.2",
     "axios": "^1.6.0",
     "clsx": "^2.0.0",
+    "fewcha-plugin-wallet-adapter": "^0.1.3",
     "lucide-react": "^0.263.0",
     "nprogress": "^0.2.0",
     "react": "^18.2.0",

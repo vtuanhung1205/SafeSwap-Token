@@ -12,71 +12,71 @@ export const useWebSocket = () => {
   const socketRef = useRef(null);
 
   useEffect(() => {
-    // Initialize socket connection
-    socketRef.current = io(SOCKET_URL, {
+      // Initialize socket connection
+      socketRef.current = io(SOCKET_URL, {
       path: '/socket.io', // Chỉ định đường dẫn ở đây
-      transports: ['websocket', 'polling'],
-      timeout: 5000,
-    });
+        transports: ['websocket', 'polling'],
+        timeout: 10000,
+      });
 
-    const socket = socketRef.current;
+      const socket = socketRef.current;
 
-    // Connection event handlers
-    socket.on('connect', () => {
-      console.log('WebSocket connected');
-      setIsConnected(true);
-    });
+      // Connection event handlers
+      socket.on('connect', () => {
+        console.log('WebSocket connected');
+        setIsConnected(true);
+      });
 
-    socket.on('disconnect', () => {
-      console.log('WebSocket disconnected');
-      setIsConnected(false);
-    });
+      socket.on('disconnect', () => {
+        console.log('WebSocket disconnected');
+        setIsConnected(false);
+      });
 
-    socket.on('connect_error', (error) => {
-      console.error('WebSocket connection error:', error);
-      setIsConnected(false);
-    });
+      socket.on('connect_error', (error) => {
+        console.error('WebSocket connection error:', error);
+        setIsConnected(false);
+      });
 
-    // Price update handlers
-    socket.on('initial_prices', (data) => {
-      if (data.success && data.data) {
-        const priceMap = {};
-        data.data.forEach(price => {
-          priceMap[price.symbol] = price;
-        });
-        setPrices(priceMap);
-        setLastUpdate(new Date());
-        console.log('Initial prices loaded:', Object.keys(priceMap).length, 'tokens');
-      }
-    });
+      // Price update handlers
+      socket.on('initial_prices', (data) => {
+        if (data.success && data.data) {
+          const priceMap = {};
+          data.data.forEach(price => {
+            priceMap[price.symbol] = price;
+          });
+          setPrices(priceMap);
+          setLastUpdate(new Date());
+          console.log('Initial prices loaded:', Object.keys(priceMap).length, 'tokens');
+        }
+      });
 
-    socket.on('price_update', (data) => {
-      if (data.type === 'price_update' && data.data) {
-        setPrices(prev => ({
-          ...prev,
-          [data.data.symbol]: {
-            ...prev[data.data.symbol],
-            ...data.data,
-          }
-        }));
-        setLastUpdate(new Date());
-      }
-    });
+      socket.on('price_update', (data) => {
+        if (data.type === 'price_update' && data.data) {
+          setPrices(prev => ({
+            ...prev,
+            [data.data.symbol]: {
+              ...prev[data.data.symbol],
+              ...data.data,
+            }
+          }));
+          setLastUpdate(new Date());
+        }
+      });
 
-    socket.on('subscription_success', (data) => {
-      console.log('Subscribed to tokens:', data.subscribed);
-    });
+      socket.on('subscription_success', (data) => {
+        console.log('Subscribed to tokens:', data.subscribed);
+      });
 
-    socket.on('unsubscription_success', (data) => {
-      console.log('Unsubscribed from tokens:', data.unsubscribed);
-    });
+      socket.on('unsubscription_success', (data) => {
+        console.log('Unsubscribed from tokens:', data.unsubscribed);
+      });
 
-    // Cleanup on unmount
-    return () => {
-      if (socket) {
-        socket.disconnect();
-      }
-    };
+      // Cleanup on unmount
+      return () => {
+        if (socket) {
+          socket.disconnect();
+        }
+      };
   }, []);
 
   const subscribeToTokens = (tokens) => {

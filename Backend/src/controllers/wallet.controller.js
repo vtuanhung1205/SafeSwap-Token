@@ -10,8 +10,9 @@ const aptosService = new AptosService();
 class WalletController {
   async connectWallet(req, res, next) {
     try {
+      console.log("Received wallet connect request:", req.body); // Log the request body
       const { address, publicKey, signature } = req.body;
-      const userId = req.userId;
+      const userId = req.userId || 'guest'; // Allow guest connections
 
       // Validation
       if (!address || !publicKey) {
