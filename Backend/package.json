@@ -2,11 +2,11 @@
   "name": "safeswap-backend",
   "version": "1.0.0",
   "description": "SafeSwap Backend API - Token Swap Platform on Aptos",
-  "main": "debug-server.js",
+  "main": "src/server.js",
   "scripts": {
-    "dev": "nodemon debug-server.js",
-    "start": "node debug-server.js",
-    "start:prod": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
+    "debug": "node debug-server.js",
     "build": "echo 'No build step required for Node.js'",
     "lint": "eslint src/**/*.js",
     "test": "jest"

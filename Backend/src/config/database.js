@@ -3,8 +3,8 @@ const { logger } = require('../utils/logger');
 
 const connectDatabase = async () => {
   try {
-    // Use local MongoDB first for testing, fallback to Atlas
-    const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/safeswap';
+    // MongoDB Atlas URI from environment variables
+    const mongoUri = process.env.MONGODB_URI;
     
     if (!mongoUri) {
       throw new Error('MONGODB_URI not found in environment variables');
