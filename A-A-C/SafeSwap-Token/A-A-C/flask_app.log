@@ -1,2 +1,0 @@
-[2025-05-24 22:19:22,254] {D:\ITHackathon\Rug-Pull-Detect\RugPullDetectionModel\app.py:125} ERROR - Error during prediction: cannot access local variable 'warning' where it is not associated with a value
-[2025-05-24 22:19:27,013] {D:\ITHackathon\Rug-Pull-Detect\RugPullDetectionModel\app.py:125} ERROR - Error during prediction: cannot access local variable 'warning' where it is not associated with a value
