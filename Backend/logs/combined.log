@@ -50,3 +50,33 @@
 {"level":"warn","message":"AI_SERVICE_URL is not set. Using fallback scam detection.","service":"safeswap-backend","timestamp":"2025-07-18 13:31:00"}
 {"level":"info","message":"🔗 Connecting to MongoDB: safeswap.6pk7wds.mongodb.net/safeswap?retryWrites=true&w=majority&appName=SafeSwap","service":"safeswap-backend","timestamp":"2025-07-18 13:31:00"}
 {"code":8000,"codeName":"AtlasError","connectionGeneration":0,"errorLabelSet":{},"errorResponse":{"code":8000,"codeName":"AtlasError","errmsg":"bad auth : Authentication failed.","ok":0},"level":"error","message":"Database connection failed: bad auth : Authentication failed.","ok":0,"service":"safeswap-backend","stack":"MongoServerError: bad auth : Authentication failed.\n    at Connection.sendCommand (D:\\Attacker\\SafeSwap-Token\\Backend\\node_modules\\mongodb\\lib\\cmap\\connection.js:305:27)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async Connection.command (D:\\Attacker\\SafeSwap-Token\\Backend\\node_modules\\mongodb\\lib\\cmap\\connection.js:333:26)\n    at async executeScram (D:\\Attacker\\SafeSwap-Token\\Backend\\node_modules\\mongodb\\lib\\cmap\\auth\\scram.js:79:22)\n    at async ScramSHA256.auth (D:\\Attacker\\SafeSwap-Token\\Backend\\node_modules\\mongodb\\lib\\cmap\\auth\\scram.js:39:16)\n    at async performInitialHandshake (D:\\Attacker\\SafeSwap-Token\\Backend\\node_modules\\mongodb\\lib\\cmap\\connect.js:104:13)\n    at async connect (D:\\Attacker\\SafeSwap-Token\\Backend\\node_modules\\mongodb\\lib\\cmap\\connect.js:24:9)","timestamp":"2025-07-18 13:31:03"}
+{"level":"warn","message":"AI_SERVICE_URL is not set. Using fallback scam detection.","service":"safeswap-backend","timestamp":"2025-07-18 13:58:45"}
+{"level":"info","message":"🔗 Connecting to MongoDB: safeswap.6pk7wds.mongodb.net/safeswap?retryWrites=true&w=majority&appName=SafeSwap","service":"safeswap-backend","timestamp":"2025-07-18 13:58:45"}
+{"level":"info","message":"📦 MongoDB connected successfully","service":"safeswap-backend","timestamp":"2025-07-18 13:58:47"}
+{"level":"info","message":"📍 Connected to: mongodb+srv://***:***@safeswap.6pk7wds.mongodb.net/safeswap?retryWrites=true&w=majority&appName=SafeSwap","service":"safeswap-backend","timestamp":"2025-07-18 13:58:47"}
+{"level":"info","message":"🏓 Database ping successful","service":"safeswap-backend","timestamp":"2025-07-18 13:58:47"}
+{"level":"info","message":"Database connected successfully","service":"safeswap-backend","timestamp":"2025-07-18 13:58:47"}
+{"level":"info","message":"Price feed service initialized","service":"safeswap-backend","timestamp":"2025-07-18 13:58:47"}
+{"level":"info","message":"SafeSwap Backend API server running on port 5000","service":"safeswap-backend","timestamp":"2025-07-18 13:58:47"}
+{"level":"info","message":"Environment: development","service":"safeswap-backend","timestamp":"2025-07-18 13:58:47"}
+{"level":"info","message":"Health check: http://localhost:5000/health","service":"safeswap-backend","timestamp":"2025-07-18 13:58:47"}
+{"level":"warn","message":"MongoDB disconnected","service":"safeswap-backend","timestamp":"2025-07-18 14:43:50"}
+{"level":"info","message":"MongoDB reconnected","service":"safeswap-backend","timestamp":"2025-07-18 14:43:50"}
+{"level":"warn","message":"AI_SERVICE_URL is not set. Using fallback scam detection.","service":"safeswap-backend","timestamp":"2025-07-18 15:32:53"}
+{"level":"info","message":"🔗 Connecting to MongoDB: safeswap.6pk7wds.mongodb.net/safeswap?retryWrites=true&w=majority&appName=SafeSwap","service":"safeswap-backend","timestamp":"2025-07-18 15:32:53"}
+{"level":"info","message":"📦 MongoDB connected successfully","service":"safeswap-backend","timestamp":"2025-07-18 15:32:55"}
+{"level":"info","message":"📍 Connected to: mongodb+srv://***:***@safeswap.6pk7wds.mongodb.net/safeswap?retryWrites=true&w=majority&appName=SafeSwap","service":"safeswap-backend","timestamp":"2025-07-18 15:32:55"}
+{"level":"info","message":"🏓 Database ping successful","service":"safeswap-backend","timestamp":"2025-07-18 15:32:59"}
+{"level":"info","message":"Database connected successfully","service":"safeswap-backend","timestamp":"2025-07-18 15:32:59"}
+{"level":"info","message":"PriceFeedService initialized with 5 prices from database.","service":"safeswap-backend","timestamp":"2025-07-18 15:33:00"}
+{"level":"info","message":"Price feed service initialized","service":"safeswap-backend","timestamp":"2025-07-18 15:33:00"}
+{"level":"info","message":"SafeSwap Backend API server running on port 5000","service":"safeswap-backend","timestamp":"2025-07-18 15:33:00"}
+{"level":"info","message":"Environment: development","service":"safeswap-backend","timestamp":"2025-07-18 15:33:00"}
+{"level":"info","message":"Health check: http://localhost:5000/health","service":"safeswap-backend","timestamp":"2025-07-18 15:33:00"}
+{"level":"warn","message":"AI_SERVICE_URL is not set. Using fallback scam detection.","service":"safeswap-backend","timestamp":"2025-07-18 15:49:38"}
+{"level":"info","message":"🔗 Connecting to MongoDB: safeswap.6pk7wds.mongodb.net/safeswap?retryWrites=true&w=majority&appName=SafeSwap","service":"safeswap-backend","timestamp":"2025-07-18 15:49:38"}
+{"level":"info","message":"📦 MongoDB connected successfully","service":"safeswap-backend","timestamp":"2025-07-18 15:49:40"}
+{"level":"info","message":"📍 Connected to: mongodb+srv://***:***@safeswap.6pk7wds.mongodb.net/safeswap?retryWrites=true&w=majority&appName=SafeSwap","service":"safeswap-backend","timestamp":"2025-07-18 15:49:40"}
+{"level":"info","message":"🏓 Database ping successful","service":"safeswap-backend","timestamp":"2025-07-18 15:49:40"}
+{"level":"info","message":"Database connected successfully","service":"safeswap-backend","timestamp":"2025-07-18 15:49:40"}
+{"level":"info","message":"PriceFeedService initialized with 5 prices from database.","service":"safeswap-backend","timestamp":"2025-07-18 15:49:40"}

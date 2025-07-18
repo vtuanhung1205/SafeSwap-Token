@@ -16,6 +16,8 @@ const swapRoutes = require('./routes/swap.routes');
 const priceRoutes = require('./routes/price.routes');
 const { WebSocketService } = require('./services/websocket.service');
 const { PriceFeedService } = require('./services/priceFeed.service');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./config/swagger.config');
 
 // Load environment variables
 dotenv.config();
@@ -61,6 +63,9 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Swagger UI
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/wallet', walletRoutes);
@@ -95,7 +100,6 @@ app.use(errorHandler);
 
 // Initialize services
 const webSocketService = new WebSocketService(io);
-const priceFeedService = new PriceFeedService();
 
 // Graceful shutdown
 const gracefulShutdown = (signal) => {
@@ -128,7 +132,9 @@ const startServer = async () => {
     await connectDatabase();
     logger.info('Database connected successfully');
 
-    // Initialize price feed service (no start method needed)
+    // Initialize price feed service AFTER database connection
+    const priceFeedService = new PriceFeedService();
+    await priceFeedService.initialize();
     logger.info('Price feed service initialized');
 
     const PORT = process.env.PORT || 5000;

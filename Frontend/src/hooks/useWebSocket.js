@@ -2,12 +2,15 @@ import { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 import { mockPrices } from '../utils/mockData';
 import toast from 'react-hot-toast';
+import.meta.env.VITE_API_URL;
+import.meta.env.VITE_WEBSOCKET_URL;
+// Toggle this for demo mode
 import { DEMO_MODE } from '../config/demo';
 
 const SOCKET_URL =
   (import.meta.env.VITE_WEBSOCKET_URL
-    ? import.meta.env.VITE_WEBSOCKET_URL.replace(/^http/, 'ws')
-    : 'wss://safeswap-backend-service.onrender.com');
+    ? import.meta.env.VITE_WEBSOCKET_URL.replace(/^http/, 'ws') + '/socket.io'
+    : 'wss://safeswap-backend-service.onrender.com/socket.io');
 
 export const useWebSocket = () => {
   const [isConnected, setIsConnected] = useState(false);

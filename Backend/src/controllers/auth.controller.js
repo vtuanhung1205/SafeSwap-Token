@@ -31,7 +31,7 @@ class AuthController {
       await user.save();
 
       // Generate tokens
-      const tokens = authService.generateTokens({ userId: user._id });
+      const tokens = authService.generateTokens(user._id);
 
       logger.info(`User registered successfully: ${email}`);
 
@@ -70,7 +70,7 @@ class AuthController {
       }
 
       // Generate tokens
-      const tokens = authService.generateTokens({ userId: user._id });
+      const tokens = authService.generateTokens(user._id);
 
       logger.info(`User logged in successfully: ${email}`);
 
@@ -118,7 +118,7 @@ class AuthController {
       }
 
       // Generate tokens
-      const tokens = authService.generateTokens({ userId: user._id });
+      const tokens = authService.generateTokens(user._id);
 
       res.json({
         success: true,
@@ -142,7 +142,7 @@ class AuthController {
       }
 
       const decoded = authService.verifyToken(refreshToken, 'refresh');
-      const tokens = authService.generateTokens({ userId: decoded.userId });
+      const tokens = authService.generateTokens(decoded.id);
 
       res.json({
         success: true,

@@ -1,6 +1,7 @@
 const { logger } = require('../utils/logger');
 const { createError } = require('../middleware/errorHandler');
 const axios = require('axios');
+const { TokenPrice } = require('../models/TokenPrice.model');
 
 class PriceFeedService {
   constructor() {
@@ -8,6 +9,30 @@ class PriceFeedService {
     this.binanceApiUrl = 'https://api.binance.com/api/v3';
     this.cache = new Map();
     this.cacheExpiry = 60000; // 1 minute
+  }
+
+  async initialize() {
+    try {
+      const pricesFromDb = await TokenPrice.find({});
+      pricesFromDb.forEach(price => {
+        const cacheKey = `price_${price.symbol.toLowerCase()}`;
+        this.cache.set(cacheKey, {
+          data: {
+            symbol: price.symbol,
+            price: price.price,
+            change24h: price.change24h,
+            marketCap: price.marketCap,
+            volume24h: price.volume24h,
+            source: 'database',
+            timestamp: price.lastUpdated.getTime()
+          },
+          timestamp: Date.now()
+        });
+      });
+      logger.info(`PriceFeedService initialized with ${pricesFromDb.length} prices from database.`);
+    } catch (error) {
+      logger.error('Failed to initialize PriceFeedService from database:', error);
+    }
   }
 
   async getTokenPrice(symbol) {

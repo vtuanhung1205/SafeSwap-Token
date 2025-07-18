@@ -7,54 +7,233 @@ const { standardRateLimiter } = require('../middleware/rateLimiter');
 const router = express.Router();
 const walletController = new WalletController();
 
-// @route   POST /api/wallet/connect
-// @desc    Connect wallet to user account
-// @access  Private
+/**
+ * @swagger
+ * /api/wallet/connect:
+ *   post:
+ *     summary: Connect wallet to user account
+ *     tags: [Wallet]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - address
+ *               - publicKey
+ *             properties:
+ *               address:
+ *                 type: string
+ *                 description: Wallet address
+ *                 example: 0x1234567890abcdef1234567890abcdef12345678
+ *               publicKey:
+ *                 type: string
+ *                 description: Wallet public key
+ *                 example: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+ *     responses:
+ *       200:
+ *         description: Wallet connected successfully.
+ *       400:
+ *         description: Invalid wallet data.
+ *       401:
+ *         description: Unauthorized, token is missing or invalid.
+ */
 router.post('/connect', verifyToken, standardRateLimiter, asyncHandler(walletController.connectWallet.bind(walletController)));
 
-// @route   POST /api/wallet/disconnect
-// @desc    Disconnect wallet from user account
-// @access  Private
+/**
+ * @swagger
+ * /api/wallet/disconnect:
+ *   post:
+ *     summary: Disconnect wallet from user account
+ *     tags: [Wallet]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Wallet disconnected successfully.
+ *       401:
+ *         description: Unauthorized, token is missing or invalid.
+ *       404:
+ *         description: No wallet connected to this account.
+ */
 router.post('/disconnect', verifyToken, asyncHandler(walletController.disconnectWallet.bind(walletController)));
 
-// @route   GET /api/wallet/info
-// @desc    Get wallet information
-// @access  Private
+/**
+ * @swagger
+ * /api/wallet/info:
+ *   get:
+ *     summary: Get wallet information
+ *     tags: [Wallet]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Wallet information retrieved successfully.
+ *       401:
+ *         description: Unauthorized, token is missing or invalid.
+ *       404:
+ *         description: No wallet connected to this account.
+ */
 router.get('/info', verifyToken, asyncHandler(walletController.getWalletInfo.bind(walletController)));
 
-// @route   GET /api/wallet/balance
-// @desc    Get wallet balance
-// @access  Private
+/**
+ * @swagger
+ * /api/wallet/balance:
+ *   get:
+ *     summary: Get wallet balance
+ *     tags: [Wallet]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Wallet balance retrieved successfully.
+ *       401:
+ *         description: Unauthorized, token is missing or invalid.
+ *       404:
+ *         description: No wallet connected to this account.
+ */
 router.get('/balance', verifyToken, asyncHandler(walletController.getBalance.bind(walletController)));
 
-// @route   POST /api/wallet/update-balance
-// @desc    Update wallet balance
-// @access  Private
+/**
+ * @swagger
+ * /api/wallet/update-balance:
+ *   post:
+ *     summary: Update wallet balance
+ *     tags: [Wallet]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Wallet balance updated successfully.
+ *       401:
+ *         description: Unauthorized, token is missing or invalid.
+ *       404:
+ *         description: No wallet connected to this account.
+ */
 router.post('/update-balance', verifyToken, asyncHandler(walletController.updateBalance.bind(walletController)));
 
-// @route   GET /api/wallet/transactions
-// @desc    Get wallet transaction history
-// @access  Private
+/**
+ * @swagger
+ * /api/wallet/transactions:
+ *   get:
+ *     summary: Get wallet transaction history
+ *     tags: [Wallet]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 25
+ *         description: Maximum number of transactions to return
+ *     responses:
+ *       200:
+ *         description: Transaction history retrieved successfully.
+ *       401:
+ *         description: Unauthorized, token is missing or invalid.
+ *       404:
+ *         description: No wallet connected to this account.
+ */
 router.get('/transactions', verifyToken, asyncHandler(walletController.getTransactionHistory.bind(walletController)));
 
-// @route   GET /api/wallet/resources
-// @desc    Get wallet account resources
-// @access  Private
+/**
+ * @swagger
+ * /api/wallet/resources:
+ *   get:
+ *     summary: Get wallet account resources
+ *     tags: [Wallet]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Account resources retrieved successfully.
+ *       401:
+ *         description: Unauthorized, token is missing or invalid.
+ *       404:
+ *         description: No wallet connected to this account.
+ */
 router.get('/resources', verifyToken, asyncHandler(walletController.getAccountResources.bind(walletController)));
 
-// @route   POST /api/wallet/validate-address
-// @desc    Validate wallet address
-// @access  Public
+/**
+ * @swagger
+ * /api/wallet/validate-address:
+ *   post:
+ *     summary: Validate wallet address
+ *     tags: [Wallet]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - address
+ *             properties:
+ *               address:
+ *                 type: string
+ *                 description: Wallet address to validate
+ *                 example: 0x1234567890abcdef1234567890abcdef12345678
+ *     responses:
+ *       200:
+ *         description: Address validation result.
+ *       400:
+ *         description: Invalid address format.
+ */
 router.post('/validate-address', asyncHandler(walletController.validateAddress.bind(walletController)));
 
-// @route   POST /api/wallet/fund
-// @desc    Fund wallet from faucet (testnet only)
-// @access  Private
+/**
+ * @swagger
+ * /api/wallet/fund:
+ *   post:
+ *     summary: Fund wallet from faucet (testnet only)
+ *     tags: [Wallet]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - amount
+ *             properties:
+ *               amount:
+ *                 type: number
+ *                 description: Amount to fund (in APT)
+ *                 example: 10
+ *     responses:
+ *       200:
+ *         description: Wallet funded successfully.
+ *       400:
+ *         description: Invalid amount or funding failed.
+ *       401:
+ *         description: Unauthorized, token is missing or invalid.
+ *       404:
+ *         description: No wallet connected to this account.
+ */
 router.post('/fund', verifyToken, standardRateLimiter, asyncHandler(walletController.fundAccount.bind(walletController)));
 
-// @route   GET /api/wallet/account
-// @desc    Get account information
-// @access  Private
+/**
+ * @swagger
+ * /api/wallet/account:
+ *   get:
+ *     summary: Get account information
+ *     tags: [Wallet]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Account information retrieved successfully.
+ *       401:
+ *         description: Unauthorized, token is missing or invalid.
+ *       404:
+ *         description: No wallet connected to this account.
+ */
 router.get('/account', verifyToken, asyncHandler(walletController.getAccountInfo.bind(walletController)));
 
 module.exports = router;
