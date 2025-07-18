@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { swapAPI, handleApiError } from '../../utils/api';
+import { swapAPI, walletAPI, handleApiError } from '../../utils/api';
 import toast from 'react-hot-toast';
 import { useWallet } from '@aptos-labs/wallet-adapter-react';
+import { Wallet, ArrowUpDown, RefreshCw, AlertTriangle, CheckCircle, Loader2 } from 'lucide-react';
+import './Dashboard.css';
 
 // --- Helper Components for a cleaner structure ---
 
@@ -26,6 +28,36 @@ const StatCard = ({ icon, title, value }) => (
   </div>
 );
 
+// Token balance card component
+const TokenBalanceCard = ({ symbol, name, balance, icon, usdValue }) => (
+  <div className="bg-[#18181c] border border-[#23232a] rounded-xl p-4 flex items-center justify-between hover:border-cyan-500/30 transition-all duration-200">
+    <div className="flex items-center gap-3">
+      <img src={icon} alt={symbol} className="w-10 h-10 rounded-full" />
+      <div>
+        <h4 className="font-semibold text-white">{symbol}</h4>
+        <p className="text-xs text-gray-400">{name}</p>
+      </div>
+    </div>
+    <div className="text-right">
+      <p className="font-mono text-white font-semibold">{formatTokenBalance(balance, symbol)}</p>
+      {usdValue && <p className="text-xs text-gray-400">{formatCurrency(usdValue)}</p>}
+    </div>
+  </div>
+);
+
+// Format token balance based on token type
+const formatTokenBalance = (balance, symbol) => {
+  if (balance === null || balance === undefined) return "0";
+  
+  // Use different precision based on token type
+  let precision = 4;
+  if (symbol === "BTC") precision = 8;
+  else if (symbol === "ETH" || symbol === "APT") precision = 6;
+  else if (symbol === "USDC" || symbol === "USDT") precision = 2;
+  
+  return parseFloat(balance).toFixed(precision);
+};
+
 // --- Main Dashboard Component ---
 
 const Dashboard = () => {
@@ -33,8 +65,39 @@ const Dashboard = () => {
   const { connected } = useWallet();
   const [swapHistory, setSwapHistory] = useState([]);
   const [stats, setStats] = useState({ totalSwaps: 0, totalVolume: 0, successRate: 0, avgAmount: 0 });
+  const [tokenBalances, setTokenBalances] = useState({});
   const [loading, setLoading] = useState(true);
+  const [loadingBalances, setLoadingBalances] = useState(false);
   const [error, setError] = useState(null);
+
+  // Token metadata for UI display
+  const tokenMetadata = {
+    APT: {
+      name: "Aptos",
+      icon: "https://s2.coinmarketcap.com/static/img/coins/200x200/21794.png",
+      decimals: 8
+    },
+    BTC: {
+      name: "Bitcoin",
+      icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Bitcoin.svg/800px-Bitcoin.svg.png",
+      decimals: 8
+    },
+    ETH: {
+      name: "Ethereum",
+      icon: "https://static1.tokenterminal.com//ethereum/logo.png?logo_hash=fd8f54cab23f8f4980041f4e74607cac0c7ab880",
+      decimals: 18
+    },
+    USDC: {
+      name: "USD Coin",
+      icon: "https://s2.coinmarketcap.com/static/img/coins/200x200/3408.png",
+      decimals: 6
+    },
+    USDT: {
+      name: "Tether",
+      icon: "https://public.bnbstatic.com/static/academy/uploads-original/2fd4345d8c3a46278941afd9ab7ad225.png",
+      decimals: 6
+    }
+  };
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -71,12 +134,32 @@ const Dashboard = () => {
       } else {
         toast.error('Failed to load swap statistics');
       }
+
+      // Fetch wallet balances if connected
+      if (connected) {
+        fetchWalletBalances();
+      }
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
       setError(handleApiError(err) || 'Failed to load dashboard data. Please try again later.');
       toast.error('Failed to load dashboard data');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchWalletBalances = async () => {
+    try {
+      setLoadingBalances(true);
+      const response = await walletAPI.getInfo();
+      
+      if (response.data?.success && response.data.data?.wallet?.tokenBalances) {
+        setTokenBalances(response.data.data.wallet.tokenBalances);
+      }
+    } catch (err) {
+      console.error('Error fetching wallet balances:', err);
+    } finally {
+      setLoadingBalances(false);
     }
   };
 
@@ -118,7 +201,7 @@ const Dashboard = () => {
     );
   }
 
-  if (loading) {
+  if (loading && !loadingBalances) {
     return <div className="flex items-center justify-center h-96 text-gray-400">Loading Dashboard...</div>;
   }
 
@@ -156,11 +239,68 @@ const Dashboard = () => {
       </header>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-12">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
         <StatCard icon="🔄" title="Total Swaps" value={stats.totalSwaps} />
         <StatCard icon="💰" title="Total Volume" value={formatCurrency(stats.totalVolume)} />
         <StatCard icon="📊" title="Success Rate" value={`${stats.successRate?.toFixed(1) || 0}%`} />
         <StatCard icon="📈" title="Avg. Amount" value={formatCurrency(stats.avgAmount || 0)} />
+      </div>
+
+      {/* Wallet Overview Section */}
+      <div className="bg-[#18181c] border border-[#23232a] rounded-2xl mb-8">
+        <div className="flex justify-between items-center p-6 border-b border-[#23232a]">
+          <h2 className="text-2xl font-bold">Wallet Overview</h2>
+          <button 
+            className="flex items-center gap-2 px-4 py-2 bg-cyan-600/20 text-cyan-400 font-semibold rounded-lg hover:bg-cyan-600/40 transition-colors"
+            onClick={fetchWalletBalances}
+            disabled={loadingBalances}
+          >
+            {loadingBalances ? (
+              <>
+                <Loader2 size={16} className="animate-spin" />
+                <span>Refreshing...</span>
+              </>
+            ) : (
+              <>
+                <RefreshCw size={16} />
+                <span>Refresh</span>
+              </>
+            )}
+          </button>
+        </div>
+
+        {!connected ? (
+          <div className="text-center py-16">
+            <div className="inline-block p-4 rounded-full bg-cyan-500/10 mb-4">
+              <Wallet size={40} className="text-cyan-400" />
+            </div>
+            <h3 className="text-xl font-semibold">No Wallet Connected</h3>
+            <p className="text-gray-400 mb-4">Connect your wallet to view your balances</p>
+          </div>
+        ) : Object.keys(tokenBalances).length === 0 ? (
+          <div className="text-center py-16">
+            <div className="inline-block p-4 rounded-full bg-yellow-500/10 mb-4">
+              <AlertTriangle size={40} className="text-yellow-400" />
+            </div>
+            <h3 className="text-xl font-semibold">No Balances Found</h3>
+            <p className="text-gray-400 mb-4">Your wallet balances will appear here</p>
+          </div>
+        ) : (
+          <div className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {Object.entries(tokenBalances).map(([symbol, data]) => (
+                <TokenBalanceCard 
+                  key={symbol}
+                  symbol={symbol}
+                  name={tokenMetadata[symbol]?.name || symbol}
+                  balance={data.balance}
+                  icon={tokenMetadata[symbol]?.icon || `https://cryptoicon-api.vercel.app/api/icon/${symbol.toLowerCase()}`}
+                  usdValue={data.usdValue}
+                />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Swap History Section */}
@@ -168,12 +308,22 @@ const Dashboard = () => {
         <div className="flex justify-between items-center p-6 border-b border-[#23232a]">
           <h2 className="text-2xl font-bold">Swap History</h2>
           <button 
-            className="px-4 py-2 bg-cyan-600/20 text-cyan-400 font-semibold rounded-lg hover:bg-cyan-600/40 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-cyan-600/20 text-cyan-400 font-semibold rounded-lg hover:bg-cyan-600/40 transition-colors"
             onClick={fetchDashboardData}
             disabled={loading}
           >
-              {loading ? 'Refreshing...' : 'Refresh'}
-            </button>
+            {loading ? (
+              <>
+                <Loader2 size={16} className="animate-spin" />
+                <span>Refreshing...</span>
+              </>
+            ) : (
+              <>
+                <RefreshCw size={16} />
+                <span>Refresh</span>
+              </>
+            )}
+          </button>
         </div>
 
         {swapHistory.length === 0 ? (

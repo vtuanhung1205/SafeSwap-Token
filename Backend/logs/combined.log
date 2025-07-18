@@ -401,3 +401,8 @@
 {"level":"info","message":"Updated price for BTC: $117788","service":"safeswap-backend","timestamp":"2025-07-18 21:45:00"}
 {"level":"info","message":"Updated price for ETH: $3579.68","service":"safeswap-backend","timestamp":"2025-07-18 21:45:00"}
 {"level":"info","message":"Updated price for USDT: $1","service":"safeswap-backend","timestamp":"2025-07-18 21:45:00"}
+{"level":"info","message":"Connecting to MongoDB...","service":"safeswap-backend","timestamp":"2025-07-18 22:06:50"}
+{"level":"info","message":"MongoDB connected successfully.","service":"safeswap-backend","timestamp":"2025-07-18 22:06:50"}
+{"level":"info","message":"Added 1000 APT to wallet for user 6879ddc837cf7ae9a11d3548. New balance: 26000","service":"safeswap-backend","timestamp":"2025-07-18 22:06:51"}
+{"level":"info","message":"Added 1000 APT to wallet for user 6879b4fc3551062af75aba68. New balance: 1010.5","service":"safeswap-backend","timestamp":"2025-07-18 22:06:51"}
+{"level":"info","message":"MongoDB disconnected.","service":"safeswap-backend","timestamp":"2025-07-18 22:06:51"}

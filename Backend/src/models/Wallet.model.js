@@ -3,9 +3,9 @@ const mongoose = require('mongoose');
 const walletSchema = new mongoose.Schema(
   {
     userId: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.Mixed, // Changed from ObjectId to Mixed to support both ObjectId and String
       ref: 'User',
-      required: true, // Revert back to required
+      required: true,
     },
     address: {
       type: String,

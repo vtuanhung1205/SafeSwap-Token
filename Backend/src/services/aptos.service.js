@@ -45,13 +45,17 @@ class AptosService {
     try {
       const { address, publicKey } = walletData;
 
+      // Check if userId is 'guest' (non-authenticated user)
+      const isGuestUser = userId === 'guest';
+
       // 1. Check if the wallet address is already registered
       const existingWallet = await Wallet.findOne({ address });
 
       if (existingWallet) {
-        // 2. If it exists, check if it belongs to the current user
-        if (existingWallet.userId.toString() === userId) {
-          // It's the same user, just update the connection status and public key
+        // 2. If it exists, check if it belongs to the current user or is a guest wallet
+        if (existingWallet.userId.toString() === userId || 
+            (isGuestUser && existingWallet.userId === 'guest')) {
+          // It's the same user or a guest wallet, just update the connection status and public key
           existingWallet.publicKey = publicKey;
           existingWallet.isConnected = true;
           existingWallet.lastSyncAt = new Date();
@@ -64,7 +68,13 @@ class AptosService {
         }
       } else {
         // 4. If the wallet does not exist, create a new one for the current user
-        const balance = await this.getAccountBalance(address);
+        let balance = 0;
+        try {
+          balance = await this.getAccountBalance(address);
+        } catch (error) {
+          logger.error(`Failed to get balance for ${address}:`, error.message);
+          // Continue with zero balance
+        }
 
         const newWallet = new Wallet({
           userId,
@@ -229,22 +239,43 @@ class AptosService {
         return false;
       }
 
+      // Normalize the address
+      let normalizedAddress = address.trim();
+      
+      // Ensure it starts with 0x
+      if (!normalizedAddress.startsWith('0x')) {
+        normalizedAddress = `0x${normalizedAddress}`;
+      }
+      
       // Basic format validation
       const aptosAddressRegex = /^0x[a-fA-F0-9]{1,64}$/;
-      if (!aptosAddressRegex.test(address)) {
+      if (!aptosAddressRegex.test(normalizedAddress)) {
         return false;
       }
 
+      // For production environments, we might want to skip the network call
+      // and just validate the format
+      if (process.env.NODE_ENV === 'production') {
+        return true;
+      }
+      
       // Try to get account info to verify if address exists
       try {
-        await this.getAccountInfo(address);
+        await axios.get(`${this.nodeUrl}/accounts/${normalizedAddress}`, {
+          timeout: 5000
+        });
         return true;
       } catch (error) {
-        // Address format is valid but account doesn't exist
-        return true; // Still valid format for potential new accounts
+        // If we get a 404, the address format is valid but the account doesn't exist yet
+        if (error.response?.status === 404) {
+          return true; // Valid format, just not initialized
+        }
+        // For other errors, we'll assume the address is invalid
+        logger.warn(`Address validation failed for ${normalizedAddress}:`, error.message);
+        return false;
       }
     } catch (error) {
-      logger.error(`Failed to validate address ${address}:`, error.message);
+      logger.error(`Error validating address ${address}:`, error.message);
       return false;
     }
   }

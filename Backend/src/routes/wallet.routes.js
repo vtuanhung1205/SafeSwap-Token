@@ -1,7 +1,7 @@
 const express = require('express');
 const { WalletController } = require('../controllers/wallet.controller');
 const { asyncHandler } = require('../middleware/errorHandler');
-const { verifyToken } = require('../middleware/auth');
+const { verifyToken, optionalAuth } = require('../middleware/auth');
 const { standardRateLimiter } = require('../middleware/rateLimiter');
 
 const router = express.Router();
@@ -37,7 +37,7 @@ const walletController = new WalletController();
  *       400:
  *         description: Invalid wallet data.
  */
-router.post('/connect', standardRateLimiter, asyncHandler(walletController.connectWallet.bind(walletController)));
+router.post('/connect', standardRateLimiter, optionalAuth, asyncHandler(walletController.connectWallet.bind(walletController)));
 
 /**
  * @swagger

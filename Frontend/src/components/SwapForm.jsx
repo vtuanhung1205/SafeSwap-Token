@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useWebSocket } from "../hooks/useWebSocket";
-import { swapAPI, priceAPI, handleApiError } from "../utils/api";
+import { swapAPI, priceAPI, walletAPI, handleApiError } from "../utils/api";
 import toast from "react-hot-toast";
 import { useWallet } from "@aptos-labs/wallet-adapter-react"; // Import useWallet
 import WalletConnect from "./WalletConnect"; // Updated import path
@@ -103,8 +103,8 @@ const SwapForm = () => {
     subscribeToTokens,
   } = useWebSocket();
 
-  const [fromToken, setFromToken] = useState(tokens[0]); // APT
-  const [toToken, setToToken] = useState(tokens[1]); // USDC
+  const [fromToken, setFromToken] = useState(tokens[0]); // BTC
+  const [toToken, setToToken] = useState(tokens[1]); // ETH
   const [fromAmount, setFromAmount] = useState("");
   const debouncedFromAmount = useDebounce(fromAmount, 500); // 500ms delay
   const [toAmount, setToAmount] = useState("");
@@ -113,6 +113,8 @@ const SwapForm = () => {
   const [isSwapping, setIsSwapping] = useState(false);
   const [scamAnalysis, setScamAnalysis] = useState(null);
   const [showTokenModal, setShowTokenModal] = useState(null);
+  const [tokenBalances, setTokenBalances] = useState({});
+  const [isLoadingBalances, setIsLoadingBalances] = useState(false);
 
   const [formRef, isFormInView] = useInView({ threshold: 0.1, triggerOnce: true });
   const animationClasses = isFormInView
@@ -132,6 +134,31 @@ const SwapForm = () => {
       setQuote(null);
     }
   }, [debouncedFromAmount, fromToken, toToken]);
+
+  // Fetch wallet balances when wallet is connected
+  useEffect(() => {
+    if (isWalletConnected) {
+      fetchWalletBalances();
+    } else {
+      setTokenBalances({});
+    }
+  }, [isWalletConnected]);
+
+  const fetchWalletBalances = async () => {
+    if (!isWalletConnected) return;
+    
+    setIsLoadingBalances(true);
+    try {
+      const response = await walletAPI.getInfo();
+      if (response.data?.success && response.data.data?.wallet?.tokenBalances) {
+        setTokenBalances(response.data.data.wallet.tokenBalances);
+      }
+    } catch (error) {
+      console.error("Failed to fetch wallet balances:", error);
+    } finally {
+      setIsLoadingBalances(false);
+    }
+  };
 
   const getSwapQuote = async () => {
     if (!debouncedFromAmount || !fromToken || !toToken) return;
@@ -215,6 +242,9 @@ const SwapForm = () => {
           setToAmount("");
           setQuote(null);
           setScamAnalysis(null);
+          
+          // Refresh balances after swap
+          setTimeout(fetchWalletBalances, 2000);
       }
     } catch (error) {
       console.error("Swap error:", error);
@@ -232,6 +262,27 @@ const SwapForm = () => {
     setToAmount("");
   };
 
+  // Get the balance for a specific token
+  const getTokenBalance = (symbol) => {
+    if (!isWalletConnected || !tokenBalances || !tokenBalances[symbol]) {
+      return null;
+    }
+    return tokenBalances[symbol].balance;
+  };
+
+  // Format balance with appropriate decimals
+  const formatBalance = (balance, symbol) => {
+    if (balance === null || balance === undefined) return "N/A";
+    
+    // Use different precision based on token type
+    let precision = 4;
+    if (symbol === "BTC") precision = 8;
+    else if (symbol === "ETH" || symbol === "APT") precision = 6;
+    else if (symbol === "USDC" || symbol === "USDT") precision = 2;
+    
+    return parseFloat(balance).toFixed(precision);
+  };
+
   return (
     <div className="flex flex-col items-center justify-center min-h-[80vh] bg-transparent px-4">
       <div
@@ -241,284 +292,294 @@ const SwapForm = () => {
         <div className="text-center mb-8">
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-3">
             Swap Anytime
-      </h2>
+          </h2>
           <p className="text-lg text-gray-400">
             Secure, fast, and decentralized.
           </p>
-      </div>
+        </div>
 
         <div className="relative group">
-          <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-600 to-pink-600 rounded-2xl blur-lg opacity-20 group-hover:opacity-40 transition duration-500"></div>
-          <div
-            className={`relative bg-[#18181c] border border-[#23232a] rounded-2xl shadow-lg p-6 md:p-8`}
-          >
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-white">Swap Tokens</h3>
-              <div className="flex items-center gap-2">
-                {isConnected ? (
-                  <div className="flex items-center gap-2 text-green-400">
-                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                    <span className="text-xs">Live</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2 text-yellow-400">
-                    <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
-                    <span className="text-xs">Connecting</span>
-                  </div>
-                )}
-              </div>
-          </div>
+          <div className="bg-[#1c1c24] rounded-2xl p-6 border border-[#2a2a35] shadow-lg">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-white">Swap Tokens</h3>
+              {isConnected && (
+                <div className="text-xs px-2 py-1 bg-green-500/20 text-green-400 rounded-full">
+                  Live
+                </div>
+              )}
+            </div>
 
             {/* From Token */}
             <div className="mb-4">
-              <label className="block text-gray-400 text-sm mb-2">From</label>
-              <div className="flex bg-[#23232a] rounded-lg p-4 focus-within:ring-1 focus-within:ring-cyan-500 transition-all">
+              <div className="flex justify-between items-center mb-2">
+                <label className="text-sm text-gray-400">From</label>
+                {isWalletConnected && tokenBalances[fromToken.symbol] && (
+                  <div className="text-xs text-gray-400 flex items-center">
+                    <Wallet size={12} className="mr-1" />
+                    <span>Balance: {formatBalance(getTokenBalance(fromToken.symbol), fromToken.symbol)} {fromToken.symbol}</span>
+                  </div>
+                )}
+              </div>
+              <div className="flex bg-[#111112] rounded-xl p-3 border border-[#2a2a35] focus-within:border-cyan-600 transition">
                 <button
-                  className="flex items-center gap-2 bg-[#2a2a32] px-3 py-2 rounded-lg mr-4 hover:bg-[#31313a] transition-colors"
+                  className="flex items-center space-x-2 bg-[#1c1c24] px-3 py-2 rounded-lg border border-[#2a2a35] hover:border-cyan-600 transition"
                   onClick={() => setShowTokenModal("from")}
                 >
                   <img
                     src={fromToken.icon}
                     alt={fromToken.name}
-                    className="w-6 h-6 rounded-full"
+                    className="w-5 h-5 rounded-full"
                   />
-                  <span className="font-semibold text-white">{fromToken.symbol}</span>
-                  <ChevronDown className="w-4 h-4 text-gray-400" />
+                  <span className="text-white">{fromToken.symbol}</span>
+                  <ChevronDown />
                 </button>
-            <input
-              type="number"
+                <input
+                  type="number"
+                  className="flex-1 bg-transparent border-none text-right text-white text-lg focus:outline-none"
                   placeholder="0.0"
-              value={fromAmount}
-              onChange={(e) => setFromAmount(e.target.value)}
-                  className="flex-1 bg-transparent text-white text-xl font-semibold focus:outline-none"
-            />
-          </div>
-              <div className="flex justify-between text-sm mt-2 px-1">
-                <span className="text-gray-400">
-                  {fromToken.symbol} Price: {getFormattedPrice(fromToken.symbol)}
-                </span>
-                <PriceChange symbol={fromToken.symbol} />
-          </div>
-        </div>
+                  value={fromAmount}
+                  onChange={(e) => setFromAmount(e.target.value)}
+                />
+              </div>
+              {isWalletConnected && tokenBalances[fromToken.symbol] && (
+                <div className="flex justify-end mt-1">
+                  <button 
+                    className="text-xs text-cyan-500 hover:text-cyan-400"
+                    onClick={() => {
+                      const balance = getTokenBalance(fromToken.symbol);
+                      if (balance) setFromAmount(balance.toString());
+                    }}
+                  >
+                    Max
+                  </button>
+                </div>
+              )}
+            </div>
 
             {/* Swap Button */}
-            <div className="flex justify-center -my-2 relative z-10">
+            <div className="flex justify-center -my-2 z-10 relative">
               <button
-                className="bg-[#23232a] p-3 rounded-full hover:bg-[#31313a] transition-colors border border-[#3a3a42] shadow-lg"
+                className="bg-[#1c1c24] p-2 rounded-lg border border-[#2a2a35] hover:border-cyan-600 transition"
                 onClick={swapTokens}
               >
-                <ArrowUpDown className="w-5 h-5 text-cyan-400" />
-          </button>
-        </div>
+                <ArrowUpDown size={18} className="text-cyan-500" />
+              </button>
+            </div>
 
             {/* To Token */}
-            <div className="mb-6">
-              <label className="block text-gray-400 text-sm mb-2">To</label>
-              <div className="flex bg-[#23232a] rounded-lg p-4 focus-within:ring-1 focus-within:ring-cyan-500 transition-all">
+            <div className="mb-4 mt-2">
+              <div className="flex justify-between items-center mb-2">
+                <label className="text-sm text-gray-400">To</label>
+                {isWalletConnected && tokenBalances[toToken.symbol] && (
+                  <div className="text-xs text-gray-400 flex items-center">
+                    <Wallet size={12} className="mr-1" />
+                    <span>Balance: {formatBalance(getTokenBalance(toToken.symbol), toToken.symbol)} {toToken.symbol}</span>
+                  </div>
+                )}
+              </div>
+              <div className="flex bg-[#111112] rounded-xl p-3 border border-[#2a2a35] focus-within:border-cyan-600 transition">
                 <button
-                  className="flex items-center gap-2 bg-[#2a2a32] px-3 py-2 rounded-lg mr-4 hover:bg-[#31313a] transition-colors"
+                  className="flex items-center space-x-2 bg-[#1c1c24] px-3 py-2 rounded-lg border border-[#2a2a35] hover:border-cyan-600 transition"
                   onClick={() => setShowTokenModal("to")}
                 >
                   <img
                     src={toToken.icon}
                     alt={toToken.name}
-                    className="w-6 h-6 rounded-full"
+                    className="w-5 h-5 rounded-full"
                   />
-                  <span className="font-semibold text-white">{toToken.symbol}</span>
-                  <ChevronDown className="w-4 h-4 text-gray-400" />
-            </button>
+                  <span className="text-white">{toToken.symbol}</span>
+                  <ChevronDown />
+                </button>
                 <input
                   type="number"
+                  className="flex-1 bg-transparent border-none text-right text-white text-lg focus:outline-none"
                   placeholder="0.0"
                   value={toAmount}
                   readOnly
-                  className="flex-1 bg-transparent text-white text-xl font-semibold focus:outline-none"
                 />
-          </div>
-              <div className="flex justify-between text-sm mt-2 px-1">
-                <span className="text-gray-400">
-                  {toToken.symbol} Price: {getFormattedPrice(toToken.symbol)}
-                </span>
-                <PriceChange symbol={toToken.symbol} />
-          </div>
-        </div>
-
-            {/* Scam Warning */}
-            {scamAnalysis && scamAnalysis.riskScore > 50 && (
-              <div className="mb-6 bg-red-500/10 border border-red-500/20 rounded-lg p-4">
-                <div className="flex items-start gap-3">
-                  <AlertTriangle className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <h4 className="font-semibold text-red-400">
-                      Potential Scam Warning
-                    </h4>
-                    <p className="text-sm text-gray-300 mt-1">
-                      This token has a risk score of {scamAnalysis.riskScore}%.
-                      {scamAnalysis.reasons?.length > 0 && (
-                        <span>
-                          {" "}
-                          Reasons:{" "}
-                          {scamAnalysis.reasons.map((r) => r.toLowerCase()).join(", ")}
-                          .
-                        </span>
-                      )}
-                    </p>
+              </div>
             </div>
-            </div>
-          </div>
-        )}
 
-            {/* Quote Info */}
+            {/* Price and Rate Info */}
             {quote && (
-              <div className="mb-6 bg-[#23232a] rounded-lg p-4">
-                <h4 className="font-semibold text-gray-300 mb-2">Swap Summary</h4>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Exchange Rate</span>
-                    <span className="text-white">
-                      1 {fromToken.symbol} = {quote.exchangeRate.toFixed(6)}{" "}
-                      {toToken.symbol}
-                    </span>
+              <div className="bg-[#111112] rounded-xl p-3 mb-4 border border-[#2a2a35]">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm text-gray-400">Price</span>
+                  <span className="text-sm text-white">
+                    1 {fromToken.symbol} ≈{" "}
+                    {quote.exchangeRate.toFixed(6)} {toToken.symbol}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-400">Fee</span>
+                  <span className="text-sm text-white">
+                    {(quote.fee * 100).toFixed(2)}% ({quote.fee.toFixed(6)}{" "}
+                    {fromToken.symbol})
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Scam Analysis */}
+            {scamAnalysis && (
+              <div
+                className={`rounded-xl p-3 mb-4 border ${
+                  scamAnalysis.isScam
+                    ? "bg-red-500/10 border-red-500/30 text-red-400"
+                    : scamAnalysis.riskScore > 50
+                    ? "bg-yellow-500/10 border-yellow-500/30 text-yellow-400"
+                    : "bg-green-500/10 border-green-500/30 text-green-400"
+                }`}
+              >
+                <div className="flex items-start space-x-2">
+                  {scamAnalysis.isScam ? (
+                    <AlertTriangle size={18} />
+                  ) : (
+                    <CheckCircle size={18} />
+                  )}
+                  <div>
+                    <div className="font-medium mb-1">
+                      {scamAnalysis.isScam
+                        ? "High Risk Token"
+                        : scamAnalysis.riskScore > 50
+                        ? "Medium Risk Token"
+                        : "Low Risk Token"}
+                    </div>
+                    <div className="text-xs">
+                      {scamAnalysis.recommendation}
+                    </div>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Price Impact</span>
-                    <span className="text-white">{quote.priceImpact}%</span>
+                </div>
+              </div>
+            )}
+
+            {/* Connect Wallet / Swap Button */}
+            {!isWalletConnected ? (
+              <WalletConnect />
+            ) : (
+              <button
+                className={`w-full py-3 rounded-xl font-medium transition ${
+                  isLoadingQuote || isSwapping || !quote
+                    ? "bg-cyan-600/50 text-cyan-300 cursor-not-allowed"
+                    : "bg-cyan-600 text-white hover:bg-cyan-700"
+                }`}
+                disabled={isLoadingQuote || isSwapping || !quote}
+                onClick={handleSwap}
+              >
+                {isSwapping ? (
+                  <div className="flex items-center justify-center space-x-2">
+                    <Loader2 size={18} className="animate-spin" />
+                    <span>Swapping...</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Network Fee</span>
-                    <span className="text-white">
-                      {quote.fee.toFixed(6)} {fromToken.symbol}
-                    </span>
-            </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Slippage Tolerance</span>
-                    <span className="text-white">{quote.slippage || 0.5}%</span>
+                ) : isLoadingQuote ? (
+                  <div className="flex items-center justify-center space-x-2">
+                    <Loader2 size={18} className="animate-spin" />
+                    <span>Getting Quote...</span>
+                  </div>
+                ) : !quote ? (
+                  "Enter Amount"
+                ) : (
+                  "Swap Tokens"
+                )}
+              </button>
+            )}
           </div>
+        </div>
+
+        {/* Token Selection Modal */}
+        {showTokenModal && (
+          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+            <div className="bg-[#1c1c24] rounded-2xl p-6 border border-[#2a2a35] shadow-lg w-full max-w-sm">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-white">
+                  Select Token
+                </h3>
+                <button
+                  className="text-gray-400 hover:text-white"
+                  onClick={() => setShowTokenModal(null)}
+                >
+                  &times;
+                </button>
+              </div>
+              <div className="max-h-80 overflow-y-auto">
+                {tokens.map((token) => (
+                  <button
+                    key={token.symbol}
+                    className="flex items-center justify-between w-full p-3 hover:bg-[#2a2a35] rounded-lg transition mb-2"
+                    onClick={() => {
+                      if (showTokenModal === "from") {
+                        if (token.symbol === toToken.symbol) {
+                          setToToken(fromToken);
+                        }
+                        setFromToken(token);
+                      } else {
+                        if (token.symbol === fromToken.symbol) {
+                          setFromToken(toToken);
+                        }
+                        setToToken(token);
+                      }
+                      setShowTokenModal(null);
+                    }}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <img
+                        src={token.icon}
+                        alt={token.name}
+                        className="w-8 h-8 rounded-full"
+                      />
+                      <div className="text-left">
+                        <div className="text-white font-medium">
+                          {token.symbol}
+                        </div>
+                        <div className="text-gray-400 text-sm">{token.name}</div>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end">
+                      <PriceChange symbol={token.symbol} />
+                      {isWalletConnected && tokenBalances[token.symbol] && (
+                        <div className="text-xs text-gray-400">
+                          {formatBalance(getTokenBalance(token.symbol), token.symbol)} {token.symbol}
+                        </div>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         )}
-
-            {/* Swap Button */}
-        <button
-              className={`w-full py-4 rounded-xl font-bold text-white transition-all ${
-                isWalletConnected
-                  ? "bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600"
-                  : "bg-gray-600"
-              }`}
-          onClick={handleSwap}
-              disabled={
-                !fromAmount ||
-                parseFloat(fromAmount) <= 0 ||
-                !toAmount ||
-                isLoadingQuote ||
-                isSwapping ||
-                !isWalletConnected // Vô hiệu hóa nếu ví chưa kết nối
-              }
-            >
-              {isSwapping ? (
-                <span className="flex items-center justify-center gap-2">
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Swapping...
-                </span>
-              ) : !isWalletConnected ? ( // Thay đổi điều kiện kiểm tra
-                <span className="flex items-center justify-center gap-2">
-                  <Wallet className="w-5 h-5" />
-                  Connect Wallet to Swap
-                </span>
-              ) : isLoadingQuote ? (
-                <span className="flex items-center justify-center gap-2">
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Getting Quote...
-                </span>
-              ) : (
-                <span>Swap Tokens</span>
-              )}
-        </button>
-          </div>
-        </div>
       </div>
-
-      {/* Token Selection Modal */}
-      {showTokenModal && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          <div
-            className="absolute inset-0"
-            onClick={() => setShowTokenModal(null)}
-          ></div>
-          <div className="bg-[#18181c] rounded-2xl p-6 w-full max-w-md relative z-10">
-            <h3 className="text-xl font-bold text-white mb-4">
-              Select a Token
-            </h3>
-            <div className="space-y-2 max-h-96 overflow-y-auto">
-              {tokens.map((token) => (
-                <button
-                  key={token.symbol}
-                  className="flex items-center gap-3 w-full p-3 hover:bg-[#23232a] rounded-lg transition-colors"
-                  onClick={() => {
-                    if (showTokenModal === "from") {
-                      if (token.symbol === toToken.symbol) {
-                        setToToken(fromToken);
-                      }
-                      setFromToken(token);
-                    } else {
-                      if (token.symbol === fromToken.symbol) {
-                        setFromToken(toToken);
-                      }
-                      setToToken(token);
-                    }
-                    setShowTokenModal(null);
-                  }}
-                >
-                  <img
-                    src={token.icon}
-                    alt={token.name}
-                    className="w-8 h-8 rounded-full"
-                  />
-                  <div className="text-left">
-                    <div className="font-semibold text-white">
-                      {token.symbol}
-                    </div>
-                    <div className="text-sm text-gray-400">{token.name}</div>
-                  </div>
-                  <div className="ml-auto text-right">
-                    <div className="font-mono text-white">
-                      {getFormattedPrice(token.symbol)}
-                    </div>
-                    <PriceChange symbol={token.symbol} />
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
 
-// Price change component with color coding
 const PriceChange = ({ symbol }) => {
   const { getFormattedPriceChange } = useWebSocket();
   const change = getFormattedPriceChange(symbol);
-
-  return <span className={change.className}>{change.formatted}</span>;
+  
+  return (
+    <div className={`text-sm ${change.className} flex items-center`}>
+      {change.isPositive ? <TrendingUp size={12} className="mr-1" /> : <ArrowUpDown size={12} className="mr-1" />}
+      {change.formatted}
+    </div>
+  );
 };
 
-// Helper for the token dropdown button
 const ChevronDown = (props) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
+    width="16"
+    height="16"
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
+    className="text-gray-400"
     {...props}
   >
-    <polyline points="6 9 12 15 18 9"></polyline>
+    <path d="m6 9 6 6 6-6" />
   </svg>
 );
 
