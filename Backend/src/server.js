@@ -6,16 +6,16 @@ const dotenv = require('dotenv');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 
-const { connectDatabase } = require('./src/config/database');
-const { logger } = require('./src/utils/logger');
-const { errorHandler } = require('./src/middleware/errorHandler');
-const { rateLimiter } = require('./src/middleware/rateLimiter');
-const authRoutes = require('./src/routes/auth.routes');
-const walletRoutes = require('./src/routes/wallet.routes');
-const swapRoutes = require('./src/routes/swap.routes');
-const priceRoutes = require('./src/routes/price.routes');
-const { WebSocketService } = require('./src/services/websocket.service');
-const { PriceFeedService } = require('./src/services/priceFeed.service');
+const { connectDatabase } = require('./config/database');
+const { logger } = require('./utils/logger');
+const { errorHandler } = require('./middleware/errorHandler');
+const { rateLimiter } = require('./middleware/rateLimiter');
+const authRoutes = require('./routes/auth.routes');
+const walletRoutes = require('./routes/wallet.routes');
+const swapRoutes = require('./routes/swap.routes');
+const priceRoutes = require('./routes/price.routes');
+const { WebSocketService } = require('./services/websocket.service');
+const { PriceFeedService } = require('./services/priceFeed.service');
 
 // Load environment variables
 dotenv.config();

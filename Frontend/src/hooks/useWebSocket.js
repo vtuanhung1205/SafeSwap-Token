@@ -4,8 +4,6 @@ import { mockPrices } from '../utils/mockData';
 import toast from 'react-hot-toast';
 
 // Toggle this for demo mode
-import { useEffect, useRef, useState } from 'react';
-import { io } from 'socket.io-client';
 import { DEMO_MODE } from '../config/demo';
 
 const SOCKET_URL = import.meta.env.VITE_WEBSOCKET_URL || 'http://localhost:5000';
