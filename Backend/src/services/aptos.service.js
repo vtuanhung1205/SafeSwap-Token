@@ -3,36 +3,22 @@ const { createError } = require('../middleware/errorHandler');
 const { Wallet } = require('../models/Wallet.model');
 const axios = require('axios');
 const { PriceFeedService } = require('./priceFeed.service'); // Import PriceFeedService
-
-// Correct import for Aptos SDK
-let AptosClient;
-try {
-  const aptosSDK = require('@aptos-labs/ts-sdk');
-  AptosClient = aptosSDK.AptosClient;
-} catch (error) {
-  logger.warn('Aptos SDK not available, using fallback implementation');
-  // Fallback implementation if SDK is not available
-  AptosClient = class MockAptosClient {
-    constructor(url) {
-      this.url = url;
-    }
-  };
-}
+// Correct import based on official documentation for new versions
+const { Aptos, AptosConfig, Network } = require("@aptos-labs/ts-sdk");
 
 class AptosService {
   constructor() {
-    this.nodeUrl = process.env.APTOS_NODE_URL || 'https://fullnode.testnet.aptoslabs.com/v1';
-    this.faucetUrl = process.env.APTOS_FAUCET_URL || 'https://faucet.testnet.aptoslabs.com';
     this.network = process.env.APTOS_NETWORK || 'testnet';
-    this.priceFeedService = new PriceFeedService(); // Khởi tạo PriceFeedService
+    const networkEnum = this.network.toUpperCase() === 'MAINNET' ? Network.MAINNET : Network.TESTNET;
     
-    // Initialize client with fallback
-    try {
-      this.client = new AptosClient(this.nodeUrl);
-    } catch (error) {
-      logger.error('Failed to initialize AptosClient:', error);
-      this.client = null;
-    }
+    // Official way to configure the client
+    const config = new AptosConfig({ network: networkEnum });
+    this.client = new Aptos(config); // This is the main entrypoint now, not AptosClient directly
+
+    this.nodeUrl = this.client.config.fullnode; // Get the node URL from the config
+    this.faucetUrl = this.client.config.faucet; // Get the faucet URL from the config
+    
+    this.priceFeedService = new PriceFeedService();
     
     // Liquidswap contract addresses
     this.liquidswapModuleAddress = '0x190d44266241744264b964a37b8f09863167a12d3e70cda39376cfb4e3561e12';
@@ -59,6 +45,18 @@ class AptosService {
     try {
       const { address, publicKey } = walletData;
 
+      // If the user is a guest, do not perform database operations
+      if (userId === 'guest') {
+        logger.info(`Guest wallet connected: ${address}`);
+        // Return a mock wallet object for guests
+        return {
+          address,
+          publicKey,
+          isConnected: true,
+          userId: 'guest'
+        };
+      }
+
       // Check if wallet already exists
       const existingWallet = await Wallet.findOne({ address });
       
@@ -69,7 +67,7 @@ class AptosService {
       // Get account balance
       const balance = await this.getAccountBalance(address);
 
-      // Update or create wallet
+      // Update or create wallet for logged-in users
       const wallet = await Wallet.findOneAndUpdate(
         { userId },
         {
@@ -83,7 +81,7 @@ class AptosService {
         { upsert: true, new: true }
       );
 
-      logger.info(`Wallet connected for user ${userId}: ${address}`);
+      logger.info(`Wallet connected and synced for user ${userId}: ${address}`);
       return wallet;
     } catch (error) {
       logger.error('Failed to connect wallet:', error);

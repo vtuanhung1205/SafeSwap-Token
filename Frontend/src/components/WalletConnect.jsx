@@ -15,8 +15,13 @@ const WalletConnect = ({ onWalletConnected }) => {
       // Ensure we have a valid account object with address and public key
       if (connected && account?.address && account?.publicKey) {
         try {
-          console.log("Syncing wallet with backend:", account); // Log the full account object
-          await walletAPI.connect(account.address, account.publicKey);
+          const addressString = account.address.toString();
+          const publicKeyString = account.publicKey.toString();
+          
+          console.log("Syncing wallet with backend:", { address: addressString, publicKey: publicKeyString });
+          
+          await walletAPI.connect(addressString, publicKeyString);
+          
           toast.success(`Wallet ${wallet?.name} connected!`);
           if (onWalletConnected) {
             onWalletConnected(account);
@@ -25,7 +30,7 @@ const WalletConnect = ({ onWalletConnected }) => {
           toast.error("Failed to sync wallet with backend.");
           console.error("Wallet sync error:", error);
         }
-        setIsModalOpen(false); // Close modal on successful connection
+        setIsModalOpen(false);
       }
     };
     syncWallet();

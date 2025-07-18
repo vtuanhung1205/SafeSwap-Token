@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import toast from 'react-hot-toast';
 
@@ -9,76 +9,85 @@ export const useWebSocket = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [prices, setPrices] = useState({});
   const [lastUpdate, setLastUpdate] = useState(null);
-  const socketRef = useRef(null);
+  const socketRef = useRef(null); // Removed TypeScript syntax
 
-  useEffect(() => {
-      // Initialize socket connection
-      socketRef.current = io(SOCKET_URL, {
-      path: '/socket.io', // Chỉ định đường dẫn ở đây
-        transports: ['websocket', 'polling'],
-        timeout: 10000,
-      });
+  // Function to connect the socket
+  const connectSocket = useCallback(() => {
+    if (socketRef.current && socketRef.current.connected) {
+      return;
+    }
 
-      const socket = socketRef.current;
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+    }
+    
+    const socket = io(SOCKET_URL, {
+      path: '/socket.io',
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 3000,
+    });
 
-      // Connection event handlers
-      socket.on('connect', () => {
-        console.log('WebSocket connected');
-        setIsConnected(true);
-      });
+    socketRef.current = socket;
 
-      socket.on('disconnect', () => {
-        console.log('WebSocket disconnected');
-        setIsConnected(false);
-      });
+    socket.on('connect', () => {
+      console.log('WebSocket connected:', socket.id);
+      setIsConnected(true);
+      toast.success('Live data connection established!');
+    });
 
-      socket.on('connect_error', (error) => {
-        console.error('WebSocket connection error:', error);
-        setIsConnected(false);
-      });
+    socket.on('disconnect', (reason) => {
+      console.log('WebSocket disconnected:', reason);
+      setIsConnected(false);
+      if (reason !== 'io client disconnect') {
+        toast.error('Live data connection lost. Reconnecting...');
+      }
+    });
 
-      // Price update handlers
-      socket.on('initial_prices', (data) => {
-        if (data.success && data.data) {
-          const priceMap = {};
-          data.data.forEach(price => {
-            priceMap[price.symbol] = price;
-          });
-          setPrices(priceMap);
-          setLastUpdate(new Date());
-          console.log('Initial prices loaded:', Object.keys(priceMap).length, 'tokens');
-        }
-      });
+    socket.on('connect_error', (error) => {
+      console.error('WebSocket connection error:', error.message);
+      setIsConnected(false);
+    });
+    
+    socket.on('initial_prices', (data) => {
+      if (data.success && data.data) {
+        const priceMap = {};
+        data.data.forEach(price => {
+          priceMap[price.symbol] = price;
+        });
+        setPrices(priceMap);
+        setLastUpdate(new Date());
+      }
+    });
 
-      socket.on('price_update', (data) => {
-        if (data.type === 'price_update' && data.data) {
-          setPrices(prev => ({
-            ...prev,
-            [data.data.symbol]: {
-              ...prev[data.data.symbol],
-              ...data.data,
-            }
-          }));
-          setLastUpdate(new Date());
-        }
-      });
+    socket.on('price_update', (data) => {
+      if (data.type === 'price_update' && data.data) {
+        setPrices(prev => ({
+          ...prev,
+          [data.data.symbol]: {
+            ...prev[data.data.symbol],
+            ...data.data,
+          }
+        }));
+        setLastUpdate(new Date());
+      }
+    });
 
-      socket.on('subscription_success', (data) => {
-        console.log('Subscribed to tokens:', data.subscribed);
-      });
-
-      socket.on('unsubscription_success', (data) => {
-        console.log('Unsubscribed from tokens:', data.unsubscribed);
-      });
-
-      // Cleanup on unmount
-      return () => {
-        if (socket) {
-          socket.disconnect();
-        }
-      };
   }, []);
 
+  // Effect to manage connection lifecycle
+  useEffect(() => {
+    connectSocket();
+
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
+    };
+  }, [connectSocket]);
+  
   const subscribeToTokens = (tokens) => {
     if (socketRef.current && isConnected) {
       socketRef.current.emit('subscribe_prices', tokens);
@@ -101,7 +110,7 @@ export const useWebSocket = () => {
 
   const getFormattedPrice = (symbol, decimals = 6) => {
     const price = getTokenPrice(symbol);
-    if (!price) return '$0.00';
+    if (!price || typeof price.price !== 'number') return '$0.00'; // Added check for price type
     
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
