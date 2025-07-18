@@ -45,32 +45,47 @@ class AptosService {
     try {
       const { address, publicKey } = walletData;
 
-      // Since the frontend now requires login, userId will always be valid.
-      // The 'guest' check is no longer needed.
-      
-      const balance = await this.getAccountBalance(address);
+      // 1. Check if the wallet address is already registered
+      const existingWallet = await Wallet.findOne({ address });
 
-      const wallet = await Wallet.findOneAndUpdate(
-        { userId },
-        {
+      if (existingWallet) {
+        // 2. If it exists, check if it belongs to the current user
+        if (existingWallet.userId.toString() === userId) {
+          // It's the same user, just update the connection status and public key
+          existingWallet.publicKey = publicKey;
+          existingWallet.isConnected = true;
+          existingWallet.lastSyncAt = new Date();
+          await existingWallet.save();
+          logger.info(`Wallet re-connected for user ${userId}: ${address}`);
+          return existingWallet;
+        } else {
+          // 3. The wallet is linked to another account, throw a specific error
+          throw createError(409, 'This wallet is already linked to another account.');
+        }
+      } else {
+        // 4. If the wallet does not exist, create a new one for the current user
+        const balance = await this.getAccountBalance(address);
+
+        const newWallet = new Wallet({
           userId,
           address,
           publicKey,
           chainId: `aptos-${this.network}`,
           balance,
           isConnected: true,
-          lastSyncAt: new Date(),
-        },
-        { upsert: true, new: true }
-      );
+        });
 
-      logger.info(`Wallet synced for user ${userId}: ${address}`);
-      return wallet;
-
+        await newWallet.save();
+        logger.info(`New wallet created for user ${userId}: ${address}`);
+        return newWallet;
+      }
     } catch (error) {
+      // Re-throw specific errors, otherwise throw a generic one
+      if (error.statusCode) {
+        throw error;
+      }
       logger.error('Failed to connect wallet:', {
         message: error.message,
-        stack: error.stack,
         userId,
         address: walletData.address,
       });
