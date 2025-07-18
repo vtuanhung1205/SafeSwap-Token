@@ -2,9 +2,7 @@ import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { authAPI, handleApiError } from '../utils/api';
 import { mockUser } from '../utils/mockData';
 import toast from 'react-hot-toast';
-
-// Toggle this for demo mode
-const DEMO_MODE = true;
+import { DEMO_MODE } from '../config/demo';
 
 const AuthContext = createContext();
 

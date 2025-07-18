@@ -43,7 +43,12 @@ const useInView = (options) => {
 };
 
 // Toggle this for demo mode
-const DEMO_MODE = true;
+import React, { useState, useEffect, useContext } from 'react';
+import { ArrowUpDown, Settings, AlertTriangle, TrendingUp, CheckCircle } from 'lucide-react';
+import { AuthContext } from '../contexts/AuthContext';
+import { useWebSocket } from '../hooks/useWebSocket';
+import toast from 'react-hot-toast';
+import { DEMO_MODE } from '../config/demo';
 
 const tokens = [
   {

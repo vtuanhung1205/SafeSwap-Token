@@ -13,8 +13,19 @@ class AuthService {
 
   async validateUser(email, password) {
     try {
-      // For demo purposes, just find user by email (no password check)
-      return await User.findOne({ email });
+      // Find user by email
+      const user = await User.findOne({ email });
+      if (!user) {
+        return null;
+      }
+
+      // Check password
+      const isValidPassword = await user.comparePassword(password);
+      if (!isValidPassword) {
+        return null;
+      }
+
+      return user;
     } catch (error) {
       logger.error('User validation failed:', error);
       return null;

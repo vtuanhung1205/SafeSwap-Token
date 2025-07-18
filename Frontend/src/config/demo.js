@@ -1,7 +1,7 @@
 // Demo mode configuration
 // Set to true to use mock data for demo purposes
 // Set to false to use real API connections
-export const DEMO_MODE = true;
+export const DEMO_MODE = false;
 
 // Demo configuration options
 export const DEMO_CONFIG = {
