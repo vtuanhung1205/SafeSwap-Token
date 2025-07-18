@@ -13,7 +13,7 @@ const priceFeedService = new PriceFeedService();
 class SwapController {
   async getQuote(req, res, next) {
     try {
-      const { fromToken, toToken, amount } = req.query;
+      const { fromToken, toToken, amount } = req.body;
 
       // Validation
       if (!fromToken || !toToken || !amount) {
