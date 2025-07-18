@@ -1,0 +1,27 @@
+{
+    "typescript.validate.enable": false,
+    "typescript.suggest.enabled": false,
+    "typescript.preferences.includePackageJsonAutoImports": "off",
+    "typescript.disableAutomaticTypeAcquisition": true,
+    "typescript.workspaceSymbols.enabled": false,
+    "typescript.implementationsCodeLens.enabled": false,
+    "typescript.referencesCodeLens.enabled": false,
+    "typescript.tsc.autoDetect": "off",
+    "typescript.preferences.detectTypeImports": false,
+    "typescript.format.enable": false,
+    "typescript.check.npmIsInstalled": false,
+    "files.exclude": {
+        "**/*.d.ts": true,
+        "**/node_modules/**": false
+    },
+    "search.exclude": {
+        "**/node_modules": false,
+        "**/*.d.ts": true
+    },
+    "files.associations": {
+        "*.js": "javascript"
+    },
+    "emmet.includeLanguages": {
+        "javascript": "javascript"
+    }
+}
