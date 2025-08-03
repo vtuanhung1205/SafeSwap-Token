@@ -205,7 +205,7 @@ class TokenController {
       }
 
       // Validate Aptos address format
-      if (!aptosService.validateAddress(tokenData.address)) {
+      if (!aptosService.isValidAddress(tokenData.address)) {
         throw createError(400, 'Invalid Aptos token address format');
       }
 
@@ -221,14 +221,34 @@ class TokenController {
         throw createError(409, 'Token already exists');
       }
 
-      // Get token metadata from blockchain
-      const metadata = await aptosService.getTokenMetadata(tokenData.address);
-      if (metadata) {
-        tokenData.decimals = metadata.decimals;
-        tokenData.totalSupply = metadata.totalSupply;
-      }
+      // Create token in database
+      const token = new Token({
+        symbol: tokenData.symbol.toUpperCase(),
+        name: tokenData.name,
+        address: tokenData.address,
+        decimals: tokenData.decimals || 6,
+        totalSupply: tokenData.totalSupply || 0,
+        isNative: tokenData.isNative || false,
+        chainId: tokenData.chainId || 'aptos-testnet',
+        coingeckoId: tokenData.coingeckoId,
+        price: tokenData.price || 0,
+        priceUSD: tokenData.priceUSD || 0,
+        change24h: tokenData.change24h || 0,
+        marketCap: tokenData.marketCap || 0,
+        volume24h: tokenData.volume24h || 0,
+        circulatingSupply: tokenData.circulatingSupply || 0,
+        maxSupply: tokenData.maxSupply || 0,
+        description: tokenData.description,
+        website: tokenData.website,
+        twitter: tokenData.twitter,
+        telegram: tokenData.telegram,
+        github: tokenData.github,
+        verified: tokenData.verified || false,
+        riskScore: tokenData.riskScore || 50,
+        riskFactors: tokenData.riskFactors || []
+      });
 
-      const token = await aptosService.createToken(tokenData);
+      await token.save();
 
       logger.info(`Token created: ${token.symbol}`);
 
@@ -253,7 +273,18 @@ class TokenController {
         throw createError(400, 'Token address is required');
       }
 
-      const token = await aptosService.updateTokenPrice(address);
+      const token = await Token.findOne({ address });
+      if (!token) {
+        throw createError(404, 'Token not found');
+      }
+
+      // Mock price update for now
+      const newPrice = Math.random() * 100;
+      token.price = newPrice;
+      token.priceUSD = newPrice;
+      token.lastUpdated = new Date();
+      
+      await token.save();
 
       res.json({
         success: true,

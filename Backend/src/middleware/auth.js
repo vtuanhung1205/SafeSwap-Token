@@ -1,5 +1,6 @@
 const { createError } = require('./errorHandler');
 const { AuthService } = require('../services/auth.service');
+const { User } = require('../models/User.model');
 const { logger } = require('../utils/logger');
 
 const authService = new AuthService();
@@ -41,4 +42,28 @@ const authenticate = async (req, res, next) => {
   }
 };
 
-module.exports = { authenticate };
+const requireAdmin = async (req, res, next) => {
+  try {
+    if (!req.user) {
+      throw createError(401, 'Authentication required');
+    }
+
+    // Get user from database to check admin status
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      throw createError(404, 'User not found');
+    }
+
+    if (!user.isAdmin) {
+      logger.warn(`Non-admin user ${user.email} attempted admin action: ${req.path}`);
+      throw createError(403, 'Admin access required');
+    }
+
+    logger.info(`Admin action by ${user.email}: ${req.path}`);
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = { authenticate, requireAdmin };
