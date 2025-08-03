@@ -10,7 +10,10 @@
     "debug": "node debug-server.js",
     "build": "echo 'No build step required for Node.js'",
     "lint": "eslint src/**/*.js",
-    "test": "jest"
+    "test": "jest",
+    "seed": "node src/scripts/seedSafeSwap.js",
+    "seed:dev": "NODE_ENV=development node src/scripts/seedSafeSwap.js",
+    "seed:prod": "NODE_ENV=production node src/scripts/seedSafeSwap.js"
   },
   "keywords": [
     "aptos",

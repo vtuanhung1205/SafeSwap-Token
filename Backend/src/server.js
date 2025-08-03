@@ -16,6 +16,7 @@ const walletRoutes = require('./routes/wallet.routes');
 const swapRoutes = require('./routes/swap.routes');
 const priceRoutes = require('./routes/price.routes');
 const tokenRoutes = require('./routes/token.routes');
+const liquidityRoutes = require('./routes/liquidity.routes');
 const { WebSocketService } = require('./services/websocket.service');
 const { PriceFeedService } = require('./services/priceFeed.service');
 const swaggerUi = require('swagger-ui-express');
@@ -88,6 +89,7 @@ app.use('/api/wallet', walletRoutes);
 app.use('/api/swap', swapRoutes);
 app.use('/api/price', priceRoutes);
 app.use('/api/tokens', tokenRoutes);
+app.use('/api/liquidity', liquidityRoutes);
 
 // Welcome route
 app.get('/', (req, res) => {
