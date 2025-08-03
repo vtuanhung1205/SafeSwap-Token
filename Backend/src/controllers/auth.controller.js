@@ -31,7 +31,7 @@ class AuthController {
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'none', // Allow cross-origin cookies
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-        domain: process.env.NODE_ENV === 'production' ? '.onrender.com' : undefined
+        domain: process.env.NODE_ENV === 'production' ? 'onrender.com' : undefined
       });
 
       logger.info(`Google OAuth successful for user: ${email}, sessionId: ${sessionId}`);
@@ -131,7 +131,7 @@ class AuthController {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'none',
-        domain: process.env.NODE_ENV === 'production' ? '.onrender.com' : undefined
+        domain: process.env.NODE_ENV === 'production' ? 'onrender.com' : undefined
       });
 
       logger.info(`User logged out: ${sessionId}`);
