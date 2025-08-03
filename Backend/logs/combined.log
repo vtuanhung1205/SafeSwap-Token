@@ -445,3 +445,30 @@
 {"level":"info","message":"Updated price for APT: $4.2","service":"safeswap-backend","timestamp":"2025-08-03 21:55:18"}
 {"level":"info","message":"Updated price for ETH: $3471.73","service":"safeswap-backend","timestamp":"2025-08-03 21:55:19"}
 {"level":"info","message":"Updated price for SOL: $161.34","service":"safeswap-backend","timestamp":"2025-08-03 21:55:19"}
+{"level":"warn","message":"AI_SERVICE_URL is not set. Using fallback scam detection.","service":"safeswap-backend","timestamp":"2025-08-03 22:53:04"}
+{"level":"info","message":"🔗 Connecting to MongoDB: safeswap.6pk7wds.mongodb.net/safeswap?retryWrites=true&w=majority&appName=SafeSwap","service":"safeswap-backend","timestamp":"2025-08-03 22:53:05"}
+{"level":"info","message":"📦 MongoDB connected successfully","service":"safeswap-backend","timestamp":"2025-08-03 22:53:06"}
+{"level":"info","message":"📍 Connected to: mongodb+srv://***:***@safeswap.6pk7wds.mongodb.net/safeswap?retryWrites=true&w=majority&appName=SafeSwap","service":"safeswap-backend","timestamp":"2025-08-03 22:53:06"}
+{"level":"info","message":"🏓 Database ping successful","service":"safeswap-backend","timestamp":"2025-08-03 22:53:06"}
+{"level":"info","message":"Database connected successfully","service":"safeswap-backend","timestamp":"2025-08-03 22:53:06"}
+{"level":"info","message":"PriceFeedService initialized with 6 prices from database.","service":"safeswap-backend","timestamp":"2025-08-03 22:53:06"}
+{"level":"info","message":"Price feed service initialized","service":"safeswap-backend","timestamp":"2025-08-03 22:53:06"}
+{"level":"info","message":"Scheduling price update job. It will run every 5 minutes.","service":"safeswap-backend","timestamp":"2025-08-03 22:53:06"}
+{"level":"info","message":"Running initial price update...","service":"safeswap-backend","timestamp":"2025-08-03 22:53:06"}
+{"level":"info","message":"SafeSwap Backend API server running on port 5000","service":"safeswap-backend","timestamp":"2025-08-03 22:53:06"}
+{"level":"info","message":"Environment: development","service":"safeswap-backend","timestamp":"2025-08-03 22:53:06"}
+{"level":"info","message":"Health check: http://localhost:5000/health","service":"safeswap-backend","timestamp":"2025-08-03 22:53:06"}
+{"level":"info","message":"Updated price for BTC: $113895","service":"safeswap-backend","timestamp":"2025-08-03 22:53:06"}
+{"level":"info","message":"Updated price for ETH: $3470.74","service":"safeswap-backend","timestamp":"2025-08-03 22:53:06"}
+{"level":"info","message":"Updated price for USDC: $0.999719","service":"safeswap-backend","timestamp":"2025-08-03 22:53:06"}
+{"level":"info","message":"Updated price for APT: $4.21","service":"safeswap-backend","timestamp":"2025-08-03 22:53:06"}
+{"level":"info","message":"Updated price for USDT: $0.99992","service":"safeswap-backend","timestamp":"2025-08-03 22:53:06"}
+{"level":"info","message":"Updated price for SOL: $161.96","service":"safeswap-backend","timestamp":"2025-08-03 22:53:07"}
+{"level":"info","message":"Running scheduled price update for popular tokens...","service":"safeswap-backend","timestamp":"2025-08-03 22:55:00"}
+{"level":"warn","message":"CoinGecko price fetch failed for ETH:","service":"safeswap-backend","timestamp":"2025-08-03 22:55:00"}
+{"level":"info","message":"Updated price for USDT: $0.999935","service":"safeswap-backend","timestamp":"2025-08-03 22:55:00"}
+{"level":"info","message":"Updated price for BTC: $113893","service":"safeswap-backend","timestamp":"2025-08-03 22:55:00"}
+{"level":"info","message":"Updated price for USDC: $0.999749","service":"safeswap-backend","timestamp":"2025-08-03 22:55:00"}
+{"level":"info","message":"Updated price for ETH: $3474.12","service":"safeswap-backend","timestamp":"2025-08-03 22:55:00"}
+{"level":"info","message":"Updated price for APT: $4.21","service":"safeswap-backend","timestamp":"2025-08-03 22:55:00"}
+{"level":"info","message":"Updated price for SOL: $162","service":"safeswap-backend","timestamp":"2025-08-03 22:55:00"}
