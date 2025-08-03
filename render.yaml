@@ -14,17 +14,39 @@ services:
         value: 10000
       - key: MONGODB_URI
         sync: false # Set via Render dashboard
-      - key: JWT_SECRET
-        generateValue: true
-      - key: JWT_REFRESH_SECRET
-        generateValue: true
-      - key: JWT_EXPIRES_IN
-        value: 24h
-      - key: JWT_REFRESH_EXPIRES_IN
-        value: 7d
+      - key: APTOS_NETWORK
+        value: testnet
+      - key: APTOS_NODE_URL
+        value: https://fullnode.testnet.aptoslabs.com/v1
+      - key: ALLOWED_ORIGINS
+        value: https://safeswap-frontend.onrender.com
+      - key: LOG_FORMAT
+        value: combined
+      - key: LOG_LEVEL
+        value: info
       - key: RATE_LIMIT_WINDOW_MS
         value: 900000
       - key: RATE_LIMIT_MAX_REQUESTS
         value: 100
-      - key: BCRYPT_ROUNDS
-        value: 12
+
+  - type: web
+    name: safeswap-frontend
+    env: static
+    rootDir: Frontend
+    buildCommand: npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://safeswap-backend-service.onrender.com/api
+      - key: VITE_APP_NAME
+        value: SafeSwap
+      - key: VITE_APP_VERSION
+        value: 1.0.0
+      - key: VITE_ENABLE_AI_DETECTION
+        value: true
+      - key: VITE_ENABLE_REAL_TIME_PRICES
+        value: true
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
