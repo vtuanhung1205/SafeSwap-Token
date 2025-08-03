@@ -19,10 +19,13 @@ const WalletConnect = ({ onWalletConnected }) => {
         if (connected) {
           // Disconnect wallet if user is not authenticated
           disconnect();
-          toast.error("Please login before connecting your wallet", { duration: 3000 });
+          console.log("User not authenticated, disconnecting wallet");
         }
         return;
       }
+      
+      // Add delay to prevent rapid requests
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Ensure we have a valid account object with address and public key
       if (connected && account && !isConnecting && isAuthenticated) {
@@ -77,10 +80,17 @@ const WalletConnect = ({ onWalletConnected }) => {
         }
       }
     };
-    syncWallet();
+    
+    // Add debounce to prevent multiple rapid calls
+    const timeoutId = setTimeout(syncWallet, 500);
+    return () => clearTimeout(timeoutId);
   }, [connected, account, wallet, onWalletConnected, isConnecting, isAuthenticated, disconnect, connectWallet]);
 
   const handleConnectClick = () => {
+    if (isConnecting) {
+      return; // Prevent multiple clicks
+    }
+    
     if (!isAuthenticated) {
       toast.error("Please login with Google before connecting your wallet", { duration: 3000 });
       return;
