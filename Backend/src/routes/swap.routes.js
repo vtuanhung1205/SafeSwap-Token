@@ -26,47 +26,28 @@ const swapController = new SwapController();
  *             properties:
  *               fromToken:
  *                 type: string
- *                 description: Symbol of the source token
- *                 example: APT
+ *                 description: Address of the source token
+ *                 example: 0x1::aptos_coin::AptosCoin
  *               toToken:
  *                 type: string
- *                 description: Symbol of the target token
- *                 example: USDC
+ *                 description: Address of the target token
+ *                 example: 0xf22bede237a07e121b56d91a491eb7bcdfd1f5907926a9e58338f964a01b17fa::asset::USDC
  *               amount:
  *                 type: number
  *                 description: Amount of source token to swap
  *                 example: 10
+ *               dex:
+ *                 type: string
+ *                 enum: [liquidswap, pancakeswap, sushi]
+ *                 default: liquidswap
+ *                 description: DEX to use for swap
  *     responses:
  *       200:
  *         description: Swap quote retrieved successfully.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 quoteId:
- *                   type: string
- *                   description: Unique ID for this quote
- *                 fromAmount:
- *                   type: number
- *                   description: Amount of source token
- *                 toAmount:
- *                   type: number
- *                   description: Amount of target token
- *                 exchangeRate:
- *                   type: number
- *                   description: Exchange rate
- *                 fee:
- *                   type: number
- *                   description: Fee amount
- *                 expiresAt:
- *                   type: string
- *                   format: date-time
- *                   description: Quote expiration time
  *       400:
  *         description: Invalid request parameters.
  *       500:
- *         description: Unable to get price.
+ *         description: Unable to get quote.
  */
 router.post('/quote', asyncHandler(swapController.getQuote.bind(swapController)));
 
@@ -77,7 +58,7 @@ router.post('/quote', asyncHandler(swapController.getQuote.bind(swapController))
  *     summary: Execute swap transaction
  *     tags: [Swap]
  *     security:
- *       - bearerAuth: []
+ *       - sessionAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -93,31 +74,37 @@ router.post('/quote', asyncHandler(swapController.getQuote.bind(swapController))
  *             properties:
  *               fromToken:
  *                 type: string
- *                 description: Symbol of the source token
- *                 example: APT
+ *                 description: Address of the source token
  *               toToken:
  *                 type: string
- *                 description: Symbol of the target token
- *                 example: USDC
+ *                 description: Address of the target token
  *               fromAmount:
  *                 type: number
  *                 description: Amount of source token to swap
- *                 example: 10
  *               toAmount:
  *                 type: number
  *                 description: Amount of target token to receive
- *                 example: 50
  *               quoteId:
  *                 type: string
  *                 description: Quote ID from the quote endpoint
- *                 example: q_123456789
+ *               slippage:
+ *                 type: number
+ *                 default: 0.5
+ *                 description: Allowed slippage percentage
+ *               dex:
+ *                 type: string
+ *                 enum: [liquidswap, pancakeswap, sushi]
+ *                 default: liquidswap
+ *                 description: DEX to use for swap
  *     responses:
  *       200:
  *         description: Swap executed successfully.
  *       400:
  *         description: Invalid request or insufficient balance.
  *       401:
- *         description: Unauthorized, token is missing or invalid.
+ *         description: Authentication required.
+ *       403:
+ *         description: Access denied.
  *       404:
  *         description: Quote not found or expired.
  */
@@ -125,12 +112,37 @@ router.post('/execute', authenticate, standardRateLimiter, asyncHandler(swapCont
 
 /**
  * @swagger
- * /api/swap/history:
+ * /api/swap/transaction/{transactionId}:
  *   get:
- *     summary: Get user swap history
+ *     summary: Get transaction status
  *     tags: [Swap]
  *     security:
- *       - bearerAuth: []
+ *       - sessionAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: transactionId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the transaction
+ *     responses:
+ *       200:
+ *         description: Transaction status retrieved successfully.
+ *       401:
+ *         description: Authentication required.
+ *       404:
+ *         description: Transaction not found.
+ */
+router.get('/transaction/:transactionId', authenticate, asyncHandler(swapController.getTransactionStatus.bind(swapController)));
+
+/**
+ * @swagger
+ * /api/swap/history:
+ *   get:
+ *     summary: Get user's swap transaction history
+ *     tags: [Swap]
+ *     security:
+ *       - sessionAuth: []
  *     parameters:
  *       - in: query
  *         name: page
@@ -143,172 +155,82 @@ router.post('/execute', authenticate, standardRateLimiter, asyncHandler(swapCont
  *         schema:
  *           type: integer
  *           default: 20
- *         description: Number of records per page
+ *         description: Number of transactions per page
  *       - in: query
  *         name: status
  *         schema:
  *           type: string
- *           enum: [pending, completed, failed]
+ *           enum: [pending, completed, failed, cancelled]
  *         description: Filter by transaction status
  *     responses:
  *       200:
- *         description: Swap history retrieved successfully.
+ *         description: Transaction history retrieved successfully
  *       401:
- *         description: Unauthorized, token is missing or invalid.
+ *         description: Authentication required
  */
-router.get('/history', authenticate, asyncHandler(swapController.getSwapHistory.bind(swapController)));
+router.get('/history', authenticate, asyncHandler(swapController.getTransactionHistory.bind(swapController)));
 
 /**
  * @swagger
- * /api/swap/history/{transactionId}:
+ * /api/swap/dexes:
  *   get:
- *     summary: Get swap transaction details
+ *     summary: Get supported DEXes
  *     tags: [Swap]
- *     security:
- *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Supported DEXes retrieved successfully
+ */
+router.get('/dexes', asyncHandler(swapController.getSupportedDexes.bind(swapController)));
+
+/**
+ * @swagger
+ * /api/swap/tokens:
+ *   get:
+ *     summary: Get common tokens
+ *     tags: [Swap]
+ *     responses:
+ *       200:
+ *         description: Common tokens retrieved successfully
+ */
+router.get('/tokens', asyncHandler(swapController.getCommonTokens.bind(swapController)));
+
+/**
+ * @swagger
+ * /api/swap/pools:
+ *   get:
+ *     summary: Get liquidity pools
+ *     tags: [Swap]
+ *     parameters:
+ *       - in: query
+ *         name: dex
+ *         schema:
+ *           type: string
+ *           enum: [liquidswap, pancakeswap, sushi]
+ *           default: liquidswap
+ *         description: DEX to get pools from
+ *     responses:
+ *       200:
+ *         description: Liquidity pools retrieved successfully
+ */
+router.get('/pools', asyncHandler(swapController.getLiquidityPools.bind(swapController)));
+
+/**
+ * @swagger
+ * /api/swap/pool/{poolAddress}:
+ *   get:
+ *     summary: Get pool information
+ *     tags: [Swap]
  *     parameters:
  *       - in: path
- *         name: transactionId
+ *         name: poolAddress
  *         required: true
  *         schema:
  *           type: string
- *         description: ID of the swap transaction
+ *         description: Pool address
  *     responses:
  *       200:
- *         description: Swap details retrieved successfully.
- *       401:
- *         description: Unauthorized, token is missing or invalid.
- *       404:
- *         description: Swap transaction not found.
+ *         description: Pool information retrieved successfully
  */
-router.get('/history/:transactionId', authenticate, asyncHandler(swapController.getSwapDetails.bind(swapController)));
-
-/**
- * @swagger
- * /api/swap/stats:
- *   get:
- *     summary: Get user swap statistics
- *     tags: [Swap]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Swap statistics retrieved successfully.
- *       401:
- *         description: Unauthorized, token is missing or invalid.
- */
-router.get('/stats', authenticate, asyncHandler(swapController.getSwapStats.bind(swapController)));
-
-/**
- * @swagger
- * /api/swap/calculate-rates:
- *   post:
- *     summary: Calculate swap rates between two tokens
- *     tags: [Swap]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - fromToken
- *               - toToken
- *               - amount
- *             properties:
- *               fromToken:
- *                 type: string
- *                 description: Symbol of the source token
- *                 example: APT
- *               toToken:
- *                 type: string
- *                 description: Symbol of the target token
- *                 example: USDC
- *               amount:
- *                 type: number
- *                 description: Amount of source token to swap
- *                 example: 10
- *     responses:
- *       200:
- *         description: Swap rates calculated successfully.
- *       400:
- *         description: Invalid request parameters.
- */
-router.post('/calculate-rates', asyncHandler(swapController.calculateSwapRates.bind(swapController)));
-
-/**
- * @swagger
- * /api/swap/create-transaction:
- *   post:
- *     summary: Create a swap transaction payload
- *     tags: [Swap]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - fromToken
- *               - toToken
- *               - fromAmount
- *               - toAmount
- *             properties:
- *               fromToken:
- *                 type: string
- *                 description: Symbol of the source token
- *                 example: APT
- *               toToken:
- *                 type: string
- *                 description: Symbol of the target token
- *                 example: USDC
- *               fromAmount:
- *                 type: number
- *                 description: Amount of source token to swap
- *                 example: 10
- *               toAmount:
- *                 type: number
- *                 description: Amount of target token to receive
- *                 example: 50
- *               slippage:
- *                 type: number
- *                 description: Allowed slippage percentage
- *                 example: 0.5
- *     responses:
- *       200:
- *         description: Transaction payload created successfully.
- *       400:
- *         description: Invalid request parameters.
- *       401:
- *         description: Unauthorized, token is missing or invalid.
- */
-router.post('/create-transaction', authenticate, asyncHandler(swapController.createSwapTransaction.bind(swapController)));
-
-/**
- * @swagger
- * /api/swap/cancel/{transactionId}:
- *   post:
- *     summary: Cancel a pending swap transaction
- *     tags: [Swap]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: transactionId
- *         required: true
- *         schema:
- *           type: string
- *         description: ID of the swap transaction to cancel
- *     responses:
- *       200:
- *         description: Transaction cancelled successfully.
- *       401:
- *         description: Unauthorized, token is missing or invalid.
- *       404:
- *         description: Pending transaction not found.
- */
-router.post('/cancel/:transactionId', authenticate, asyncHandler(swapController.cancelSwap.bind(swapController)));
+router.get('/pool/:poolAddress', asyncHandler(swapController.getPoolInfo.bind(swapController)));
 
 module.exports = router;
