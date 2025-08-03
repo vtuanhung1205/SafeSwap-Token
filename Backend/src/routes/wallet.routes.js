@@ -1,7 +1,7 @@
 const express = require('express');
 const { WalletController } = require('../controllers/wallet.controller');
 const { asyncHandler } = require('../middleware/errorHandler');
-const { authenticate, optionalAuth } = require('../middleware/auth');
+const { authenticate } = require('../middleware/auth');
 const { standardRateLimiter } = require('../middleware/rateLimiter');
 
 const router = express.Router();
@@ -27,138 +27,282 @@ const walletController = new WalletController();
  *             properties:
  *               address:
  *                 type: string
- *                 description: Aptos wallet address (0x + 64 hex characters)
- *                 example: 0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef
+ *                 description: Aptos wallet address
+ *                 example: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
  *               publicKey:
  *                 type: string
- *                 description: Aptos wallet public key
- *                 example: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+ *                 description: Wallet public key
+ *                 example: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+ *               walletName:
+ *                 type: string
+ *                 description: Custom name for the wallet
+ *                 example: "Trading Wallet"
  *     responses:
  *       200:
- *         description: Wallet connected successfully.
+ *         description: Wallet connected successfully
  *       400:
- *         description: Invalid Aptos address format.
+ *         description: Invalid wallet data
  *       401:
- *         description: Unauthorized, login required.
+ *         description: Authentication required
  *       409:
- *         description: Wallet already linked to another account.
+ *         description: Wallet already connected to another account
  */
-router.post('/connect', standardRateLimiter, authenticate, asyncHandler(walletController.connectWallet.bind(walletController)));
+router.post('/connect', authenticate, standardRateLimiter, asyncHandler(walletController.connectWallet.bind(walletController)));
 
 /**
  * @swagger
- * /api/wallet/disconnect:
+ * /api/wallet/disconnect/{walletId}:
  *   post:
- *     summary: Disconnect wallet from user account
+ *     summary: Disconnect a specific wallet
  *     tags: [Wallet]
  *     security:
  *       - sessionAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: walletId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the wallet to disconnect
  *     responses:
  *       200:
- *         description: Wallet disconnected successfully.
+ *         description: Wallet disconnected successfully
  *       401:
- *         description: Unauthorized, login required.
+ *         description: Authentication required
  *       404:
- *         description: No wallet connected to this account.
+ *         description: Wallet not found
  */
-router.post('/disconnect', authenticate, asyncHandler(walletController.disconnectWallet.bind(walletController)));
+router.post('/disconnect/:walletId', authenticate, asyncHandler(walletController.disconnectWallet.bind(walletController)));
 
 /**
  * @swagger
- * /api/wallet/info:
+ * /api/wallet/list:
  *   get:
- *     summary: Get wallet information with balances
- *     tags: [Wallet]
- *     security:
- *       - sessionAuth: []
- *     responses:
- *       200:
- *         description: Wallet information retrieved successfully.
- *       401:
- *         description: Unauthorized, login required.
- *       404:
- *         description: No wallet connected to this account.
- */
-router.get('/info', authenticate, asyncHandler(walletController.getWalletInfo.bind(walletController)));
-
-/**
- * @swagger
- * /api/wallet/balance:
- *   get:
- *     summary: Get wallet balance (APT or specific token)
+ *     summary: Get all user wallets
  *     tags: [Wallet]
  *     security:
  *       - sessionAuth: []
  *     parameters:
  *       - in: query
- *         name: tokenAddress
+ *         name: includeDisconnected
  *         schema:
- *           type: string
- *         description: Token address to get balance for (optional, defaults to APT)
+ *           type: boolean
+ *         description: Include disconnected wallets
  *     responses:
  *       200:
- *         description: Wallet balance retrieved successfully.
+ *         description: User wallets retrieved successfully
  *       401:
- *         description: Unauthorized, login required.
- *       404:
- *         description: No wallet connected to this account.
+ *         description: Authentication required
  */
-router.get('/balance', authenticate, asyncHandler(walletController.getBalance.bind(walletController)));
+router.get('/list', authenticate, asyncHandler(walletController.getUserWallets.bind(walletController)));
 
 /**
  * @swagger
- * /api/wallet/token-balances:
+ * /api/wallet/{walletId}/info:
  *   get:
- *     summary: Get all token balances for wallet
+ *     summary: Get specific wallet information
  *     tags: [Wallet]
  *     security:
  *       - sessionAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: walletId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the wallet
  *     responses:
  *       200:
- *         description: Token balances retrieved successfully.
+ *         description: Wallet information retrieved successfully
  *       401:
- *         description: Unauthorized, login required.
+ *         description: Authentication required
  *       404:
- *         description: No wallet connected to this account.
+ *         description: Wallet not found
  */
-router.get('/token-balances', authenticate, asyncHandler(walletController.getTokenBalances.bind(walletController)));
+router.get('/:walletId/info', authenticate, asyncHandler(walletController.getWalletInfo.bind(walletController)));
 
 /**
  * @swagger
- * /api/wallet/transactions:
+ * /api/wallet/{walletId}/set-default:
+ *   post:
+ *     summary: Set wallet as default
+ *     tags: [Wallet]
+ *     security:
+ *       - sessionAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: walletId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the wallet to set as default
+ *     responses:
+ *       200:
+ *         description: Default wallet updated successfully
+ *       401:
+ *         description: Authentication required
+ *       404:
+ *         description: Wallet not found
+ */
+router.post('/:walletId/set-default', authenticate, asyncHandler(walletController.setDefaultWallet.bind(walletController)));
+
+/**
+ * @swagger
+ * /api/wallet/{walletId}/name:
+ *   put:
+ *     summary: Update wallet name
+ *     tags: [Wallet]
+ *     security:
+ *       - sessionAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: walletId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the wallet
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: New wallet name
+ *                 example: "My Trading Wallet"
+ *     responses:
+ *       200:
+ *         description: Wallet name updated successfully
+ *       400:
+ *         description: Invalid wallet name
+ *       401:
+ *         description: Authentication required
+ *       404:
+ *         description: Wallet not found
+ */
+router.put('/:walletId/name', authenticate, asyncHandler(walletController.updateWalletName.bind(walletController)));
+
+/**
+ * @swagger
+ * /api/wallet/{walletId}/sync:
+ *   post:
+ *     summary: Sync wallet with blockchain
+ *     tags: [Wallet]
+ *     security:
+ *       - sessionAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: walletId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the wallet to sync
+ *     responses:
+ *       200:
+ *         description: Wallet synced successfully
+ *       401:
+ *         description: Authentication required
+ *       404:
+ *         description: Wallet not found
+ */
+router.post('/:walletId/sync', authenticate, asyncHandler(walletController.syncWallet.bind(walletController)));
+
+/**
+ * @swagger
+ * /api/wallet/{walletId}/balance:
+ *   get:
+ *     summary: Get wallet balance
+ *     tags: [Wallet]
+ *     security:
+ *       - sessionAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: walletId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the wallet
+ *     responses:
+ *       200:
+ *         description: Wallet balance retrieved successfully
+ *       401:
+ *         description: Authentication required
+ *       404:
+ *         description: Wallet not found
+ */
+router.get('/:walletId/balance', authenticate, asyncHandler(walletController.getBalance.bind(walletController)));
+
+/**
+ * @swagger
+ * /api/wallet/{walletId}/tokens:
+ *   get:
+ *     summary: Get wallet token balances
+ *     tags: [Wallet]
+ *     security:
+ *       - sessionAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: walletId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the wallet
+ *     responses:
+ *       200:
+ *         description: Token balances retrieved successfully
+ *       401:
+ *         description: Authentication required
+ *       404:
+ *         description: Wallet not found
+ */
+router.get('/:walletId/tokens', authenticate, asyncHandler(walletController.getTokenBalances.bind(walletController)));
+
+/**
+ * @swagger
+ * /api/wallet/{walletId}/transactions:
  *   get:
  *     summary: Get wallet transaction history
  *     tags: [Wallet]
  *     security:
  *       - sessionAuth: []
  *     parameters:
+ *       - in: path
+ *         name: walletId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the wallet
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
  *       - in: query
  *         name: limit
  *         schema:
  *           type: integer
  *           default: 20
- *         description: Maximum number of transactions to return
- *       - in: query
- *         name: offset
- *         schema:
- *           type: integer
- *           default: 0
- *         description: Number of transactions to skip
+ *         description: Number of transactions per page
  *     responses:
  *       200:
- *         description: Transaction history retrieved successfully.
+ *         description: Transaction history retrieved successfully
  *       401:
- *         description: Unauthorized, login required.
+ *         description: Authentication required
  *       404:
- *         description: No wallet connected to this account.
+ *         description: Wallet not found
  */
-router.get('/transactions', authenticate, asyncHandler(walletController.getTransactionHistory.bind(walletController)));
+router.get('/:walletId/transactions', authenticate, asyncHandler(walletController.getTransactionHistory.bind(walletController)));
 
 /**
  * @swagger
  * /api/wallet/validate/{address}:
  *   get:
- *     summary: Validate Aptos wallet address
+ *     summary: Validate Aptos address
  *     tags: [Wallet]
  *     parameters:
  *       - in: path
@@ -166,12 +310,10 @@ router.get('/transactions', authenticate, asyncHandler(walletController.getTrans
  *         required: true
  *         schema:
  *           type: string
- *         description: Aptos wallet address to validate
+ *         description: Aptos address to validate
  *     responses:
  *       200:
- *         description: Address validation result with account info.
- *       400:
- *         description: Invalid address format.
+ *         description: Address validation result
  */
 router.get('/validate/:address', asyncHandler(walletController.validateAddress.bind(walletController)));
 
@@ -179,7 +321,7 @@ router.get('/validate/:address', asyncHandler(walletController.validateAddress.b
  * @swagger
  * /api/wallet/account/{address}:
  *   get:
- *     summary: Get account information for any Aptos address
+ *     summary: Get account information
  *     tags: [Wallet]
  *     parameters:
  *       - in: path
@@ -187,31 +329,38 @@ router.get('/validate/:address', asyncHandler(walletController.validateAddress.b
  *         required: true
  *         schema:
  *           type: string
- *         description: Aptos wallet address
+ *         description: Aptos address
  *     responses:
  *       200:
- *         description: Account information retrieved successfully.
+ *         description: Account information retrieved successfully
  *       400:
- *         description: Invalid Aptos address format.
+ *         description: Invalid address format
  */
 router.get('/account/:address', asyncHandler(walletController.getAccountInfo.bind(walletController)));
 
 /**
  * @swagger
- * /api/wallet/update-balance:
+ * /api/wallet/{walletId}/update-balance:
  *   post:
  *     summary: Update wallet balance from blockchain
  *     tags: [Wallet]
  *     security:
  *       - sessionAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: walletId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the wallet
  *     responses:
  *       200:
- *         description: Wallet balance updated successfully.
+ *         description: Balance updated successfully
  *       401:
- *         description: Unauthorized, login required.
+ *         description: Authentication required
  *       404:
- *         description: No wallet connected to this account.
+ *         description: Wallet not found
  */
-router.post('/update-balance', authenticate, asyncHandler(walletController.updateBalance.bind(walletController)));
+router.post('/:walletId/update-balance', authenticate, asyncHandler(walletController.updateBalance.bind(walletController)));
 
 module.exports = router;

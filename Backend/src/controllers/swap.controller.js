@@ -1,5 +1,6 @@
 const { SwapTransaction } = require('../models/SwapTransaction.model');
 const { Wallet } = require('../models/Wallet.model');
+const { User } = require('../models/User.model');
 const { ScamDetectionService } = require('../services/scamDetection.service');
 const { AptosService } = require('../services/aptos.service');
 const { PriceFeedService } = require('../services/priceFeed.service');
@@ -127,10 +128,19 @@ class SwapController {
         throw createError(400, 'All swap parameters are required');
       }
 
-      // Get user wallet
-      const wallet = await Wallet.findOne({ userId });
+      // Get user's default wallet
+      const user = await User.findById(userId);
+      if (!user || !user.defaultWalletId) {
+        throw createError(400, 'No default wallet found. Please connect a wallet first.');
+      }
+
+      const wallet = await Wallet.findOne({ 
+        _id: user.defaultWalletId,
+        userId 
+      });
+      
       if (!wallet || !wallet.isConnected) {
-        throw createError(400, 'No connected wallet found');
+        throw createError(400, 'Default wallet is not connected. Please reconnect your wallet.');
       }
 
       // Scam detection
