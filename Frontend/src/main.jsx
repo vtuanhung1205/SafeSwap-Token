@@ -5,6 +5,7 @@ import "./index.css";
 import { AuthProvider } from "./contexts/AuthContext.jsx";
 import { BrowserRouter as Router } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
 // --- Aptos Wallet Imports ---
 import { AptosWalletAdapterProvider } from "@aptos-labs/wallet-adapter-react";
@@ -40,18 +41,20 @@ const wallets = [
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <AptosWalletAdapterProvider
-      plugins={wallets}
-      autoConnect={false}
-      onError={(error) => {
-        console.error("Wallet Adapter Error", error);
-      }}
-    >
-      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <AuthProvider>
-    <App />
-        </AuthProvider>
-      </Router>
-    </AptosWalletAdapterProvider>
+    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+      <AptosWalletAdapterProvider
+        plugins={wallets}
+        autoConnect={false}
+        onError={(error) => {
+          console.error("Wallet Adapter Error", error);
+        }}
+      >
+        <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <AuthProvider>
+            <App />
+          </AuthProvider>
+        </Router>
+      </AptosWalletAdapterProvider>
+    </GoogleOAuthProvider>
   </React.StrictMode>
 );

@@ -2,32 +2,48 @@ import React, { useState } from 'react';
 import { X, LogIn } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
+import { useGoogleLogin } from '@react-oauth/google';
 
 const LoginModal = ({ isOpen, onClose }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { googleLogin } = useAuth();
 
-  const handleGoogleLogin = async () => {
-    setIsSubmitting(true);
-    
-    try {
-      // Simulate Google OAuth flow
-      // In a real app, you would integrate with Google OAuth SDK
-      const googleData = {
-        googleId: 'demo_google_id_' + Date.now(),
-        email: 'demo@example.com',
-        name: 'Demo User',
-        avatar: 'https://lh3.googleusercontent.com/a/default-user'
-      };
-      
-      await googleLogin(googleData);
-      onClose();
-    } catch (error) {
-      console.error('Google login error:', error);
+  const googleLoginHook = useGoogleLogin({
+    onSuccess: async (response) => {
+      setIsSubmitting(true);
+      try {
+        // Get user info from Google
+        const userInfo = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: {
+            Authorization: `Bearer ${response.access_token}`,
+          },
+        }).then(res => res.json());
+
+        const googleData = {
+          googleId: userInfo.sub,
+          email: userInfo.email,
+          name: userInfo.name,
+          avatar: userInfo.picture
+        };
+        
+        await googleLogin(googleData);
+        onClose();
+      } catch (error) {
+        console.error('Google login error:', error);
+        toast.error('Google login failed. Please try again.');
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    onError: (error) => {
+      console.error('Google OAuth error:', error);
       toast.error('Google login failed. Please try again.');
-    } finally {
       setIsSubmitting(false);
     }
+  });
+
+  const handleGoogleLogin = () => {
+    googleLoginHook();
   };
 
   if (!isOpen) return null;
@@ -86,10 +102,10 @@ const LoginModal = ({ isOpen, onClose }) => {
             )}
           </button>
 
-          {/* Demo Note */}
+          {/* Google OAuth Note */}
           <div className="text-center">
             <p className="text-xs text-gray-500">
-              Demo mode: Click to simulate Google login
+              Sign in with your real Google account
             </p>
           </div>
         </div>
