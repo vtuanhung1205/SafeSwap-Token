@@ -11,8 +11,8 @@ const swapController = new SwapController();
  * @swagger
  * /api/swap/quote:
  *   post:
- *     summary: Get swap quote
- *     tags: [Swap]
+ *     summary: Get SafeSwap quote
+ *     tags: [SafeSwap]
  *     requestBody:
  *       required: true
  *       content:
@@ -36,16 +36,15 @@ const swapController = new SwapController();
  *                 type: number
  *                 description: Amount of source token to swap
  *                 example: 10
- *               dex:
- *                 type: string
- *                 enum: [liquidswap, pancakeswap, sushi]
- *                 default: liquidswap
- *                 description: DEX to use for swap
+ *               slippage:
+ *                 type: number
+ *                 default: 0.5
+ *                 description: Allowed slippage percentage
  *     responses:
  *       200:
- *         description: Swap quote retrieved successfully.
+ *         description: SafeSwap quote calculated successfully.
  *       400:
- *         description: Invalid request parameters.
+ *         description: Invalid request parameters or unsupported token pair.
  *       500:
  *         description: Unable to get quote.
  */
@@ -55,8 +54,8 @@ router.post('/quote', asyncHandler(swapController.getQuote.bind(swapController))
  * @swagger
  * /api/swap/execute:
  *   post:
- *     summary: Execute swap transaction
- *     tags: [Swap]
+ *     summary: Execute SafeSwap transaction
+ *     tags: [SafeSwap]
  *     security:
  *       - sessionAuth: []
  *     requestBody:
@@ -91,14 +90,9 @@ router.post('/quote', asyncHandler(swapController.getQuote.bind(swapController))
  *                 type: number
  *                 default: 0.5
  *                 description: Allowed slippage percentage
- *               dex:
- *                 type: string
- *                 enum: [liquidswap, pancakeswap, sushi]
- *                 default: liquidswap
- *                 description: DEX to use for swap
  *     responses:
  *       200:
- *         description: Swap executed successfully.
+ *         description: SafeSwap executed successfully.
  *       400:
  *         description: Invalid request or insufficient balance.
  *       401:
@@ -115,7 +109,7 @@ router.post('/execute', authenticate, standardRateLimiter, asyncHandler(swapCont
  * /api/swap/transaction/{transactionId}:
  *   get:
  *     summary: Get transaction status
- *     tags: [Swap]
+ *     tags: [SafeSwap]
  *     security:
  *       - sessionAuth: []
  *     parameters:
@@ -139,8 +133,8 @@ router.get('/transaction/:transactionId', authenticate, asyncHandler(swapControl
  * @swagger
  * /api/swap/history:
  *   get:
- *     summary: Get user's swap transaction history
- *     tags: [Swap]
+ *     summary: Get user's SafeSwap transaction history
+ *     tags: [SafeSwap]
  *     security:
  *       - sessionAuth: []
  *     parameters:
@@ -172,42 +166,22 @@ router.get('/history', authenticate, asyncHandler(swapController.getTransactionH
 
 /**
  * @swagger
- * /api/swap/dexes:
+ * /api/swap/dex-info:
  *   get:
- *     summary: Get supported DEXes
- *     tags: [Swap]
+ *     summary: Get SafeSwap DEX information
+ *     tags: [SafeSwap]
  *     responses:
  *       200:
- *         description: Supported DEXes retrieved successfully
+ *         description: DEX information retrieved successfully
  */
-router.get('/dexes', asyncHandler(swapController.getSupportedDexes.bind(swapController)));
-
-/**
- * @swagger
- * /api/swap/tokens:
- *   get:
- *     summary: Get common tokens
- *     tags: [Swap]
- *     responses:
- *       200:
- *         description: Common tokens retrieved successfully
- */
-router.get('/tokens', asyncHandler(swapController.getCommonTokens.bind(swapController)));
+router.get('/dex-info', asyncHandler(swapController.getDexInfo.bind(swapController)));
 
 /**
  * @swagger
  * /api/swap/pools:
  *   get:
- *     summary: Get liquidity pools
- *     tags: [Swap]
- *     parameters:
- *       - in: query
- *         name: dex
- *         schema:
- *           type: string
- *           enum: [liquidswap, pancakeswap, sushi]
- *           default: liquidswap
- *         description: DEX to get pools from
+ *     summary: Get SafeSwap liquidity pools
+ *     tags: [SafeSwap]
  *     responses:
  *       200:
  *         description: Liquidity pools retrieved successfully
@@ -219,7 +193,7 @@ router.get('/pools', asyncHandler(swapController.getLiquidityPools.bind(swapCont
  * /api/swap/pool/{poolAddress}:
  *   get:
  *     summary: Get pool information
- *     tags: [Swap]
+ *     tags: [SafeSwap]
  *     parameters:
  *       - in: path
  *         name: poolAddress
@@ -232,5 +206,45 @@ router.get('/pools', asyncHandler(swapController.getLiquidityPools.bind(swapCont
  *         description: Pool information retrieved successfully
  */
 router.get('/pool/:poolAddress', asyncHandler(swapController.getPoolInfo.bind(swapController)));
+
+/**
+ * @swagger
+ * /api/swap/pairs:
+ *   get:
+ *     summary: Get supported token pairs
+ *     tags: [SafeSwap]
+ *     responses:
+ *       200:
+ *         description: Supported pairs retrieved successfully
+ */
+router.get('/pairs', asyncHandler(swapController.getSupportedPairs.bind(swapController)));
+
+/**
+ * @swagger
+ * /api/swap/token-distribution:
+ *   get:
+ *     summary: Get SafeSwap token distribution
+ *     tags: [SafeSwap]
+ *     responses:
+ *       200:
+ *         description: Token distribution retrieved successfully
+ */
+router.get('/token-distribution', asyncHandler(swapController.getTokenDistribution.bind(swapController)));
+
+/**
+ * @swagger
+ * /api/swap/positions:
+ *   get:
+ *     summary: Get user's liquidity positions
+ *     tags: [SafeSwap]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: User positions retrieved successfully
+ *       401:
+ *         description: Authentication required
+ */
+router.get('/positions', authenticate, asyncHandler(swapController.getUserPositions.bind(swapController)));
 
 module.exports = router;
