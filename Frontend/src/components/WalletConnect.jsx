@@ -82,7 +82,7 @@ const WalletConnect = ({ onWalletConnected }) => {
 
   const handleConnectClick = () => {
     if (!isAuthenticated) {
-      toast.error("Please login before connecting your wallet", { duration: 3000 });
+      toast.error("Please login with Google before connecting your wallet", { duration: 3000 });
       return;
     }
     

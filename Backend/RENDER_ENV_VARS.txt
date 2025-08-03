@@ -9,7 +9,7 @@ JWT_EXPIRES_IN=24h
 JWT_REFRESH_EXPIRES_IN=7d
 ALLOWED_ORIGINS=https://safeswap-frontend.onrender.com,http://localhost:5173,http://localhost:3000
 RATE_LIMIT_WINDOW_MS=900000
-RATE_LIMIT_MAX_REQUESTS=100
+RATE_LIMIT_MAX_REQUESTS=50000
 BCRYPT_ROUNDS=12
 
 # Optional (để trống nếu chưa có):
