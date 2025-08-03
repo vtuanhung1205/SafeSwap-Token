@@ -16,6 +16,12 @@ const api = axios.create({
 // Request interceptor - no need to add auth headers for session-based auth
 api.interceptors.request.use(
   (config) => {
+    console.log('Request config:', {
+      url: config.url,
+      method: config.method,
+      withCredentials: config.withCredentials,
+      headers: config.headers
+    });
     return config;
   },
   (error) => {
