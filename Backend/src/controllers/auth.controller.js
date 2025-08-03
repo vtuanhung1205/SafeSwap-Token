@@ -29,11 +29,11 @@ class AuthController {
       res.cookie('sessionId', sessionId, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
+        sameSite: 'lax', // Changed from 'strict' to 'lax' for cross-origin
         maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
       });
 
-      logger.info(`Google OAuth successful for user: ${email}`);
+      logger.info(`Google OAuth successful for user: ${email}, sessionId: ${sessionId}`);
 
       res.json({
         success: true,

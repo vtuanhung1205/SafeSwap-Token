@@ -94,16 +94,32 @@ export const AuthProvider = ({ children }) => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       
+      console.log('Google login attempt with data:', googleData);
+      
       const response = await authAPI.googleAuth(googleData);
+      
+      console.log('Google auth response:', response.data);
       
       if (response.data.success) {
         dispatch({ type: 'SET_USER', payload: response.data.data.user });
         toast.success('Successfully logged in with Google!');
+        
+        // Check session after login
+        setTimeout(async () => {
+          try {
+            const statusResponse = await authAPI.getAuthStatus();
+            console.log('Auth status after login:', statusResponse.data);
+          } catch (error) {
+            console.error('Failed to check auth status after login:', error);
+          }
+        }, 1000);
+        
         return response.data.data;
       } else {
         throw new Error(response.data.message || 'Google login failed');
       }
     } catch (error) {
+      console.error('Google login error:', error);
       const errorMessage = handleApiError(error);
       dispatch({ type: 'SET_ERROR', payload: errorMessage });
       toast.error(errorMessage);
