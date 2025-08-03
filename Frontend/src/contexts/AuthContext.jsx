@@ -109,6 +109,17 @@ export const AuthProvider = ({ children }) => {
           try {
             const statusResponse = await authAPI.getAuthStatus();
             console.log('Auth status after login:', statusResponse.data);
+            
+            // Check if session cookie is set
+            console.log('Cookies after login:', document.cookie);
+            
+            // Test wallet connection
+            try {
+              const walletResponse = await walletAPI.getInfo();
+              console.log('Wallet info after login:', walletResponse.data);
+            } catch (walletError) {
+              console.log('Wallet check failed (expected if no wallet):', walletError.response?.data);
+            }
           } catch (error) {
             console.error('Failed to check auth status after login:', error);
           }

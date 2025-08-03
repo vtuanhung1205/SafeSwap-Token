@@ -22,6 +22,10 @@ api.interceptors.request.use(
       withCredentials: config.withCredentials,
       headers: config.headers
     });
+    
+    // Log cookies before request
+    console.log('Cookies before request:', document.cookie);
+    
     return config;
   },
   (error) => {

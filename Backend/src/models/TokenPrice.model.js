@@ -2,19 +2,30 @@ const mongoose = require('mongoose');
 
 const tokenPriceSchema = new mongoose.Schema(
   {
+    tokenAddress: {
+      type: String,
+      required: true,
+      trim: true,
+      // Aptos token address format
+      validate: {
+        validator: function(v) {
+          return /^0x[a-fA-F0-9]{64}::[a-zA-Z0-9_]+::[a-zA-Z0-9_]+$/.test(v);
+        },
+        message: 'Invalid Aptos token address format'
+      }
+    },
     symbol: {
       type: String,
       required: true,
-      unique: true,
       uppercase: true,
       trim: true,
     },
-    name: {
-      type: String,
-      required: true,
-      trim: true,
-    },
     price: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    priceUSD: {
       type: Number,
       required: true,
       min: 0,

@@ -1,11 +1,12 @@
 const { User } = require('../models/User.model');
+const { Session } = require('../models/Session.model');
 const { createError } = require('../middleware/errorHandler');
 const { logger } = require('../utils/logger');
 
 class AuthService {
   constructor() {
-    // Session storage for Google OAuth users
-    this.sessions = new Map();
+    // No longer need in-memory storage
+    // this.sessions = new Map();
   }
 
   async createUserFromGoogle(googleProfile) {
@@ -56,23 +57,21 @@ class AuthService {
     }
   }
 
-  createSession(user) {
+  async createSession(user, req = null) {
     try {
       const sessionId = this.generateSessionId();
       const sessionData = {
+        sessionId,
         userId: user._id,
         email: user.email,
         name: user.name,
         avatar: user.avatar,
         googleId: user.googleId,
-        createdAt: new Date(),
-        lastActivity: new Date()
+        userAgent: req?.get('User-Agent'),
+        ipAddress: req?.ip,
       };
 
-      this.sessions.set(sessionId, sessionData);
-      
-      // Clean up old sessions (older than 7 days)
-      this.cleanupOldSessions();
+      await Session.createSession(sessionData);
       
       logger.info(`Session created for user: ${user.email}`);
       return sessionId;
@@ -82,31 +81,38 @@ class AuthService {
     }
   }
 
-  getSession(sessionId) {
+  async getSession(sessionId) {
     try {
-      const session = this.sessions.get(sessionId);
+      const session = await Session.findBySessionId(sessionId);
       if (!session) {
         return null;
       }
 
       // Update last activity
-      session.lastActivity = new Date();
-      this.sessions.set(sessionId, session);
+      await session.updateActivity();
 
-      return session;
+      return {
+        userId: session.userId,
+        email: session.email,
+        name: session.name,
+        avatar: session.avatar,
+        googleId: session.googleId,
+        createdAt: session.createdAt,
+        lastActivity: session.lastActivity
+      };
     } catch (error) {
       logger.error('Failed to get session:', error);
       return null;
     }
   }
 
-  removeSession(sessionId) {
+  async removeSession(sessionId) {
     try {
-      const removed = this.sessions.delete(sessionId);
-      if (removed) {
+      const result = await Session.deleteOne({ sessionId });
+      if (result.deletedCount > 0) {
         logger.info(`Session removed: ${sessionId}`);
       }
-      return removed;
+      return result.deletedCount > 0;
     } catch (error) {
       logger.error('Failed to remove session:', error);
       return false;
@@ -115,26 +121,6 @@ class AuthService {
 
   generateSessionId() {
     return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-  }
-
-  cleanupOldSessions() {
-    try {
-      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-      let cleanedCount = 0;
-
-      for (const [sessionId, session] of this.sessions.entries()) {
-        if (session.lastActivity < sevenDaysAgo) {
-          this.sessions.delete(sessionId);
-          cleanedCount++;
-        }
-      }
-
-      if (cleanedCount > 0) {
-        logger.info(`Cleaned up ${cleanedCount} old sessions`);
-      }
-    } catch (error) {
-      logger.error('Failed to cleanup old sessions:', error);
-    }
   }
 
   async getUserById(userId) {
@@ -179,7 +165,7 @@ class AuthService {
     return {
       service: 'AuthService',
       status: 'healthy',
-      activeSessions: this.sessions.size,
+      // activeSessions: this.sessions.size, // This line is removed as per the new_code
       timestamp: new Date().toISOString()
     };
   }

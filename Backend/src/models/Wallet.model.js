@@ -6,7 +6,6 @@ const walletSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      index: true, // For faster queries
     },
     address: {
       type: String,

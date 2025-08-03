@@ -23,14 +23,15 @@ class AuthController {
       });
 
       // Create session
-      const sessionId = authService.createSession(user);
+      const sessionId = await authService.createSession(user, req);
 
       // Set session cookie
       res.cookie('sessionId', sessionId, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax', // Changed from 'strict' to 'lax' for cross-origin
-        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+        sameSite: 'none', // Allow cross-origin cookies
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        domain: process.env.NODE_ENV === 'production' ? '.onrender.com' : undefined
       });
 
       logger.info(`Google OAuth successful for user: ${email}, sessionId: ${sessionId}`);
@@ -122,13 +123,18 @@ class AuthController {
       const sessionId = req.cookies.sessionId || req.headers['x-session-id'];
       
       if (sessionId) {
-        authService.removeSession(sessionId);
+        await authService.removeSession(sessionId);
       }
 
       // Clear session cookie
-      res.clearCookie('sessionId');
+      res.clearCookie('sessionId', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'none',
+        domain: process.env.NODE_ENV === 'production' ? '.onrender.com' : undefined
+      });
 
-      logger.info('User logged out successfully');
+      logger.info(`User logged out: ${sessionId}`);
 
       res.json({
         success: true,
