@@ -134,13 +134,27 @@ class SwapController {
         throw createError(400, 'No default wallet found. Please connect a wallet first.');
       }
 
-      const wallet = await Wallet.findOne({ 
-        _id: user.defaultWalletId,
-        userId 
-      });
-      
+      const wallet = await Wallet.validateOwnership(user.defaultWalletId, userId);
       if (!wallet || !wallet.isConnected) {
         throw createError(400, 'Default wallet is not connected. Please reconnect your wallet.');
+      }
+
+      // Check wallet permissions
+      if (!wallet.permissions.canSwap) {
+        throw createError(403, 'This wallet does not have swap permissions');
+      }
+
+      // Check transaction limits
+      const limitCheck = wallet.checkTransactionLimit(parseFloat(fromAmount));
+      if (!limitCheck.allowed) {
+        throw createError(400, `Transaction blocked: ${limitCheck.reason}`);
+      }
+
+      // Check if confirmation is required
+      const requiresConfirmation = wallet.requiresConfirmation(parseFloat(fromAmount));
+      if (requiresConfirmation) {
+        // In a real app, you might want to return a confirmation request
+        logger.info(`Large transaction requires confirmation: ${fromAmount} ${fromToken}`);
       }
 
       // Scam detection
@@ -189,6 +203,9 @@ class SwapController {
       });
 
       await transaction.save();
+
+      // Record transaction in wallet
+      await wallet.recordTransaction(parseFloat(fromAmount));
 
       // Simulate transaction processing
       setTimeout(async () => {

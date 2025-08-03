@@ -10,6 +10,15 @@ const walletService = new WalletService();
 const aptosService = new AptosBlockchainService();
 
 class WalletController {
+  // Middleware to validate wallet ownership
+  async validateWalletOwnership(walletId, userId) {
+    const wallet = await Wallet.validateOwnership(walletId, userId);
+    if (!wallet) {
+      throw createError(403, 'Access denied: Wallet not found or you do not own this wallet');
+    }
+    return wallet;
+  }
+
   async connectWallet(req, res, next) {
     try {
       console.log("Received wallet connect request:", req.body);
@@ -28,10 +37,7 @@ class WalletController {
       }
 
       // Check if wallet is already connected by this user
-      const existingWallet = await Wallet.findOne({ 
-        userId, 
-        address 
-      });
+      const existingWallet = await Wallet.findByUserAndAddress(userId, address);
 
       if (existingWallet) {
         if (existingWallet.isConnected) {
@@ -83,6 +89,7 @@ class WalletController {
         userId,
         address,
         publicKey,
+        name: walletName,
         chainId: 'aptos-testnet',
         aptBalance,
         tokenBalances,
@@ -91,7 +98,26 @@ class WalletController {
         sequenceNumber: accountInfo?.sequence_number || 0,
         authenticationKey: accountInfo?.authentication_key || publicKey,
         accountType: 'single_signer',
-        name: walletName
+        // Set default security settings
+        security: {
+          requireConfirmation: true,
+          confirmationThreshold: 100, // APT
+          dailyLimit: 1000, // APT
+          dailyTransactions: 0,
+          lastTransactionDate: new Date()
+        },
+        permissions: {
+          canSwap: true,
+          canTransfer: true,
+          canStake: false,
+          canVote: false
+        },
+        metadata: {
+          source: 'user_created',
+          tags: ['connected'],
+          color: '#3B82F6',
+          notes: ''
+        }
       });
 
       await newWallet.save();
@@ -123,14 +149,8 @@ class WalletController {
       const { walletId } = req.params;
       const userId = req.user._id;
 
-      const wallet = await Wallet.findOne({ 
-        _id: walletId, 
-        userId 
-      });
-
-      if (!wallet) {
-        throw createError(404, 'Wallet not found');
-      }
+      // Validate wallet ownership
+      const wallet = await this.validateWalletOwnership(walletId, userId);
 
       wallet.isConnected = false;
       wallet.lastSyncAt = new Date();
@@ -167,21 +187,14 @@ class WalletController {
       const userId = req.user._id;
       const { includeDisconnected = false } = req.query;
 
-      const query = { userId };
-      if (!includeDisconnected) {
-        query.isConnected = true;
-      }
-
-      const wallets = await Wallet.find(query)
-        .sort({ lastSyncAt: -1 })
-        .lean();
+      const wallets = await Wallet.getUserWallets(userId, includeDisconnected);
 
       // Get user's default wallet
       const user = await User.findById(userId);
       const defaultWalletId = user?.defaultWalletId;
 
       const walletsWithDefault = wallets.map(wallet => ({
-        ...wallet,
+        ...wallet.toJSON(),
         isDefault: defaultWalletId && defaultWalletId.equals(wallet._id)
       }));
 
@@ -203,14 +216,8 @@ class WalletController {
       const { walletId } = req.params;
       const userId = req.user._id;
 
-      const wallet = await Wallet.findOne({ 
-        _id: walletId, 
-        userId 
-      });
-
-      if (!wallet) {
-        throw createError(404, 'Wallet not found');
-      }
+      // Validate wallet ownership
+      const wallet = await this.validateWalletOwnership(walletId, userId);
 
       // Get fresh balance from blockchain if wallet is connected
       if (wallet.isConnected) {
@@ -241,15 +248,8 @@ class WalletController {
       const { walletId } = req.params;
       const userId = req.user._id;
 
-      // Verify wallet belongs to user
-      const wallet = await Wallet.findOne({ 
-        _id: walletId, 
-        userId 
-      });
-
-      if (!wallet) {
-        throw createError(404, 'Wallet not found');
-      }
+      // Validate wallet ownership
+      const wallet = await this.validateWalletOwnership(walletId, userId);
 
       if (!wallet.isConnected) {
         throw createError(400, 'Cannot set disconnected wallet as default');
@@ -282,14 +282,8 @@ class WalletController {
         throw createError(400, 'Wallet name is required');
       }
 
-      const wallet = await Wallet.findOne({ 
-        _id: walletId, 
-        userId 
-      });
-
-      if (!wallet) {
-        throw createError(404, 'Wallet not found');
-      }
+      // Validate wallet ownership
+      const wallet = await this.validateWalletOwnership(walletId, userId);
 
       wallet.name = name.trim();
       await wallet.save();
@@ -304,19 +298,69 @@ class WalletController {
     }
   }
 
+  async updateWalletSettings(req, res, next) {
+    try {
+      const { walletId } = req.params;
+      const { security, permissions, metadata } = req.body;
+      const userId = req.user._id;
+
+      // Validate wallet ownership
+      const wallet = await this.validateWalletOwnership(walletId, userId);
+
+      // Update security settings if provided
+      if (security) {
+        if (security.requireConfirmation !== undefined) {
+          wallet.security.requireConfirmation = security.requireConfirmation;
+        }
+        if (security.confirmationThreshold !== undefined) {
+          wallet.security.confirmationThreshold = security.confirmationThreshold;
+        }
+        if (security.dailyLimit !== undefined) {
+          wallet.security.dailyLimit = security.dailyLimit;
+        }
+      }
+
+      // Update permissions if provided
+      if (permissions) {
+        Object.keys(permissions).forEach(key => {
+          if (wallet.permissions.hasOwnProperty(key)) {
+            wallet.permissions[key] = permissions[key];
+          }
+        });
+      }
+
+      // Update metadata if provided
+      if (metadata) {
+        if (metadata.tags) {
+          wallet.metadata.tags = metadata.tags;
+        }
+        if (metadata.color) {
+          wallet.metadata.color = metadata.color;
+        }
+        if (metadata.notes !== undefined) {
+          wallet.metadata.notes = metadata.notes;
+        }
+      }
+
+      await wallet.save();
+
+      res.json({
+        success: true,
+        message: 'Wallet settings updated successfully',
+        data: { wallet }
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async syncWallet(req, res, next) {
     try {
       const { walletId } = req.params;
       const userId = req.user._id;
 
-      const wallet = await Wallet.findOne({ 
-        _id: walletId, 
-        userId 
-      });
-
-      if (!wallet) {
-        throw createError(404, 'Wallet not found');
-      }
+      // Validate wallet ownership
+      const wallet = await this.validateWalletOwnership(walletId, userId);
 
       if (!wallet.isConnected) {
         throw createError(400, 'Cannot sync disconnected wallet');
@@ -351,14 +395,8 @@ class WalletController {
       const { walletId } = req.params;
       const userId = req.user._id;
 
-      const wallet = await Wallet.findOne({ 
-        _id: walletId, 
-        userId 
-      });
-
-      if (!wallet) {
-        throw createError(404, 'Wallet not found');
-      }
+      // Validate wallet ownership
+      const wallet = await this.validateWalletOwnership(walletId, userId);
 
       res.json({
         success: true,
@@ -378,14 +416,8 @@ class WalletController {
       const { walletId } = req.params;
       const userId = req.user._id;
 
-      const wallet = await Wallet.findOne({ 
-        _id: walletId, 
-        userId 
-      });
-
-      if (!wallet) {
-        throw createError(404, 'Wallet not found');
-      }
+      // Validate wallet ownership
+      const wallet = await this.validateWalletOwnership(walletId, userId);
 
       // Convert tokenBalances Map to array
       const tokenBalancesArray = Array.from(wallet.tokenBalances.entries()).map(([tokenAddress, data]) => ({
@@ -411,14 +443,8 @@ class WalletController {
       const { page = 1, limit = 20 } = req.query;
       const userId = req.user._id;
 
-      const wallet = await Wallet.findOne({ 
-        _id: walletId, 
-        userId 
-      });
-
-      if (!wallet) {
-        throw createError(404, 'Wallet not found');
-      }
+      // Validate wallet ownership
+      const wallet = await this.validateWalletOwnership(walletId, userId);
 
       const { SwapTransaction } = require('../models/SwapTransaction.model');
       
@@ -494,14 +520,8 @@ class WalletController {
       const { walletId } = req.params;
       const userId = req.user._id;
 
-      const wallet = await Wallet.findOne({ 
-        _id: walletId, 
-        userId 
-      });
-
-      if (!wallet) {
-        throw createError(404, 'Wallet not found');
-      }
+      // Validate wallet ownership
+      const wallet = await this.validateWalletOwnership(walletId, userId);
 
       if (!wallet.isConnected) {
         throw createError(400, 'Cannot update disconnected wallet');
@@ -520,6 +540,38 @@ class WalletController {
         success: true,
         message: 'Balance updated successfully',
         data: { wallet }
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async checkTransactionLimit(req, res, next) {
+    try {
+      const { walletId } = req.params;
+      const { amount } = req.body;
+      const userId = req.user._id;
+
+      // Validate wallet ownership
+      const wallet = await this.validateWalletOwnership(walletId, userId);
+
+      if (!wallet.isConnected) {
+        throw createError(400, 'Cannot check limits for disconnected wallet');
+      }
+
+      const limitCheck = wallet.checkTransactionLimit(amount);
+      const requiresConfirmation = wallet.requiresConfirmation(amount);
+
+      res.json({
+        success: true,
+        data: {
+          allowed: limitCheck.allowed,
+          reason: limitCheck.reason,
+          requiresConfirmation,
+          dailyLimit: wallet.security.dailyLimit,
+          dailyTransactions: wallet.security.dailyTransactions,
+          confirmationThreshold: wallet.security.confirmationThreshold
+        }
       });
     } catch (error) {
       next(error);

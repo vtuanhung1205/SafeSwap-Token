@@ -188,6 +188,73 @@ router.put('/:walletId/name', authenticate, asyncHandler(walletController.update
 
 /**
  * @swagger
+ * /api/wallet/{walletId}/settings:
+ *   put:
+ *     summary: Update wallet settings
+ *     tags: [Wallet]
+ *     security:
+ *       - sessionAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: walletId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the wallet
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               security:
+ *                 type: object
+ *                 properties:
+ *                   requireConfirmation:
+ *                     type: boolean
+ *                   confirmationThreshold:
+ *                     type: number
+ *                   dailyLimit:
+ *                     type: number
+ *               permissions:
+ *                 type: object
+ *                 properties:
+ *                   canSwap:
+ *                     type: boolean
+ *                   canTransfer:
+ *                     type: boolean
+ *                   canStake:
+ *                     type: boolean
+ *                   canVote:
+ *                     type: boolean
+ *               metadata:
+ *                 type: object
+ *                 properties:
+ *                   tags:
+ *                     type: array
+ *                     items:
+ *                       type: string
+ *                   color:
+ *                     type: string
+ *                   notes:
+ *                     type: string
+ *     responses:
+ *       200:
+ *         description: Wallet settings updated successfully
+ *       400:
+ *         description: Invalid settings data
+ *       401:
+ *         description: Authentication required
+ *       403:
+ *         description: Access denied
+ *       404:
+ *         description: Wallet not found
+ */
+router.put('/:walletId/settings', authenticate, asyncHandler(walletController.updateWalletSettings.bind(walletController)));
+
+/**
+ * @swagger
  * /api/wallet/{walletId}/sync:
  *   post:
  *     summary: Sync wallet with blockchain
@@ -362,5 +429,47 @@ router.get('/account/:address', asyncHandler(walletController.getAccountInfo.bin
  *         description: Wallet not found
  */
 router.post('/:walletId/update-balance', authenticate, asyncHandler(walletController.updateBalance.bind(walletController)));
+
+/**
+ * @swagger
+ * /api/wallet/{walletId}/check-limit:
+ *   post:
+ *     summary: Check transaction limits for wallet
+ *     tags: [Wallet]
+ *     security:
+ *       - sessionAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: walletId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the wallet
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - amount
+ *             properties:
+ *               amount:
+ *                 type: number
+ *                 description: Transaction amount to check
+ *                 example: 50
+ *     responses:
+ *       200:
+ *         description: Transaction limit check completed
+ *       400:
+ *         description: Invalid amount or wallet disconnected
+ *       401:
+ *         description: Authentication required
+ *       403:
+ *         description: Access denied
+ *       404:
+ *         description: Wallet not found
+ */
+router.post('/:walletId/check-limit', authenticate, asyncHandler(walletController.checkTransactionLimit.bind(walletController)));
 
 module.exports = router;
