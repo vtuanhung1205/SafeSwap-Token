@@ -1,7 +1,7 @@
 const express = require('express');
 const { WalletController } = require('../controllers/wallet.controller');
 const { asyncHandler } = require('../middleware/errorHandler');
-const { verifyToken, optionalAuth } = require('../middleware/auth');
+const { authenticate, optionalAuth } = require('../middleware/auth');
 const { standardRateLimiter } = require('../middleware/rateLimiter');
 
 const router = express.Router();
@@ -41,7 +41,7 @@ const walletController = new WalletController();
  *       401:
  *         description: Unauthorized, login required.
  */
-router.post('/connect', standardRateLimiter, verifyToken, asyncHandler(walletController.connectWallet.bind(walletController)));
+router.post('/connect', standardRateLimiter, authenticate, asyncHandler(walletController.connectWallet.bind(walletController)));
 
 /**
  * @swagger
@@ -59,7 +59,7 @@ router.post('/connect', standardRateLimiter, verifyToken, asyncHandler(walletCon
  *       404:
  *         description: No wallet connected to this account.
  */
-router.post('/disconnect', verifyToken, asyncHandler(walletController.disconnectWallet.bind(walletController)));
+router.post('/disconnect', authenticate, asyncHandler(walletController.disconnectWallet.bind(walletController)));
 
 /**
  * @swagger
@@ -77,7 +77,7 @@ router.post('/disconnect', verifyToken, asyncHandler(walletController.disconnect
  *       404:
  *         description: No wallet connected to this account.
  */
-router.get('/info', verifyToken, asyncHandler(walletController.getWalletInfo.bind(walletController)));
+router.get('/info', authenticate, asyncHandler(walletController.getWalletInfo.bind(walletController)));
 
 /**
  * @swagger
@@ -95,7 +95,7 @@ router.get('/info', verifyToken, asyncHandler(walletController.getWalletInfo.bin
  *       404:
  *         description: No wallet connected to this account.
  */
-router.get('/balance', verifyToken, asyncHandler(walletController.getBalance.bind(walletController)));
+router.get('/balance', authenticate, asyncHandler(walletController.getBalance.bind(walletController)));
 
 /**
  * @swagger
@@ -113,7 +113,7 @@ router.get('/balance', verifyToken, asyncHandler(walletController.getBalance.bin
  *       404:
  *         description: No wallet connected to this account.
  */
-router.post('/update-balance', verifyToken, asyncHandler(walletController.updateBalance.bind(walletController)));
+router.post('/update-balance', authenticate, asyncHandler(walletController.updateBalance.bind(walletController)));
 
 /**
  * @swagger
@@ -138,7 +138,7 @@ router.post('/update-balance', verifyToken, asyncHandler(walletController.update
  *       404:
  *         description: No wallet connected to this account.
  */
-router.get('/transactions', verifyToken, asyncHandler(walletController.getTransactionHistory.bind(walletController)));
+router.get('/transactions', authenticate, asyncHandler(walletController.getTransactionHistory.bind(walletController)));
 
 /**
  * @swagger
@@ -156,7 +156,7 @@ router.get('/transactions', verifyToken, asyncHandler(walletController.getTransa
  *       404:
  *         description: No wallet connected to this account.
  */
-router.get('/resources', verifyToken, asyncHandler(walletController.getAccountResources.bind(walletController)));
+router.get('/resources', authenticate, asyncHandler(walletController.getAccountResources.bind(walletController)));
 
 /**
  * @swagger
@@ -216,7 +216,7 @@ router.post('/validate-address', asyncHandler(walletController.validateAddress.b
  *       404:
  *         description: No wallet connected to this account.
  */
-router.post('/fund', verifyToken, standardRateLimiter, asyncHandler(walletController.fundAccount.bind(walletController)));
+router.post('/fund', authenticate, standardRateLimiter, asyncHandler(walletController.fundAccount.bind(walletController)));
 
 /**
  * @swagger
@@ -234,6 +234,6 @@ router.post('/fund', verifyToken, standardRateLimiter, asyncHandler(walletContro
  *       404:
  *         description: No wallet connected to this account.
  */
-router.get('/account', verifyToken, asyncHandler(walletController.getAccountInfo.bind(walletController)));
+router.get('/account', authenticate, asyncHandler(walletController.getAccountInfo.bind(walletController)));
 
 module.exports = router;

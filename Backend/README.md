@@ -4,7 +4,7 @@ Backend API cho SafeSwap - nền tảng swap token trên Aptos blockchain với 
 
 ## ✨ Tính năng chính
 
-- 🔐 **Authentication**: JWT + Google OAuth
+- 🔐 **Google OAuth Authentication**: Đăng nhập đơn giản với Google
 - 🎯 **Aptos Wallet Integration**: Kết nối và quản lý ví Aptos
 - 💰 **Real-time Price Feed**: Cập nhật giá token theo thời gian thực
 - 🛡️ **Scam Detection**: Phân tích và cảnh báo token nguy hiểm
@@ -12,127 +12,116 @@ Backend API cho SafeSwap - nền tảng swap token trên Aptos blockchain với 
 - 🔌 **WebSocket**: Cập nhật real-time qua WebSocket
 - 📈 **Rate Limiting**: Bảo vệ API khỏi spam
 
-## 🚀 Cài đặt
+## 🚀 Quick Start
 
-### 1. Clone repository
-```bash
-git clone <repository-url>
-cd SafeSwap-Token/Backend
-```
-
-### 2. Cài đặt dependencies
+### 1. Cài đặt dependencies
 ```bash
 npm install
 ```
 
-### 3. Thiết lập environment variables
+### 2. Thiết lập environment variables
 ```bash
-cp .env.example .env
+cp env.example .env
 # Chỉnh sửa các giá trị trong file .env
 ```
 
-### 4. Chạy MongoDB
+### 3. Chạy development server
 ```bash
-# Sử dụng Docker
-docker run -d -p 27017:27017 --name mongodb mongo:latest
-
-# Hoặc cài đặt MongoDB local
+npm run dev
 ```
 
-### 5. Khởi chạy server
+### 4. Chạy production server
 ```bash
-# Development mode
-npm run dev
-
-# Production build
-npm run build
 npm start
 ```
 
 ## 🔧 Environment Variables
 
 ```env
-# Server
-NODE_ENV=development
+# Server Configuration
+NODE_ENV=production
 PORT=5000
 API_VERSION=v1
 
 # Database
-MONGODB_URI=mongodb://localhost:27017/safeswap
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/safeswap
 
-# JWT
-JWT_SECRET=your-super-secret-jwt-key
-JWT_EXPIRES_IN=7d
-
-# Google OAuth
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
-
-# Aptos
+# Aptos Configuration
+APTOS_NETWORK=testnet
 APTOS_NODE_URL=https://fullnode.testnet.aptoslabs.com/v1
 APTOS_FAUCET_URL=https://faucet.testnet.aptoslabs.com
 
-# APIs
+# External APIs
 COINGECKO_API_KEY=your-coingecko-api-key
 COINMARKETCAP_API_KEY=your-coinmarketcap-api-key
 
-# CORS
-CORS_ORIGIN=http://localhost:3000
+# CORS Configuration
+ALLOWED_ORIGINS=https://your-frontend-domain.com,http://localhost:3000
+
+# Logging
+LOG_FORMAT=combined
+LOG_LEVEL=info
+
+# AI Service (Optional)
+AI_SERVICE_URL=https://your-ai-service-url.com
+
+# Rate Limiting
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX_REQUESTS=100
 ```
 
 ## 📋 API Endpoints
 
-### Authentication
-- `POST /api/v1/auth/login` - Đăng nhập
-- `POST /api/v1/auth/register` - Đăng ký
-- `GET /api/v1/auth/google` - Google OAuth
-- `GET /api/v1/auth/profile` - Thông tin profile
-- `POST /api/v1/auth/refresh` - Refresh token
+### Authentication (Google OAuth)
+- `POST /api/auth/google` - Đăng nhập với Google
+- `GET /api/auth/profile` - Thông tin profile
+- `PUT /api/auth/profile` - Cập nhật profile
+- `POST /api/auth/logout` - Đăng xuất
+- `GET /api/auth/status` - Kiểm tra trạng thái đăng nhập
+- `GET /api/auth/validate` - Xác thực session
 
 ### Wallet
-- `POST /api/v1/wallet/connect` - Kết nối ví
-- `POST /api/v1/wallet/disconnect` - Ngắt kết nối ví
-- `GET /api/v1/wallet/info` - Thông tin ví
-- `GET /api/v1/wallet/balance` - Số dư ví
-- `GET /api/v1/wallet/transactions` - Lịch sử giao dịch
+- `POST /api/wallet/connect` - Kết nối ví
+- `POST /api/wallet/disconnect` - Ngắt kết nối ví
+- `GET /api/wallet/info` - Thông tin ví
+- `GET /api/wallet/balance` - Số dư ví
+- `GET /api/wallet/transactions` - Lịch sử giao dịch
 
 ### Price Feed
-- `GET /api/v1/price/all` - Tất cả giá token
-- `GET /api/v1/price/token/:symbol` - Giá của token cụ thể
-- `GET /api/v1/price/exchange-rate` - Tỷ giá hối đoái
-- `POST /api/v1/price/analyze` - Phân tích token
+- `GET /api/price/all` - Tất cả giá token
+- `GET /api/price/token/:symbol` - Giá của token cụ thể
+- `GET /api/price/exchange-rate` - Tỷ giá hối đoái
+- `POST /api/price/analyze` - Phân tích token
 
 ### Swap
-- `POST /api/v1/swap/quote` - Lấy quote swap
-- `POST /api/v1/swap/execute` - Thực hiện swap
-- `GET /api/v1/swap/history` - Lịch sử swap
-- `GET /api/v1/swap/stats` - Thống kê swap
+- `POST /api/swap/quote` - Lấy quote swap
+- `POST /api/swap/execute` - Thực hiện swap
+- `GET /api/swap/history` - Lịch sử swap
+- `GET /api/swap/stats` - Thống kê swap
 
 ## 🏗️ Kiến trúc
 
 ```
 Backend/
 ├── src/
-│   ├── config/          # Cấu hình database
+│   ├── config/          # Cấu hình database, swagger
 │   ├── controllers/     # Controllers xử lý request
 │   ├── middleware/      # Middleware xử lý request
 │   ├── models/          # MongoDB models
 │   ├── routes/          # API routes
 │   ├── services/        # Business logic services
-│   ├── types/           # TypeScript type definitions
+│   ├── jobs/            # Cron jobs
 │   ├── utils/           # Utility functions
-│   └── server.ts        # Main server file
+│   └── server.js        # Main server file
 ├── logs/                # Log files
-├── dist/                # Compiled JavaScript
 ├── package.json
-├── tsconfig.json
 └── README.md
 ```
 
 ## 🔄 Services
 
 ### AuthService
-- Quản lý JWT tokens
+- Quản lý session-based authentication
 - Google OAuth integration
 - User management
 
@@ -180,7 +169,7 @@ Backend/
 
 ## 🔒 Security Features
 
-- JWT authentication
+- Session-based authentication
 - Rate limiting
 - Input validation
 - Error handling
@@ -194,12 +183,10 @@ Backend/
 npm run dev          # Chạy với nodemon
 
 # Production
-npm run build        # Build TypeScript
 npm start           # Chạy production server
 
 # Utilities
 npm run lint        # ESLint check
-npm test           # Run tests
 ```
 
 ## 🔧 Development
@@ -239,20 +226,63 @@ tail -f logs/combined.log
 
 ## 🚀 Production Deployment
 
-1. Set `NODE_ENV=production`
-2. Configure production database
-3. Set up SSL certificates
-4. Configure reverse proxy (Nginx)
-5. Set up process manager (PM2)
+### Render.com (Recommended)
+1. Connect GitHub repository
+2. Set environment variables
+3. Deploy automatically
 
-## 🤝 Contributing
+### Railway
+1. Connect GitHub repository
+2. Set environment variables
+3. Auto-deploy
 
-1. Fork the repository
-2. Create feature branch
-3. Commit changes
-4. Push to branch
-5. Create Pull Request
+### Heroku
+1. Install Heroku CLI
+2. Set environment variables
+3. Deploy with Git
 
-## 📄 License
+## 🚨 Troubleshooting
 
-MIT License - see LICENSE file for details 
+### Common Issues
+
+1. **CORS Errors**
+   - Check `ALLOWED_ORIGINS` configuration
+   - Ensure frontend URL is included
+
+2. **Database Connection**
+   - Verify MongoDB URI
+   - Check network connectivity
+   - Ensure database is accessible
+
+3. **Session Issues**
+   - Check cookie settings
+   - Verify domain configuration
+   - Test with different browsers
+
+### Debug Commands
+
+```bash
+# Check Node.js version
+node --version
+
+# Check npm version
+npm --version
+
+# Test backend locally
+npm run dev
+
+# Check logs
+tail -f logs/combined.log
+```
+
+## 📞 Support
+
+For backend issues:
+1. Check logs in `logs/` directory
+2. Review environment variables
+3. Test endpoints with Postman
+4. Monitor health check endpoint
+
+---
+
+**Happy Coding! 🚀** 

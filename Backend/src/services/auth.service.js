@@ -1,83 +1,11 @@
-const jwt = require('jsonwebtoken');
 const { User } = require('../models/User.model');
 const { createError } = require('../middleware/errorHandler');
 const { logger } = require('../utils/logger');
 
 class AuthService {
   constructor() {
-    this.jwtSecret = process.env.JWT_SECRET || 'fallback_secret_key_change_in_production';
-    this.jwtExpiresIn = process.env.JWT_EXPIRES_IN || '1h';
-    this.jwtRefreshSecret = process.env.JWT_REFRESH_SECRET || 'fallback_refresh_secret_change_in_production';
-    this.jwtRefreshExpiresIn = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
-  }
-
-  async validateUser(email, password) {
-    try {
-      // Find user by email
-      const user = await User.findOne({ email });
-      if (!user) {
-        return null;
-      }
-
-      // Check password
-      const isValidPassword = await user.comparePassword(password);
-      if (!isValidPassword) {
-        return null;
-      }
-
-      return user;
-    } catch (error) {
-      logger.error('User validation failed:', error);
-      return null;
-    }
-  }
-
-  generateTokens(userId) {
-    try {
-      const payload = { id: userId };
-      
-      // Generate access token
-      const accessToken = jwt.sign(
-        payload,
-        this.jwtSecret,
-        { 
-          expiresIn: this.jwtExpiresIn,
-          issuer: 'SafeSwap',
-          audience: 'SafeSwap-Users'
-        }
-      );
-      
-      // Generate refresh token
-      const refreshToken = jwt.sign(
-        payload,
-        this.jwtRefreshSecret,
-        { 
-          expiresIn: this.jwtRefreshExpiresIn,
-          issuer: 'SafeSwap',
-          audience: 'SafeSwap-Users'
-        }
-      );
-
-      return { accessToken, refreshToken };
-    } catch (error) {
-      logger.error('Token generation failed:', error);
-      throw createError(500, 'Token generation failed');
-    }
-  }
-
-  verifyToken(token, isRefreshToken = false) {
-    try {
-      const secret = isRefreshToken ? this.jwtRefreshSecret : this.jwtSecret;
-      const decoded = jwt.verify(token, secret, {
-        issuer: 'SafeSwap',
-        audience: 'SafeSwap-Users'
-      });
-      
-      return decoded;
-    } catch (error) {
-      logger.error('Token verification failed:', error);
-      throw createError(401, 'Invalid or expired token');
-    }
+    // Session storage for Google OAuth users
+    this.sessions = new Map();
   }
 
   async createUserFromGoogle(googleProfile) {
@@ -99,200 +27,161 @@ class AuthService {
       });
 
       if (existingUser) {
-        // Update existing user with Google ID if not present
-        if (!existingUser.googleId) {
-          existingUser.googleId = googleId;
-          await existingUser.save();
-        }
+        // Update existing user with latest Google info
+        existingUser.name = displayName || existingUser.name;
+        existingUser.avatar = photoUrl || existingUser.avatar;
+        existingUser.googleId = googleId;
+        await existingUser.save();
+        
+        logger.info(`Existing user updated via Google OAuth: ${email}`);
         return existingUser;
       }
 
       // Create new user
       const newUser = new User({
         email,
-        name: displayName || 'Google User',
+        name: displayName,
         avatar: photoUrl,
         googleId,
-        isVerified: true, // Google accounts are considered verified
+        isVerified: true, // Google users are pre-verified
       });
 
       await newUser.save();
-      logger.info(`New user created via Google OAuth: ${newUser.email}`);
       
+      logger.info(`New user created via Google OAuth: ${email}`);
       return newUser;
     } catch (error) {
       logger.error('Failed to create user from Google profile:', error);
-      if (error.statusCode) {
-        throw error;
-      }
-      throw createError(500, 'Failed to create user from Google profile');
+      throw error;
     }
   }
 
-  async createUser(userData) {
+  createSession(user) {
     try {
-      const { email, name, avatar } = userData;
+      const sessionId = this.generateSessionId();
+      const sessionData = {
+        userId: user._id,
+        email: user.email,
+        name: user.name,
+        avatar: user.avatar,
+        googleId: user.googleId,
+        createdAt: new Date(),
+        lastActivity: new Date()
+      };
 
-      if (!email || !name) {
-        throw createError(400, 'Email and name are required');
-      }
-
-      const existingUser = await User.findOne({ email });
+      this.sessions.set(sessionId, sessionData);
       
-      if (existingUser) {
-        throw createError(400, 'User with this email already exists');
-      }
-
-      const newUser = new User({
-        email,
-        name,
-        avatar,
-        isVerified: false,
-      });
-
-      await newUser.save();
-      logger.info(`New user created: ${newUser.email}`);
+      // Clean up old sessions (older than 7 days)
+      this.cleanupOldSessions();
       
-      return newUser;
+      logger.info(`Session created for user: ${user.email}`);
+      return sessionId;
     } catch (error) {
-      logger.error('Failed to create user:', error);
-      if (error.statusCode) {
-        throw error;
+      logger.error('Failed to create session:', error);
+      throw createError(500, 'Failed to create session');
+    }
+  }
+
+  getSession(sessionId) {
+    try {
+      const session = this.sessions.get(sessionId);
+      if (!session) {
+        return null;
       }
-      throw createError(500, 'Failed to create user');
+
+      // Update last activity
+      session.lastActivity = new Date();
+      this.sessions.set(sessionId, session);
+
+      return session;
+    } catch (error) {
+      logger.error('Failed to get session:', error);
+      return null;
+    }
+  }
+
+  removeSession(sessionId) {
+    try {
+      const removed = this.sessions.delete(sessionId);
+      if (removed) {
+        logger.info(`Session removed: ${sessionId}`);
+      }
+      return removed;
+    } catch (error) {
+      logger.error('Failed to remove session:', error);
+      return false;
+    }
+  }
+
+  generateSessionId() {
+    return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+  }
+
+  cleanupOldSessions() {
+    try {
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      let cleanedCount = 0;
+
+      for (const [sessionId, session] of this.sessions.entries()) {
+        if (session.lastActivity < sevenDaysAgo) {
+          this.sessions.delete(sessionId);
+          cleanedCount++;
+        }
+      }
+
+      if (cleanedCount > 0) {
+        logger.info(`Cleaned up ${cleanedCount} old sessions`);
+      }
+    } catch (error) {
+      logger.error('Failed to cleanup old sessions:', error);
     }
   }
 
   async getUserById(userId) {
     try {
-      if (!userId) {
-        return null;
-      }
-
-      const user = await User.findById(userId).select('-__v');
+      const user = await User.findById(userId);
       return user;
     } catch (error) {
-      logger.error(`Failed to get user by ID ${userId}:`, error);
+      logger.error('Failed to get user by ID:', error);
       return null;
     }
   }
 
   async getUserByEmail(email) {
     try {
-      if (!email) {
-        return null;
-      }
-
-      const user = await User.findOne({ email }).select('-__v');
+      const user = await User.findOne({ email });
       return user;
     } catch (error) {
-      logger.error(`Failed to get user by email ${email}:`, error);
+      logger.error('Failed to get user by email:', error);
       return null;
     }
   }
 
   async updateUserWallet(userId, walletAddress) {
     try {
-      if (!userId || !walletAddress) {
-        throw createError(400, 'User ID and wallet address are required');
-      }
-
-      const user = await User.findByIdAndUpdate(
-        userId,
-        { walletAddress },
-        { new: true, runValidators: true }
-      ).select('-__v');
-
+      const user = await User.findById(userId);
       if (!user) {
         throw createError(404, 'User not found');
       }
 
-      logger.info(`User ${userId} wallet updated: ${walletAddress}`);
+      user.walletAddress = walletAddress;
+      await user.save();
+
+      logger.info(`Wallet address updated for user: ${user.email}`);
       return user;
     } catch (error) {
       logger.error('Failed to update user wallet:', error);
-      if (error.statusCode) {
-        throw error;
-      }
-      throw createError(500, 'Failed to update user wallet');
+      throw error;
     }
   }
 
-  async refreshAccessToken(refreshToken) {
-    try {
-      if (!refreshToken) {
-        throw createError(400, 'Refresh token is required');
-      }
-
-      const decoded = this.verifyToken(refreshToken, true);
-      const user = await this.getUserById(decoded.id);
-
-      if (!user) {
-        throw createError(404, 'User not found');
-      }
-
-      const newTokens = this.generateTokens(user._id.toString());
-      logger.info(`Access token refreshed for user: ${user.email}`);
-
-      return newTokens;
-    } catch (error) {
-      logger.error('Failed to refresh access token:', error);
-      if (error.statusCode) {
-        throw error;
-      }
-      throw createError(401, 'Invalid refresh token');
-    }
-  }
-
-  async sendPasswordResetEmail(email) {
-    // In a real application, you would send an email with a password reset link
-    // For this example, we'll just log the action
-    logger.info(`Password reset email sent to: ${email}`);
-  }
-
-  async resetPassword(token, password) {
-    // In a real application, you would verify the password reset token
-    // and then update the user's password
-    logger.info(`Password reset for token: ${token}`);
-  }
-
-  async validateTokenAndGetUser(token) {
-    try {
-      if (!token) {
-        throw createError(401, 'Token is required');
-      }
-
-      const decoded = this.verifyToken(token);
-      const user = await this.getUserById(decoded.id);
-
-      if (!user) {
-        throw createError(404, 'User not found');
-      }
-
-      return user;
-    } catch (error) {
-      logger.error('Token validation failed:', error);
-      if (error.statusCode) {
-        throw error;
-      }
-      throw createError(401, 'Invalid token');
-    }
-  }
-
-  async revokeUserTokens(userId) {
-    try {
-      // In a production environment, you would typically:
-      // 1. Add tokens to a blacklist
-      // 2. Update user's token version
-      // 3. Use Redis to store blacklisted tokens
-      
-      // For now, we'll just log the action
-      logger.info(`Tokens revoked for user: ${userId}`);
-      return true;
-    } catch (error) {
-      logger.error('Failed to revoke user tokens:', error);
-      return false;
-    }
+  getHealthStatus() {
+    return {
+      service: 'AuthService',
+      status: 'healthy',
+      activeSessions: this.sessions.size,
+      timestamp: new Date().toISOString()
+    };
   }
 }
 

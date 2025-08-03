@@ -25,16 +25,16 @@ const swaggerDefinition = {
   ],
   components: {
     securitySchemes: {
-      bearerAuth: {
-        type: 'http',
-        scheme: 'bearer',
-        bearerFormat: 'JWT',
+      sessionAuth: {
+        type: 'apiKey',
+        in: 'cookie',
+        name: 'sessionId',
       },
     },
   },
   security: [
     {
-      bearerAuth: [],
+      sessionAuth: [],
     },
   ],
 };

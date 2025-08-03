@@ -6,87 +6,6 @@ const { logger } = require('../utils/logger');
 const authService = new AuthService();
 
 class AuthController {
-  async register(req, res, next) {
-    try {
-      const { email, name, password } = req.body;
-
-      // Validation
-      if (!email || !password) {
-        throw createError(400, 'Email and password are required');
-      }
-
-      // Check if user already exists
-      const existingUser = await User.findOne({ email });
-      if (existingUser) {
-        throw createError(409, 'User with this email already exists');
-      }
-
-      // Create new user
-      const user = new User({
-        email,
-        name,
-        password,
-      });
-
-      await user.save();
-
-      // Generate tokens
-      const tokens = authService.generateTokens(user._id);
-
-      logger.info(`User registered successfully: ${email}`);
-
-      res.status(201).json({
-        success: true,
-        message: 'User registered successfully',
-        data: {
-          user: user.toJSON(),
-          tokens,
-        },
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  async login(req, res, next) {
-    try {
-      const { email, password } = req.body;
-
-      // Validation
-      if (!email || !password) {
-        throw createError(400, 'Email and password are required');
-      }
-
-      // Find user
-      const user = await User.findOne({ email });
-      if (!user) {
-        throw createError(401, 'Invalid email or password');
-      }
-
-      // Check password
-      const isValidPassword = await user.comparePassword(password);
-      if (!isValidPassword) {
-        throw createError(401, 'Invalid email or password');
-      }
-
-      // Generate tokens
-      const tokens = authService.generateTokens(user._id);
-
-      logger.info(`User logged in successfully: ${email}`);
-
-      res.json({
-        success: true,
-        message: 'Login successful',
-        data: {
-          user: user.toJSON(),
-          tokens,
-        },
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-
   async googleAuth(req, res, next) {
     try {
       const { googleId, email, name, avatar } = req.body;
@@ -95,59 +14,34 @@ class AuthController {
         throw createError(400, 'Google ID and email are required');
       }
 
-      let user = await User.findOne({ $or: [{ googleId }, { email }] });
+      // Create or update user from Google profile
+      const user = await authService.createUserFromGoogle({
+        id: googleId,
+        emails: [{ value: email }],
+        displayName: name,
+        photos: [{ value: avatar }]
+      });
 
-      if (!user) {
-        // Create new user from Google
-        user = new User({
-          googleId,
-          email,
-          name,
-          avatar,
-          isVerified: true,
-        });
-        await user.save();
-        logger.info(`New Google user created: ${email}`);
-      } else if (!user.googleId) {
-        // Link existing user with Google
-        user.googleId = googleId;
-        user.avatar = avatar || user.avatar;
-        user.isVerified = true;
-        await user.save();
-        logger.info(`Google linked to existing user: ${email}`);
-      }
+      // Create session
+      const sessionId = authService.createSession(user);
 
-      // Generate tokens
-      const tokens = authService.generateTokens(user._id);
+      // Set session cookie
+      res.cookie('sessionId', sessionId, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+      });
+
+      logger.info(`Google OAuth successful for user: ${email}`);
 
       res.json({
         success: true,
         message: 'Google authentication successful',
         data: {
           user: user.toJSON(),
-          tokens,
+          sessionId
         },
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  async refreshToken(req, res, next) {
-    try {
-      const { refreshToken } = req.body;
-
-      if (!refreshToken) {
-        throw createError(400, 'Refresh token is required');
-      }
-
-      const decoded = authService.verifyToken(refreshToken, 'refresh');
-      const tokens = authService.generateTokens(decoded.id);
-
-      res.json({
-        success: true,
-        message: 'Token refreshed successfully',
-        data: { tokens },
       });
     } catch (error) {
       next(error);
@@ -156,15 +50,27 @@ class AuthController {
 
   async getProfile(req, res, next) {
     try {
-      const user = await User.findById(req.userId);
+      const sessionId = req.cookies.sessionId || req.headers['x-session-id'];
       
+      if (!sessionId) {
+        throw createError(401, 'No session found');
+      }
+
+      const session = authService.getSession(sessionId);
+      if (!session) {
+        throw createError(401, 'Invalid or expired session');
+      }
+
+      const user = await authService.getUserById(session.userId);
       if (!user) {
         throw createError(404, 'User not found');
       }
 
       res.json({
         success: true,
-        data: { user: user.toJSON() },
+        data: {
+          user: user.toJSON(),
+        },
       });
     } catch (error) {
       next(error);
@@ -173,28 +79,38 @@ class AuthController {
 
   async updateProfile(req, res, next) {
     try {
+      const sessionId = req.cookies.sessionId || req.headers['x-session-id'];
+      
+      if (!sessionId) {
+        throw createError(401, 'No session found');
+      }
+
+      const session = authService.getSession(sessionId);
+      if (!session) {
+        throw createError(401, 'Invalid or expired session');
+      }
+
       const { name, avatar } = req.body;
-      const updateData = {};
-
-      if (name) updateData.name = name;
-      if (avatar) updateData.avatar = avatar;
-
-      const user = await User.findByIdAndUpdate(
-        req.userId,
-        updateData,
-        { new: true, runValidators: true }
-      );
-
+      const user = await User.findById(session.userId);
+      
       if (!user) {
         throw createError(404, 'User not found');
       }
 
-      logger.info(`User profile updated: ${user.email}`);
+      // Update user fields
+      if (name) user.name = name;
+      if (avatar) user.avatar = avatar;
+
+      await user.save();
+
+      logger.info(`Profile updated for user: ${user.email}`);
 
       res.json({
         success: true,
         message: 'Profile updated successfully',
-        data: { user: user.toJSON() },
+        data: {
+          user: user.toJSON(),
+        },
       });
     } catch (error) {
       next(error);
@@ -203,9 +119,16 @@ class AuthController {
 
   async logout(req, res, next) {
     try {
-      // In a stateless JWT system, logout is handled client-side
-      // But we can log the action
-      logger.info(`User logged out: ${req.userId}`);
+      const sessionId = req.cookies.sessionId || req.headers['x-session-id'];
+      
+      if (sessionId) {
+        authService.removeSession(sessionId);
+      }
+
+      // Clear session cookie
+      res.clearCookie('sessionId');
+
+      logger.info('User logged out successfully');
 
       res.json({
         success: true,
@@ -216,15 +139,46 @@ class AuthController {
     }
   }
 
-  async validateToken(req, res, next) {
+  async validateSession(req, res, next) {
     try {
-      // The verifyToken middleware already handles validation
-      // If it passes, req.user will be set
+      const sessionId = req.cookies.sessionId || req.headers['x-session-id'];
+      
+      if (!sessionId) {
+        return res.status(401).json({
+          success: false,
+          message: 'No session found',
+          data: null
+        });
+      }
+
+      const session = authService.getSession(sessionId);
+      if (!session) {
+        return res.status(401).json({
+          success: false,
+          message: 'Invalid or expired session',
+          data: null
+        });
+      }
+
+      const user = await authService.getUserById(session.userId);
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found',
+          data: null
+        });
+      }
+
       res.json({
         success: true,
-        message: 'Token is valid',
+        message: 'Session is valid',
         data: {
-          user: req.user.toJSON(),
+          user: user.toJSON(),
+          session: {
+            id: sessionId,
+            createdAt: session.createdAt,
+            lastActivity: session.lastActivity
+          }
         },
       });
     } catch (error) {
@@ -232,26 +186,48 @@ class AuthController {
     }
   }
 
-  async forgotPassword(req, res, next) {
+  async getAuthStatus(req, res, next) {
     try {
-      const { email } = req.body;
-      await authService.sendPasswordResetEmail(email);
-      res.json({
-        success: true,
-        message: 'Password reset email sent successfully',
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
+      const sessionId = req.cookies.sessionId || req.headers['x-session-id'];
+      
+      if (!sessionId) {
+        return res.json({
+          success: true,
+          data: {
+            isAuthenticated: false,
+            user: null
+          }
+        });
+      }
 
-  async resetPassword(req, res, next) {
-    try {
-      const { token, password } = req.body;
-      await authService.resetPassword(token, password);
+      const session = authService.getSession(sessionId);
+      if (!session) {
+        return res.json({
+          success: true,
+          data: {
+            isAuthenticated: false,
+            user: null
+          }
+        });
+      }
+
+      const user = await authService.getUserById(session.userId);
+      if (!user) {
+        return res.json({
+          success: true,
+          data: {
+            isAuthenticated: false,
+            user: null
+          }
+        });
+      }
+
       res.json({
         success: true,
-        message: 'Password has been reset successfully',
+        data: {
+          isAuthenticated: true,
+          user: user.toJSON()
+        }
       });
     } catch (error) {
       next(error);

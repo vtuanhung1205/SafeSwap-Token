@@ -1,7 +1,7 @@
 const express = require('express');
 const { SwapController } = require('../controllers/swap.controller');
 const { asyncHandler } = require('../middleware/errorHandler');
-const { verifyToken } = require('../middleware/auth');
+const { authenticate } = require('../middleware/auth');
 const { standardRateLimiter } = require('../middleware/rateLimiter');
 
 const router = express.Router();
@@ -121,7 +121,7 @@ router.post('/quote', asyncHandler(swapController.getQuote.bind(swapController))
  *       404:
  *         description: Quote not found or expired.
  */
-router.post('/execute', verifyToken, standardRateLimiter, asyncHandler(swapController.executeSwap.bind(swapController)));
+router.post('/execute', authenticate, standardRateLimiter, asyncHandler(swapController.executeSwap.bind(swapController)));
 
 /**
  * @swagger
@@ -156,7 +156,7 @@ router.post('/execute', verifyToken, standardRateLimiter, asyncHandler(swapContr
  *       401:
  *         description: Unauthorized, token is missing or invalid.
  */
-router.get('/history', verifyToken, asyncHandler(swapController.getSwapHistory.bind(swapController)));
+router.get('/history', authenticate, asyncHandler(swapController.getSwapHistory.bind(swapController)));
 
 /**
  * @swagger
@@ -181,7 +181,7 @@ router.get('/history', verifyToken, asyncHandler(swapController.getSwapHistory.b
  *       404:
  *         description: Swap transaction not found.
  */
-router.get('/history/:transactionId', verifyToken, asyncHandler(swapController.getSwapDetails.bind(swapController)));
+router.get('/history/:transactionId', authenticate, asyncHandler(swapController.getSwapDetails.bind(swapController)));
 
 /**
  * @swagger
@@ -197,7 +197,7 @@ router.get('/history/:transactionId', verifyToken, asyncHandler(swapController.g
  *       401:
  *         description: Unauthorized, token is missing or invalid.
  */
-router.get('/stats', verifyToken, asyncHandler(swapController.getSwapStats.bind(swapController)));
+router.get('/stats', authenticate, asyncHandler(swapController.getSwapStats.bind(swapController)));
 
 /**
  * @swagger
@@ -284,7 +284,7 @@ router.post('/calculate-rates', asyncHandler(swapController.calculateSwapRates.b
  *       401:
  *         description: Unauthorized, token is missing or invalid.
  */
-router.post('/create-transaction', verifyToken, asyncHandler(swapController.createSwapTransaction.bind(swapController)));
+router.post('/create-transaction', authenticate, asyncHandler(swapController.createSwapTransaction.bind(swapController)));
 
 /**
  * @swagger
@@ -309,6 +309,6 @@ router.post('/create-transaction', verifyToken, asyncHandler(swapController.crea
  *       404:
  *         description: Pending transaction not found.
  */
-router.post('/cancel/:transactionId', verifyToken, asyncHandler(swapController.cancelSwap.bind(swapController)));
+router.post('/cancel/:transactionId', authenticate, asyncHandler(swapController.cancelSwap.bind(swapController)));
 
 module.exports = router;

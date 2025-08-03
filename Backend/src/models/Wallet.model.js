@@ -61,12 +61,25 @@ walletSchema.methods.updateBalance = async function(newBalance) {
 
 walletSchema.methods.connect = async function() {
   this.isConnected = true;
+  this.lastSyncAt = new Date();
   return this.save();
 };
 
 walletSchema.methods.disconnect = async function() {
   this.isConnected = false;
+  this.lastSyncAt = new Date();
   return this.save();
+};
+
+walletSchema.methods.refreshBalance = async function() {
+  try {
+    // This would typically call an external API to get current balance
+    // For now, we'll just update the timestamp
+    this.lastSyncAt = new Date();
+    return this.save();
+  } catch (error) {
+    throw error;
+  }
 };
 
 // Transform toJSON output
