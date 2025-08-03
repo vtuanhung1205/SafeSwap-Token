@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: safeswap-frontend
+    env: static
+    buildCommand: npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://safeswap-backend-service.onrender.com/api
+      - key: VITE_APP_NAME
+        value: SafeSwap
+      - key: VITE_APP_VERSION
+        value: 1.0.0
+      - key: VITE_ENABLE_AI_DETECTION
+        value: true
+      - key: VITE_ENABLE_REAL_TIME_PRICES
+        value: true
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html 
