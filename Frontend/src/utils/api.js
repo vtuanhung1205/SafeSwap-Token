@@ -10,15 +10,12 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true, // Important for cookies
 });
 
-// Request interceptor to add auth token
+// Request interceptor - no need to add auth headers for session-based auth
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`;
-    }
     return config;
   },
   (error) => {
@@ -26,33 +23,14 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor to handle token refresh
+// Response interceptor - simplified for session-based auth
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const original = error.config;
-    
-    if (error.response?.status === 401 && !original._retry) {
-      original._retry = true;
-      
-      try {
-        const refreshToken = localStorage.getItem('refreshToken');
-        if (refreshToken) {
-          const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
-            refreshToken,
-          });
-          
-          const { accessToken } = response.data.data.tokens;
-          localStorage.setItem('accessToken', accessToken);
-          
-          return api(original);
-        }
-      } catch (refreshError) {
-        // Refresh failed, logout user
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        window.location.href = '/';
-      }
+    // Handle session expiration
+    if (error.response?.status === 401) {
+      // Clear any local auth state
+      console.log('Session expired or invalid');
     }
     
     return Promise.reject(error);
@@ -61,11 +39,8 @@ api.interceptors.response.use(
 
 // API endpoints
 export const authAPI = {
-  login: (email, password) => 
-    api.post('/auth/login', { email, password }),
-  
-  register: (email, name, password, avatar) => 
-    api.post('/auth/register', { email, name, password, avatar }),
+  googleAuth: (googleData) => 
+    api.post('/auth/google', googleData),
   
   getProfile: () => 
     api.get('/auth/profile'),
@@ -76,30 +51,16 @@ export const authAPI = {
   logout: () => 
     api.post('/auth/logout'),
   
-  validateToken: () => 
+  getAuthStatus: () => 
+    api.get('/auth/status'),
+    
+  validateSession: () =>
     api.get('/auth/validate'),
-    
-  forgotPassword: (email) =>
-    api.post('/auth/forgot-password', { email }),
-    
-  resetPassword: (token, password) =>
-    api.post('/auth/reset-password', { token, password }),
 };
 
 export const walletAPI = {
-  connect: (address, publicKey) => {
-    // Check if user is authenticated before making the API call
-    const token = localStorage.getItem('token');
-    if (!token) {
-      return Promise.reject({ 
-        response: { 
-          status: 401, 
-          data: { message: 'Authentication required to connect wallet' } 
-        } 
-      });
-    }
-    return api.post('/wallet/connect', { address, publicKey });
-  },
+  connect: (address, publicKey) => 
+    api.post('/wallet/connect', { address, publicKey }),
   
   disconnect: () => 
     api.post('/wallet/disconnect'),
@@ -110,17 +71,22 @@ export const walletAPI = {
   getBalance: () => 
     api.get('/wallet/balance'),
   
-  updateBalance: () => 
-    api.post('/wallet/update-balance'),
-  
-  getTransactions: (limit = 25) => 
+  getTransactions: (limit = 10) => 
     api.get(`/wallet/transactions?limit=${limit}`),
+};
+
+export const swapAPI = {
+  getQuote: (fromToken, toToken, amount) => 
+    api.post('/swap/quote', { fromToken, toToken, amount }),
   
-  validateAddress: (address) => 
-    api.post('/wallet/validate-address', { address }),
+  executeSwap: (swapData) => 
+    api.post('/swap/execute', swapData),
   
-  fundAccount: (amount) => 
-    api.post('/wallet/fund', { amount }),
+  getHistory: (limit = 20) => 
+    api.get(`/swap/history?limit=${limit}`),
+  
+  getStats: () => 
+    api.get('/swap/stats'),
 };
 
 export const priceAPI = {
@@ -130,42 +96,47 @@ export const priceAPI = {
   getTokenPrice: (symbol) => 
     api.get(`/price/token/${symbol}`),
   
-  getExchangeRate: (from, to) => 
-    api.get(`/price/exchange-rate?from=${from}&to=${to}`),
+  getExchangeRate: (fromToken, toToken) => 
+    api.get(`/price/exchange-rate?from=${fromToken}&to=${toToken}`),
   
-  analyzeToken: (tokenAddress, tokenName, tokenSymbol) => 
-    api.post('/price/analyze', { tokenAddress, tokenName, tokenSymbol }),
-  
-  batchAnalyzeTokens: (tokenAddresses) => 
-    api.post('/price/batch-analyze', { tokenAddresses }),
+  analyzeToken: (tokenAddress) => 
+    api.post('/price/analyze', { tokenAddress }),
 };
 
-export const swapAPI = {
-  getQuote: (fromToken, toToken, amount) => 
-    api.post('/swap/quote', { fromToken, toToken, amount }),
-  
-  executeSwap: (fromToken, toToken, fromAmount, toAmount, quoteId) => 
-    api.post('/swap/execute', { fromToken, toToken, fromAmount, toAmount, quoteId }),
-  
-  getHistory: (page = 1, limit = 20, status) => 
-    api.get(`/swap/history?page=${page}&limit=${limit}${status ? `&status=${status}` : ''}`),
-  
-  getSwapDetails: (transactionId) => 
-    api.get(`/swap/history/${transactionId}`),
-  
-  getStats: () => 
-    api.get('/swap/stats'),
-};
-
-// Utility functions
 export const handleApiError = (error) => {
-  if (error.response?.data?.message) {
-    return error.response.data.message;
+  if (error.response) {
+    // Server responded with error status
+    const { status, data } = error.response;
+    
+    if (data && data.message) {
+      return data.message;
+    }
+    
+    switch (status) {
+      case 400:
+        return 'Bad request. Please check your input.';
+      case 401:
+        return 'Unauthorized. Please login again.';
+      case 403:
+        return 'Access forbidden.';
+      case 404:
+        return 'Resource not found.';
+      case 409:
+        return 'Conflict. This resource already exists.';
+      case 422:
+        return 'Validation error. Please check your input.';
+      case 429:
+        return 'Too many requests. Please try again later.';
+      case 500:
+        return 'Server error. Please try again later.';
+      default:
+        return `Request failed with status ${status}.`;
+    }
+  } else if (error.request) {
+    // Request was made but no response received
+    return 'Network error. Please check your connection.';
+  } else {
+    // Something else happened
+    return error.message || 'An unexpected error occurred.';
   }
-  if (error.message) {
-    return error.message;
-  }
-  return 'An unexpected error occurred';
-};
-
-export default api; 
+}; 

@@ -64,24 +64,14 @@ export const AuthProvider = ({ children }) => {
 
   const checkAuthStatus = async () => {
     try {
-      const token = localStorage.getItem('accessToken');
-      if (!token) {
-        dispatch({ type: 'SET_LOADING', payload: false });
-        return;
-      }
-
-      const response = await authAPI.validateToken();
-      if (response.data.success) {
+      const response = await authAPI.getAuthStatus();
+      if (response.data.success && response.data.data.isAuthenticated) {
         dispatch({ type: 'SET_USER', payload: response.data.data.user });
       } else {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
         dispatch({ type: 'SET_LOADING', payload: false });
       }
     } catch (error) {
       console.error('Auth check failed:', error);
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
       dispatch({ type: 'SET_LOADING', payload: false });
     }
   };
@@ -100,154 +90,88 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const login = async (email, password) => {
+  const googleLogin = async (googleData) => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       
-      const response = await authAPI.login(email, password);
+      const response = await authAPI.googleAuth(googleData);
       
       if (response.data.success) {
-        const { user, tokens } = response.data.data;
-        
-        // Store tokens
-        localStorage.setItem('accessToken', tokens.accessToken);
-        localStorage.setItem('refreshToken', tokens.refreshToken);
-        
-        dispatch({ type: 'SET_USER', payload: user });
-        toast.success('Login successful!');
-        
-        // Check wallet status after login
-        await checkWalletStatus();
-        
-        return { success: true, user };
+        dispatch({ type: 'SET_USER', payload: response.data.data.user });
+        toast.success('Successfully logged in with Google!');
+        return response.data.data;
+      } else {
+        throw new Error(response.data.message || 'Google login failed');
       }
     } catch (error) {
       const errorMessage = handleApiError(error);
       dispatch({ type: 'SET_ERROR', payload: errorMessage });
       toast.error(errorMessage);
-      return { success: false, error: errorMessage };
-    }
-  };
-
-  const register = async (email, name, password, avatar) => {
-    try {
-      dispatch({ type: 'SET_LOADING', payload: true });
-      
-      const response = await authAPI.register(email, name, password, avatar);
-      
-      if (response.data.success) {
-        const { user, tokens } = response.data.data;
-        
-        // Store tokens
-        localStorage.setItem('accessToken', tokens.accessToken);
-        localStorage.setItem('refreshToken', tokens.refreshToken);
-        
-        dispatch({ type: 'SET_USER', payload: user });
-        toast.success('Registration successful!');
-        
-        return { success: true, user };
-      }
-    } catch (error) {
-      const errorMessage = handleApiError(error);
-      dispatch({ type: 'SET_ERROR', payload: errorMessage });
-      toast.error(errorMessage);
-      return { success: false, error: errorMessage };
+      throw error;
     }
   };
 
   const logout = async () => {
     try {
-      // Disconnect wallet if connected
-      if (state.isWalletConnected) {
-        try {
-          await walletAPI.disconnect();
-        } catch (error) {
-          console.error('Wallet disconnect error:', error);
-        }
-        dispatch({ type: 'SET_WALLET', payload: null });
-      }
-      
       await authAPI.logout();
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
       dispatch({ type: 'LOGOUT' });
-      toast.success('Logged out successfully');
+      toast.success('Successfully logged out!');
+    } catch (error) {
+      console.error('Logout failed:', error);
+      // Even if logout API fails, clear local state
+      dispatch({ type: 'LOGOUT' });
     }
   };
 
   const updateProfile = async (data) => {
     try {
       const response = await authAPI.updateProfile(data);
-      
       if (response.data.success) {
         dispatch({ type: 'SET_USER', payload: response.data.data.user });
-        toast.success('Profile updated successfully');
-        return { success: true };
+        toast.success('Profile updated successfully!');
+        return response.data.data;
       }
     } catch (error) {
       const errorMessage = handleApiError(error);
       toast.error(errorMessage);
-      return { success: false, error: errorMessage };
+      throw error;
     }
   };
 
   const connectWallet = async (walletData) => {
     try {
-      if (!state.isAuthenticated) {
-        toast.error('Please login before connecting your wallet');
-        return { success: false, error: 'Authentication required' };
-      }
-      
       const response = await walletAPI.connect(walletData.address, walletData.publicKey);
-      
       if (response.data.success) {
         dispatch({ type: 'SET_WALLET', payload: response.data.data.wallet });
-        toast.success('Wallet connected successfully');
-        return { success: true, wallet: response.data.data.wallet };
+        toast.success('Wallet connected successfully!');
+        return response.data.data;
       }
     } catch (error) {
       const errorMessage = handleApiError(error);
       toast.error(errorMessage);
-      return { success: false, error: errorMessage };
+      throw error;
     }
   };
 
   const disconnectWallet = async () => {
     try {
-      if (!state.isWalletConnected) return { success: true };
-      
-      const response = await walletAPI.disconnect();
-      
-      if (response.data.success) {
-        dispatch({ type: 'SET_WALLET', payload: null });
-        toast.success('Wallet disconnected successfully');
-        return { success: true };
-      }
+      await walletAPI.disconnect();
+      dispatch({ type: 'SET_WALLET', payload: null });
+      toast.success('Wallet disconnected successfully!');
     } catch (error) {
-      const errorMessage = handleApiError(error);
-      toast.error(errorMessage);
-      return { success: false, error: errorMessage };
+      console.error('Wallet disconnect failed:', error);
+      // Even if API fails, clear local state
+      dispatch({ type: 'SET_WALLET', payload: null });
     }
   };
 
   const value = {
-    user: state.user,
-    isAuthenticated: state.isAuthenticated,
-    isLoading: state.isLoading,
-    error: state.error,
-    wallet: state.wallet,
-    isWalletConnected: state.isWalletConnected,
-    login,
-    register,
+    ...state,
+    googleLogin,
     logout,
     updateProfile,
-    checkAuthStatus,
     connectWallet,
     disconnectWallet,
-    checkWalletStatus,
   };
 
   return (
