@@ -16,10 +16,24 @@ const updateTokenPrice = async (symbol) => {
   try {
     const priceData = await priceFeedService.getTokenPrice(symbol);
     if (priceData) {
+      // Map symbols to token addresses
+      const tokenAddressMap = {
+        'BTC': '0x1::aptos_coin::AptosCoin',
+        'ETH': '0x1::ethereum_coin::EthereumCoin',
+        'APT': '0x1::aptos_coin::AptosCoin',
+        'SOL': '0x1::solana_coin::SolanaCoin',
+        'USDC': '0x1::usd_coin::USDCoin',
+        'USDT': '0x1::tether::Tether'
+      };
+
+      const tokenAddress = tokenAddressMap[symbol] || `0x1::${symbol.toLowerCase()}::${symbol}`;
+
       await TokenPrice.findOneAndUpdate(
         { symbol: priceData.symbol },
         {
+          tokenAddress: tokenAddress,
           price: priceData.price,
+          priceUSD: priceData.price, // Use same price for USD
           change24h: priceData.change24h,
           marketCap: priceData.marketCap,
           volume24h: priceData.volume24h,
