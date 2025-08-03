@@ -11,10 +11,10 @@ const walletController = new WalletController();
  * @swagger
  * /api/wallet/connect:
  *   post:
- *     summary: Connect wallet to user account
+ *     summary: Connect Aptos wallet to user account
  *     tags: [Wallet]
  *     security:
- *       - bearerAuth: []
+ *       - sessionAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -27,19 +27,21 @@ const walletController = new WalletController();
  *             properties:
  *               address:
  *                 type: string
- *                 description: Wallet address
- *                 example: 0x1234567890abcdef1234567890abcdef12345678
+ *                 description: Aptos wallet address (0x + 64 hex characters)
+ *                 example: 0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef
  *               publicKey:
  *                 type: string
- *                 description: Wallet public key
+ *                 description: Aptos wallet public key
  *                 example: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
  *     responses:
  *       200:
  *         description: Wallet connected successfully.
  *       400:
- *         description: Invalid wallet data.
+ *         description: Invalid Aptos address format.
  *       401:
  *         description: Unauthorized, login required.
+ *       409:
+ *         description: Wallet already linked to another account.
  */
 router.post('/connect', standardRateLimiter, authenticate, asyncHandler(walletController.connectWallet.bind(walletController)));
 
@@ -50,12 +52,12 @@ router.post('/connect', standardRateLimiter, authenticate, asyncHandler(walletCo
  *     summary: Disconnect wallet from user account
  *     tags: [Wallet]
  *     security:
- *       - bearerAuth: []
+ *       - sessionAuth: []
  *     responses:
  *       200:
  *         description: Wallet disconnected successfully.
  *       401:
- *         description: Unauthorized, token is missing or invalid.
+ *         description: Unauthorized, login required.
  *       404:
  *         description: No wallet connected to this account.
  */
@@ -65,15 +67,15 @@ router.post('/disconnect', authenticate, asyncHandler(walletController.disconnec
  * @swagger
  * /api/wallet/info:
  *   get:
- *     summary: Get wallet information
+ *     summary: Get wallet information with balances
  *     tags: [Wallet]
  *     security:
- *       - bearerAuth: []
+ *       - sessionAuth: []
  *     responses:
  *       200:
  *         description: Wallet information retrieved successfully.
  *       401:
- *         description: Unauthorized, token is missing or invalid.
+ *         description: Unauthorized, login required.
  *       404:
  *         description: No wallet connected to this account.
  */
@@ -83,15 +85,21 @@ router.get('/info', authenticate, asyncHandler(walletController.getWalletInfo.bi
  * @swagger
  * /api/wallet/balance:
  *   get:
- *     summary: Get wallet balance
+ *     summary: Get wallet balance (APT or specific token)
  *     tags: [Wallet]
  *     security:
- *       - bearerAuth: []
+ *       - sessionAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: tokenAddress
+ *         schema:
+ *           type: string
+ *         description: Token address to get balance for (optional, defaults to APT)
  *     responses:
  *       200:
  *         description: Wallet balance retrieved successfully.
  *       401:
- *         description: Unauthorized, token is missing or invalid.
+ *         description: Unauthorized, login required.
  *       404:
  *         description: No wallet connected to this account.
  */
@@ -99,21 +107,21 @@ router.get('/balance', authenticate, asyncHandler(walletController.getBalance.bi
 
 /**
  * @swagger
- * /api/wallet/update-balance:
- *   post:
- *     summary: Update wallet balance
+ * /api/wallet/token-balances:
+ *   get:
+ *     summary: Get all token balances for wallet
  *     tags: [Wallet]
  *     security:
- *       - bearerAuth: []
+ *       - sessionAuth: []
  *     responses:
  *       200:
- *         description: Wallet balance updated successfully.
+ *         description: Token balances retrieved successfully.
  *       401:
- *         description: Unauthorized, token is missing or invalid.
+ *         description: Unauthorized, login required.
  *       404:
  *         description: No wallet connected to this account.
  */
-router.post('/update-balance', authenticate, asyncHandler(walletController.updateBalance.bind(walletController)));
+router.get('/token-balances', authenticate, asyncHandler(walletController.getTokenBalances.bind(walletController)));
 
 /**
  * @swagger
@@ -122,19 +130,25 @@ router.post('/update-balance', authenticate, asyncHandler(walletController.updat
  *     summary: Get wallet transaction history
  *     tags: [Wallet]
  *     security:
- *       - bearerAuth: []
+ *       - sessionAuth: []
  *     parameters:
  *       - in: query
  *         name: limit
  *         schema:
  *           type: integer
- *           default: 25
+ *           default: 20
  *         description: Maximum number of transactions to return
+ *       - in: query
+ *         name: offset
+ *         schema:
+ *           type: integer
+ *           default: 0
+ *         description: Number of transactions to skip
  *     responses:
  *       200:
  *         description: Transaction history retrieved successfully.
  *       401:
- *         description: Unauthorized, token is missing or invalid.
+ *         description: Unauthorized, login required.
  *       404:
  *         description: No wallet connected to this account.
  */
@@ -142,98 +156,62 @@ router.get('/transactions', authenticate, asyncHandler(walletController.getTrans
 
 /**
  * @swagger
- * /api/wallet/resources:
+ * /api/wallet/validate/{address}:
  *   get:
- *     summary: Get wallet account resources
+ *     summary: Validate Aptos wallet address
  *     tags: [Wallet]
- *     security:
- *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: address
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Aptos wallet address to validate
  *     responses:
  *       200:
- *         description: Account resources retrieved successfully.
- *       401:
- *         description: Unauthorized, token is missing or invalid.
- *       404:
- *         description: No wallet connected to this account.
- */
-router.get('/resources', authenticate, asyncHandler(walletController.getAccountResources.bind(walletController)));
-
-/**
- * @swagger
- * /api/wallet/validate-address:
- *   post:
- *     summary: Validate wallet address
- *     tags: [Wallet]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - address
- *             properties:
- *               address:
- *                 type: string
- *                 description: Wallet address to validate
- *                 example: 0x1234567890abcdef1234567890abcdef12345678
- *     responses:
- *       200:
- *         description: Address validation result.
+ *         description: Address validation result with account info.
  *       400:
  *         description: Invalid address format.
  */
-router.post('/validate-address', asyncHandler(walletController.validateAddress.bind(walletController)));
+router.get('/validate/:address', asyncHandler(walletController.validateAddress.bind(walletController)));
 
 /**
  * @swagger
- * /api/wallet/fund:
- *   post:
- *     summary: Fund wallet from faucet (testnet only)
- *     tags: [Wallet]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - amount
- *             properties:
- *               amount:
- *                 type: number
- *                 description: Amount to fund (in APT)
- *                 example: 10
- *     responses:
- *       200:
- *         description: Wallet funded successfully.
- *       400:
- *         description: Invalid amount or funding failed.
- *       401:
- *         description: Unauthorized, token is missing or invalid.
- *       404:
- *         description: No wallet connected to this account.
- */
-router.post('/fund', authenticate, standardRateLimiter, asyncHandler(walletController.fundAccount.bind(walletController)));
-
-/**
- * @swagger
- * /api/wallet/account:
+ * /api/wallet/account/{address}:
  *   get:
- *     summary: Get account information
+ *     summary: Get account information for any Aptos address
  *     tags: [Wallet]
- *     security:
- *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: address
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Aptos wallet address
  *     responses:
  *       200:
  *         description: Account information retrieved successfully.
+ *       400:
+ *         description: Invalid Aptos address format.
+ */
+router.get('/account/:address', asyncHandler(walletController.getAccountInfo.bind(walletController)));
+
+/**
+ * @swagger
+ * /api/wallet/update-balance:
+ *   post:
+ *     summary: Update wallet balance from blockchain
+ *     tags: [Wallet]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Wallet balance updated successfully.
  *       401:
- *         description: Unauthorized, token is missing or invalid.
+ *         description: Unauthorized, login required.
  *       404:
  *         description: No wallet connected to this account.
  */
-router.get('/account', authenticate, asyncHandler(walletController.getAccountInfo.bind(walletController)));
+router.post('/update-balance', authenticate, asyncHandler(walletController.updateBalance.bind(walletController)));
 
 module.exports = router;

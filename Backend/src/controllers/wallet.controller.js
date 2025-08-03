@@ -1,19 +1,20 @@
 const { Wallet } = require('../models/Wallet.model');
+const { Token } = require('../models/Token.model');
 const { WalletService } = require('../services/wallet.service');
-const { AptosService } = require('../services/aptos.service');
+const { AptosBlockchainService } = require('../services/aptosBlockchain.service');
 const { createError } = require('../middleware/errorHandler');
 const { logger } = require('../utils/logger');
 
 const walletService = new WalletService();
-const aptosService = new AptosService();
+const aptosService = new AptosBlockchainService();
 
 class WalletController {
   async connectWallet(req, res, next) {
     try {
-      console.log("Received wallet connect request:", req.body); // Log the request body
+      console.log("Received wallet connect request:", req.body);
       let { address, publicKey, signature } = req.body;
       
-      // Get userId from authenticated user - guest users are no longer allowed
+      // Get userId from authenticated user
       if (!req.user || !req.user._id) {
         throw createError(401, 'Authentication required to connect wallet');
       }
@@ -23,14 +24,12 @@ class WalletController {
 
       // Normalize address and publicKey
       try {
-        // Ensure address is a string and properly formatted
         if (typeof address === 'object') {
           address = address.hexString || JSON.stringify(address);
         } else if (address) {
           address = String(address);
         }
         
-        // Ensure publicKey is a string
         if (typeof publicKey === 'object') {
           publicKey = publicKey.hexString || JSON.stringify(publicKey);
         } else if (publicKey) {
@@ -45,33 +44,93 @@ class WalletController {
         throw createError(400, 'Wallet address and public key are required');
       }
 
-      // Validate address format
-      const isValidAddress = await aptosService.validateAddress(address);
-      if (!isValidAddress) {
-        throw createError(400, 'Invalid wallet address format');
+      // Validate Aptos address format
+      if (!aptosService.validateAddress(address)) {
+        throw createError(400, 'Invalid Aptos address format');
       }
 
       try {
-        // Connect wallet using Aptos service
-        const wallet = await aptosService.connectWallet(userId, {
-          address,
-          publicKey,
-          signature,
-        });
+        // Get account info from Aptos blockchain
+        const accountInfo = await aptosService.getAccountInfo(address);
+        
+        // Get APT balance
+        const aptBalance = await aptosService.getAccountBalance(address);
+        
+        // Get all token balances
+        const tokenBalances = await aptosService.getAllTokenBalances(address);
 
-        logger.info(`Wallet connected for user ${userId}: ${address}`);
+        // Check if wallet already exists
+        const existingWallet = await Wallet.findOne({ address });
+        
+        if (existingWallet) {
+          if (existingWallet.userId.toString() === userId.toString()) {
+            // Update existing wallet
+            existingWallet.publicKey = publicKey;
+            existingWallet.aptBalance = aptBalance;
+            existingWallet.sequenceNumber = accountInfo.sequence_number;
+            existingWallet.authenticationKey = accountInfo.authentication_key;
+            existingWallet.isConnected = true;
+            existingWallet.lastSyncAt = new Date();
+            
+            // Update token balances
+            for (const [tokenAddress, balanceData] of Object.entries(tokenBalances)) {
+              existingWallet.tokenBalances.set(tokenAddress, {
+                amount: balanceData.amount,
+                type: balanceData.type,
+                lastUpdated: new Date()
+              });
+            }
+            
+            await existingWallet.save();
+            
+            logger.info(`Wallet re-connected for user ${userId}: ${address}`);
+            
+            res.json({
+              success: true,
+              message: 'Wallet reconnected successfully',
+              data: { wallet: existingWallet },
+            });
+          } else {
+            throw createError(409, 'This wallet is already linked to another account');
+          }
+        } else {
+          // Create new wallet
+          const newWallet = new Wallet({
+            userId,
+            address,
+            publicKey,
+            aptBalance,
+            sequenceNumber: accountInfo.sequence_number,
+            authenticationKey: accountInfo.authentication_key,
+            isConnected: true,
+            chainId: `aptos-${aptosService.network}`,
+          });
 
-        res.json({
-          success: true,
-          message: 'Wallet connected successfully',
-          data: { wallet },
-        });
-      } catch (error) {
-        // Handle specific errors
-        if (error.status === 409) {
-          return next(createError(409, 'This wallet is already linked to another account'));
+          // Add token balances
+          for (const [tokenAddress, balanceData] of Object.entries(tokenBalances)) {
+            newWallet.tokenBalances.set(tokenAddress, {
+              amount: balanceData.amount,
+              type: balanceData.type,
+              lastUpdated: new Date()
+            });
+          }
+
+          await newWallet.save();
+          
+          logger.info(`New wallet created for user ${userId}: ${address}`);
+          
+          res.json({
+            success: true,
+            message: 'Wallet connected successfully',
+            data: { wallet: newWallet },
+          });
         }
-        throw error;
+      } catch (error) {
+        if (error.statusCode) {
+          throw error;
+        }
+        logger.error('Wallet connection error:', error);
+        throw createError(500, 'Failed to connect wallet');
       }
     } catch (error) {
       logger.error('Wallet connection error:', {
@@ -98,6 +157,7 @@ class WalletController {
       res.json({
         success: true,
         message: 'Wallet disconnected successfully',
+        data: { wallet },
       });
     } catch (error) {
       next(error);
@@ -113,55 +173,28 @@ class WalletController {
         throw createError(404, 'No wallet found for this user');
       }
 
-      // Get updated APT balance
-      const aptBalance = await aptosService.getAccountBalance(wallet.address);
-      await wallet.updateBalance(aptBalance);
-
-      // Get balances for other common tokens
-      const tokenBalances = {};
-      const commonTokens = [
-        { symbol: 'APT', address: '0x1::aptos_coin::AptosCoin', decimals: 8 },
-        { symbol: 'USDC', address: '0xf22bede237a07e121b56d91a491eb7bcdfd1f5907926a9e58338f964a01b17fa::asset::USDC', decimals: 6 },
-        { symbol: 'USDT', address: '0xf22bede237a07e121b56d91a491eb7bcdfd1f5907926a9e58338f964a01b17fa::asset::USDT', decimals: 6 },
-        { symbol: 'BTC', address: '0xae478ff7d83ed072dbc5e264250e67ef58f57c99d89b447efd8a0a2e8b2be76e::coin::T', decimals: 8 },
-        { symbol: 'ETH', address: '0xcc8a89c8dce9693d354449f1f73e60e14e347417854f029db5bc8e7454008abb::coin::T', decimals: 18 }
-      ];
-
-      // Get balances for each token in parallel
-      await Promise.all(
-        commonTokens.map(async (token) => {
-          try {
-            const rawBalance = await aptosService.getTokenBalance(wallet.address, token.address);
-            // Convert raw balance to human-readable format based on decimals
-            const balance = rawBalance / Math.pow(10, token.decimals);
-            tokenBalances[token.symbol] = {
-              symbol: token.symbol,
-              address: token.address,
-              balance: balance,
-              rawBalance: rawBalance,
-              decimals: token.decimals
-            };
-          } catch (error) {
-            logger.warn(`Failed to get ${token.symbol} balance for ${wallet.address}:`, error.message);
-            tokenBalances[token.symbol] = {
-              symbol: token.symbol,
-              address: token.address,
-              balance: 0,
-              rawBalance: 0,
-              decimals: token.decimals
-            };
-          }
-        })
-      );
+      // Refresh balances from blockchain
+      try {
+        const aptBalance = await aptosService.getAccountBalance(wallet.address);
+        const tokenBalances = await aptosService.getAllTokenBalances(wallet.address);
+        
+        // Update APT balance
+        await wallet.updateAptBalance(aptBalance);
+        
+        // Update token balances
+        for (const [tokenAddress, balanceData] of Object.entries(tokenBalances)) {
+          await wallet.updateTokenBalance(tokenAddress, balanceData);
+        }
+        
+        await wallet.save();
+      } catch (error) {
+        logger.error('Failed to refresh balances:', error);
+        // Continue with cached data
+      }
 
       res.json({
         success: true,
-        data: { 
-          wallet: {
-            ...wallet.toJSON(),
-            tokenBalances
-          }
-        },
+        data: { wallet },
       });
     } catch (error) {
       next(error);
@@ -171,30 +204,74 @@ class WalletController {
   async getBalance(req, res, next) {
     try {
       const userId = req.user._id;
-      const { coinType } = req.query;
+      const { tokenAddress } = req.query;
 
       const wallet = await Wallet.findOne({ userId });
       if (!wallet) {
         throw createError(404, 'No wallet found for this user');
       }
 
-      let balance;
-      if (coinType) {
-        balance = await aptosService.getTokenBalance(wallet.address, coinType);
+      let balance = 0;
+      let tokenInfo = null;
+
+      if (tokenAddress) {
+        // Get specific token balance
+        balance = await aptosService.getTokenBalance(wallet.address, tokenAddress);
+        
+        // Get token info
+        const token = await Token.findOne({ address: tokenAddress });
+        if (token) {
+          tokenInfo = token;
+        }
       } else {
+        // Get APT balance
         balance = await aptosService.getAccountBalance(wallet.address);
       }
-
-      // Update wallet balance in database
-      await wallet.updateBalance(balance);
 
       res.json({
         success: true,
         data: {
-          address: wallet.address,
           balance,
-          coinType: coinType || '0x1::aptos_coin::AptosCoin',
-          lastUpdated: new Date(),
+          tokenInfo,
+          walletAddress: wallet.address,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getTokenBalances(req, res, next) {
+    try {
+      const userId = req.user._id;
+
+      const wallet = await Wallet.findOne({ userId });
+      if (!wallet) {
+        throw createError(404, 'No wallet found for this user');
+      }
+
+      // Get all token balances from blockchain
+      const tokenBalances = await aptosService.getAllTokenBalances(wallet.address);
+      
+      // Get token metadata for each token
+      const balancesWithMetadata = [];
+      
+      for (const [tokenAddress, balanceData] of Object.entries(tokenBalances)) {
+        const token = await Token.findOne({ address: tokenAddress });
+        
+        balancesWithMetadata.push({
+          address: tokenAddress,
+          balance: balanceData.amount,
+          type: balanceData.type,
+          token: token || null
+        });
+      }
+
+      res.json({
+        success: true,
+        data: {
+          balances: balancesWithMetadata,
+          walletAddress: wallet.address,
         },
       });
     } catch (error) {
@@ -205,47 +282,24 @@ class WalletController {
   async getTransactionHistory(req, res, next) {
     try {
       const userId = req.user._id;
-      const { limit = 25, offset = 0 } = req.query;
+      const { limit = 20, offset = 0 } = req.query;
 
       const wallet = await Wallet.findOne({ userId });
       if (!wallet) {
         throw createError(404, 'No wallet found for this user');
       }
 
-      const transactions = await aptosService.getTransactionHistory(
-        wallet.address,
-        parseInt(limit)
-      );
+      // Get transactions from database
+      const transactions = await SwapTransaction.find({ walletAddress: wallet.address })
+        .sort({ createdAt: -1 })
+        .limit(parseInt(limit))
+        .skip(parseInt(offset));
 
       res.json({
         success: true,
         data: {
           transactions,
-          address: wallet.address,
-          count: transactions.length,
-        },
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  async getAccountResources(req, res, next) {
-    try {
-      const userId = req.user._id;
-
-      const wallet = await Wallet.findOne({ userId });
-      if (!wallet) {
-        throw createError(404, 'No wallet found for this user');
-      }
-
-      const resources = await aptosService.getAccountResources(wallet.address);
-
-      res.json({
-        success: true,
-        data: {
-          address: wallet.address,
-          resources,
+          walletAddress: wallet.address,
         },
       });
     } catch (error) {
@@ -255,60 +309,51 @@ class WalletController {
 
   async validateAddress(req, res, next) {
     try {
-      const { address } = req.body;
+      const { address } = req.params;
 
       if (!address) {
-        throw createError(400, 'Address parameter is required');
+        throw createError(400, 'Address is required');
       }
 
-      const isValid = await aptosService.validateAddress(address);
-
-      res.json({
-        success: true,
-        data: {
-          address,
-          isValid,
-        },
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  async fundAccount(req, res, next) {
-    try {
-      const userId = req.user._id;
-      const { amount } = req.body;
-
-      const wallet = await Wallet.findOne({ userId });
-      if (!wallet) {
-        throw createError(404, 'No wallet found for this user');
+      const isValid = aptosService.validateAddress(address);
+      
+      if (isValid) {
+        // Get account info if address is valid
+        try {
+          const accountInfo = await aptosService.getAccountInfo(address);
+          const balance = await aptosService.getAccountBalance(address);
+          
+          res.json({
+            success: true,
+            data: {
+              isValid: true,
+              address,
+              accountInfo,
+              balance,
+            },
+          });
+        } catch (error) {
+          res.json({
+            success: true,
+            data: {
+              isValid: true,
+              address,
+              accountInfo: null,
+              balance: 0,
+            },
+          });
+        }
+      } else {
+        res.json({
+          success: true,
+          data: {
+            isValid: false,
+            address,
+            accountInfo: null,
+            balance: 0,
+          },
+        });
       }
-
-      // Only allow funding on testnet/devnet
-      if (process.env.APTOS_NETWORK === 'mainnet') {
-        throw createError(403, 'Faucet not available on mainnet');
-      }
-
-      const result = await aptosService.fundAccount(
-        wallet.address,
-        amount ? parseInt(amount) : undefined
-      );
-
-      // Update balance after funding
-      const newBalance = await aptosService.getAccountBalance(wallet.address);
-      await wallet.updateBalance(newBalance);
-
-      logger.info(`Account funded for user ${userId}: ${wallet.address}`);
-
-      res.json({
-        success: true,
-        message: 'Account funded successfully',
-        data: {
-          result,
-          newBalance,
-        },
-      });
     } catch (error) {
       next(error);
     }
@@ -316,22 +361,27 @@ class WalletController {
 
   async getAccountInfo(req, res, next) {
     try {
-      const userId = req.user._id;
+      const { address } = req.params;
 
-      const wallet = await Wallet.findOne({ userId });
-      if (!wallet) {
-        throw createError(404, 'No wallet found for this user');
+      if (!address) {
+        throw createError(400, 'Address is required');
       }
 
-      const accountInfo = await aptosService.getAccountInfo(wallet.address);
+      if (!aptosService.validateAddress(address)) {
+        throw createError(400, 'Invalid Aptos address format');
+      }
+
+      const accountInfo = await aptosService.getAccountInfo(address);
+      const balance = await aptosService.getAccountBalance(address);
+      const tokenBalances = await aptosService.getAllTokenBalances(address);
 
       res.json({
         success: true,
         data: {
-          wallet: {
-            ...wallet.toJSON(),
-            ...accountInfo,
-          },
+          address,
+          accountInfo,
+          balance,
+          tokenBalances,
         },
       });
     } catch (error) {
@@ -341,8 +391,33 @@ class WalletController {
 
   async updateBalance(req, res, next) {
     try {
-      // Placeholder for now
-      res.json({ success: true, message: 'Balance update initiated' });
+      const userId = req.user._id;
+
+      const wallet = await Wallet.findOne({ userId });
+      if (!wallet) {
+        throw createError(404, 'No wallet found for this user');
+      }
+
+      // Refresh balances from blockchain
+      const aptBalance = await aptosService.getAccountBalance(wallet.address);
+      const tokenBalances = await aptosService.getAllTokenBalances(wallet.address);
+
+      // Update wallet balances
+      await wallet.updateAptBalance(aptBalance);
+      
+      for (const [tokenAddress, balanceData] of Object.entries(tokenBalances)) {
+        await wallet.updateTokenBalance(tokenAddress, balanceData);
+      }
+
+      await wallet.save();
+
+      logger.info(`Balance updated for wallet ${wallet.address}`);
+
+      res.json({
+        success: true,
+        message: 'Balance updated successfully',
+        data: { wallet },
+      });
     } catch (error) {
       next(error);
     }
