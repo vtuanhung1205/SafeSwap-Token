@@ -7,7 +7,7 @@ const walletSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
       index: true, // For faster queries
-LL    },
+    },
     address: {
       type: String,
       required: true,

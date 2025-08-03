@@ -1,11 +1,11 @@
 const { TokenPrice } = require('../models/TokenPrice.model');
 const { PriceFeedService } = require('../services/priceFeed.service');
-const { AptosService } = require('../services/aptos.service');
+const { AptosBlockchainService } = require('../services/aptosBlockchain.service');
 const { createError } = require('../middleware/errorHandler');
 const { logger } = require('../utils/logger');
 
 const priceFeedService = new PriceFeedService();
-const aptosService = new AptosService();
+const aptosService = new AptosBlockchainService();
 
 class PriceController {
   async getCurrentPrice(req, res, next) {

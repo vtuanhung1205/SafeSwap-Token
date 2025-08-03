@@ -28,7 +28,7 @@ class WalletController {
       if (!req.user || !req.user._id) {
         throw createError(401, 'Authentication required to connect wallet');
       }
-
+      
       const userId = req.user._id;
 
       // Validate Aptos address format
@@ -87,8 +87,8 @@ class WalletController {
       // Create new wallet
       const newWallet = new Wallet({
         userId,
-        address,
-        publicKey,
+          address,
+          publicKey,
         name: walletName,
         chainId: 'aptos-testnet',
         aptBalance,
@@ -131,9 +131,9 @@ class WalletController {
 
       logger.info(`New wallet connected for user ${userId}: ${address}`);
 
-      res.json({
-        success: true,
-        message: 'Wallet connected successfully',
+        res.json({
+          success: true,
+          message: 'Wallet connected successfully',
         data: { 
           wallet: newWallet,
           isDefault: !user.defaultWalletId || user.defaultWalletId.equals(newWallet._id)
@@ -293,7 +293,7 @@ class WalletController {
         message: 'Wallet name updated successfully',
         data: { wallet }
       });
-    } catch (error) {
+          } catch (error) {
       next(error);
     }
   }
@@ -482,7 +482,7 @@ class WalletController {
       const { address } = req.params;
       
       const isValid = aptosService.validateAddress(address);
-      
+
       res.json({
         success: true,
         data: {
@@ -505,7 +505,7 @@ class WalletController {
       }
 
       const accountInfo = await aptosService.getAccountInfo(address);
-      
+
       res.json({
         success: true,
         data: { accountInfo }
