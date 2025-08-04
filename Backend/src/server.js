@@ -93,6 +93,9 @@ app.use('/api/transactions', transactionRoutes);
 // Legacy auth route for frontend compatibility
 app.use('/api/auth', userRoutes);
 
+// Legacy wallet route for frontend compatibility
+app.use('/api/wallet', userRoutes);
+
 /**
  * Welcome route with API information
  */

@@ -265,4 +265,21 @@ router.get('/status', (req, res) => {
   });
 });
 
+/**
+ * Legacy endpoint for wallet info compatibility
+ * Returns wallet information (deprecated)
+ */
+router.get('/wallet/info', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Wallet info endpoint deprecated. Please use wallet-based authentication.',
+    data: {
+      wallets: [],
+      defaultWallet: null,
+      deprecated: true,
+      newEndpoint: '/api/user/me'
+    }
+  });
+});
+
 module.exports = router; 

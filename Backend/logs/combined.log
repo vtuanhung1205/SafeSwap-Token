@@ -683,3 +683,12 @@
 {"level":"info","message":"📦 MongoDB connected successfully","service":"safeswap-backend","timestamp":"2025-08-04 15:18:24"}
 {"level":"info","message":"📍 Connected to: mongodb://localhost:27017/safeswap","service":"safeswap-backend","timestamp":"2025-08-04 15:18:24"}
 {"level":"info","message":"🏓 Database ping successful","service":"safeswap-backend","timestamp":"2025-08-04 15:18:24"}
+{"level":"info","message":"🔗 Connecting to MongoDB: mongodb://localhost:27017/safeswap","service":"safeswap-backend","timestamp":"2025-08-04 15:43:19"}
+{"level":"info","message":"📦 MongoDB connected successfully","service":"safeswap-backend","timestamp":"2025-08-04 15:43:19"}
+{"level":"info","message":"📍 Connected to: mongodb://localhost:27017/safeswap","service":"safeswap-backend","timestamp":"2025-08-04 15:43:19"}
+{"level":"info","message":"🏓 Database ping successful","service":"safeswap-backend","timestamp":"2025-08-04 15:43:19"}
+{"level":"info","message":"Database connected successfully","service":"safeswap-backend","timestamp":"2025-08-04 15:43:19"}
+{"level":"info","message":"Server running on port 5000","service":"safeswap-backend","timestamp":"2025-08-04 15:43:19"}
+{"level":"info","message":"Environment: development","service":"safeswap-backend","timestamp":"2025-08-04 15:43:19"}
+{"level":"info","message":"Swagger UI available at: http://localhost:5000/api-docs","service":"safeswap-backend","timestamp":"2025-08-04 15:43:19"}
+{"level":"info","message":"Health check available at: http://localhost:5000/health","service":"safeswap-backend","timestamp":"2025-08-04 15:43:19"}
