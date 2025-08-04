@@ -20,7 +20,7 @@ const LoginModal = ({ isOpen, onClose }) => {
         }).then(res => res.json());
 
         const googleData = {
-          idToken: response.access_token, // Using access token as ID token for simplicity
+          idToken: response.access_token, // For now, using access token as ID token
           accessToken: response.access_token,
           googleId: userInfo.sub,
           email: userInfo.email,
@@ -28,6 +28,7 @@ const LoginModal = ({ isOpen, onClose }) => {
           avatar: userInfo.picture
         };
         
+        console.log('Sending Google data to backend:', googleData);
         await googleLogin(googleData);
         onClose();
       } catch (error) {
@@ -41,7 +42,8 @@ const LoginModal = ({ isOpen, onClose }) => {
       console.error('Google OAuth error:', error);
       toast.error('Google login failed. Please try again.');
       setIsSubmitting(false);
-    }
+    },
+    flow: 'implicit' // Use implicit flow to get id_token
   });
 
   const handleGoogleLogin = () => {

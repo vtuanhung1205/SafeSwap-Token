@@ -10,9 +10,22 @@ const logger = require('../utils/logger');
 const router = express.Router();
 
 // Google OAuth verification
-const verifyGoogleToken = async (idToken) => {
+const verifyGoogleToken = async (token) => {
   try {
-    const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`);
+    // Try to verify as ID token first
+    try {
+      const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${token}`);
+      if (response.ok) {
+        const data = await response.json();
+        return data;
+      }
+    } catch (error) {
+      // If ID token verification fails, try access token
+      console.log('ID token verification failed, trying access token...');
+    }
+    
+    // Verify as access token
+    const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?access_token=${token}`);
     if (!response.ok) {
       throw new Error('Invalid Google token');
     }
