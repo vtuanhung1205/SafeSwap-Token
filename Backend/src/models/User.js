@@ -6,7 +6,6 @@ const userSchema = new mongoose.Schema({
   email: {
     type: String,
     required: true,
-    unique: true,
     lowercase: true,
     trim: true
   },
@@ -25,8 +24,7 @@ const userSchema = new mongoose.Schema({
     default: 'email'
   },
   googleId: {
-    type: String,
-    sparse: true
+    type: String
   },
   
   // Profile
@@ -238,8 +236,7 @@ const userSchema = new mongoose.Schema({
   
   // Referral System
   referralCode: {
-    type: String,
-    sparse: true
+    type: String
   },
   referredBy: {
     type: mongoose.Schema.Types.ObjectId,

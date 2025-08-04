@@ -2,7 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
-const fetch = require('node-fetch');
+const axios = require('axios');
 const User = require('../models/User');
 const { auth, optionalAuth } = require('../middleware/auth');
 const logger = require('../utils/logger');
@@ -14,23 +14,16 @@ const verifyGoogleToken = async (token) => {
   try {
     // Try to verify as ID token first
     try {
-      const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${token}`);
-      if (response.ok) {
-        const data = await response.json();
-        return data;
-      }
+      const response = await axios.get(`https://oauth2.googleapis.com/tokeninfo?id_token=${token}`);
+      return response.data;
     } catch (error) {
       // If ID token verification fails, try access token
-      console.log('ID token verification failed, trying access token...');
+      logger.debug('ID token verification failed, trying access token...');
     }
     
     // Verify as access token
-    const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?access_token=${token}`);
-    if (!response.ok) {
-      throw new Error('Invalid Google token');
-    }
-    const data = await response.json();
-    return data;
+    const response = await axios.get(`https://oauth2.googleapis.com/tokeninfo?access_token=${token}`);
+    return response.data;
   } catch (error) {
     logger.error('Google token verification failed:', error);
     throw new Error('Google authentication failed');
