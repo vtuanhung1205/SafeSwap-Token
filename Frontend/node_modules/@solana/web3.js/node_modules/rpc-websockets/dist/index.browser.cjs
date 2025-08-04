@@ -385,5 +385,5 @@ exports.Client = Client;
 exports.CommonClient = CommonClient;
 exports.DefaultDataPack = DefaultDataPack;
 exports.WebSocket = WebSocket;
-//# sourceMappingURL=out.js.map
+//# sourceMappingURL=index.browser.cjs.map
 //# sourceMappingURL=index.browser.cjs.map

@@ -2,10 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useWallet } from '@aptos-labs/wallet-adapter-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
-import { Loader2, LogOut } from 'lucide-react'; // Import necessary icons
+import { Loader2, LogOut } from 'lucide-react';
 
-// This component is a drop-in replacement.
-// It maintains all existing logic while matching the UI of SwapForm.
 const WalletConnect = ({ onWalletConnected }) => {
   // --- LOGIC (Unchanged) ---
   const { 
@@ -13,21 +11,56 @@ const WalletConnect = ({ onWalletConnected }) => {
     account, 
     disconnect, 
     wallet, 
-    select, // Added to manually select a wallet
-    wallets // Added to list available wallets
+    select,
+    wallets 
   } = useWallet();
   const { isAuthenticated, connectWallet } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
 
-  // Only disconnect wallet if user is not authenticated
   useEffect(() => {
-    if (!isAuthenticated && connected) {
-      disconnect();
-    }
-  }, [isAuthenticated, connected, disconnect]);
+    const syncWallet = async () => {
+      if (!isAuthenticated) {
+        if (connected) {
+          disconnect();
+        }
+        return;
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      if (connected && account && !isConnecting && isAuthenticated) {
+        try {
+          setIsConnecting(true);
+          
+          let addressString = typeof account.address === 'object' ? account.address.hexString : String(account.address);
+          let publicKeyString = typeof account.publicKey === 'object' ? account.publicKey.hexString : String(account.publicKey);
+          
+          if (!addressString || !publicKeyString) {
+            throw new Error("Invalid wallet address or public key");
+          }
+          
+          const result = await connectWallet({
+            address: addressString,
+            publicKey: publicKeyString
+          });
+          
+          if (result.success && onWalletConnected) {
+            onWalletConnected({...account, address: addressString, publicKey: publicKeyString});
+          }
+        } catch (error) {
+          console.error("Wallet sync error:", error);
+        } finally {
+          setIsConnecting(false);
+          setIsModalOpen(false);
+        }
+      }
+    };
+    
+    const timeoutId = setTimeout(syncWallet, 500);
+    return () => clearTimeout(timeoutId);
+  }, [connected, account, wallet, onWalletConnected, isConnecting, isAuthenticated, disconnect, connectWallet]);
 
-  // --- Event Handlers (Logic is the same, adapted for new UI flow) ---
   const handleConnectClick = () => {
     if (isConnecting) return;
     
@@ -45,39 +78,8 @@ const WalletConnect = ({ onWalletConnected }) => {
     disconnect();
   };
 
-  const handleWalletSelect = async (walletName) => {
-    try {
-      setIsConnecting(true);
-      select(walletName);
-      
-      // Wait for wallet to connect
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      if (connected && account && isAuthenticated) {
-        let addressString = typeof account.address === 'object' ? account.address.hexString : String(account.address);
-        let publicKeyString = typeof account.publicKey === 'object' ? account.publicKey.hexString : String(account.publicKey);
-        
-        if (!addressString || !publicKeyString) {
-          throw new Error("Invalid wallet address or public key");
-        }
-        
-        const result = await connectWallet({
-          address: addressString,
-          publicKey: publicKeyString
-        });
-        
-        if (result.success && onWalletConnected) {
-          onWalletConnected({...account, address: addressString, publicKey: publicKeyString});
-          setIsModalOpen(false);
-          toast.success("Wallet connected successfully!");
-        }
-      }
-    } catch (error) {
-      console.error("Wallet connection error:", error);
-      toast.error("Failed to connect wallet");
-    } finally {
-      setIsConnecting(false);
-    }
+  const handleWalletSelect = (walletName) => {
+    select(walletName);
   };
 
   const formatAddress = (address) => {
@@ -86,7 +88,6 @@ const WalletConnect = ({ onWalletConnected }) => {
     return `${addressString.slice(0, 6)}...${addressString.slice(-4)}`;
   };
 
-  // --- UI (Redesigned to match SwapForm) ---
   return (
     <>
       {!connected ? (
@@ -109,6 +110,7 @@ const WalletConnect = ({ onWalletConnected }) => {
       ) : (
         <div className="flex items-center justify-between w-full bg-[#111112] rounded-xl p-3 border border-[#2a2a35]">
           <div className="flex items-center">
+            {/* --- FIX APPLIED: Added optional chaining to prevent crash if wallet is temporarily null --- */}
             <img src={wallet?.adapter.icon} alt={wallet?.adapter.name} className="w-6 h-6 rounded-full mr-3" />
             <span className="text-white font-mono text-sm">
               {formatAddress(account?.address)}
@@ -125,7 +127,6 @@ const WalletConnect = ({ onWalletConnected }) => {
         </div>
       )}
 
-      {/* --- Custom Wallet Selection Modal --- */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
           <div className="bg-[#1c1c24] rounded-2xl p-6 border border-[#2a2a35] shadow-lg w-full max-w-sm">
@@ -141,21 +142,25 @@ const WalletConnect = ({ onWalletConnected }) => {
               </button>
             </div>
             <div className="max-h-80 overflow-y-auto space-y-2">
-              {wallets.map((wallet) => (
-                <button
-                  key={wallet.adapter.name}
-                  onClick={() => handleWalletSelect(wallet.adapter.name)}
-                  className="flex items-center w-full p-3 hover:bg-[#2a2a35] rounded-lg transition"
-                >
-                  <img
-                    src={wallet.adapter.icon}
-                    alt={wallet.adapter.name}
-                    className="w-8 h-8 rounded-full mr-4"
-                  />
-                  <span className="text-white font-medium text-lg">
-                    {wallet.adapter.name}
-                  </span>
-                </button>
+              {/* --- FIX APPLIED: Added optional chaining to prevent crash if wallets array is not ready --- */}
+              {wallets?.map((wallet) => (
+                // Also ensure wallet and adapter exist before rendering the button
+                wallet?.adapter?.name && (
+                  <button
+                    key={wallet.adapter.name}
+                    onClick={() => handleWalletSelect(wallet.adapter.name)}
+                    className="flex items-center w-full p-3 hover:bg-[#2a2a35] rounded-lg transition"
+                  >
+                    <img
+                      src={wallet.adapter.icon}
+                      alt={wallet.adapter.name}
+                      className="w-8 h-8 rounded-full mr-4"
+                    />
+                    <span className="text-white font-medium text-lg">
+                      {wallet.adapter.name}
+                    </span>
+                  </button>
+                )
               ))}
             </div>
           </div>

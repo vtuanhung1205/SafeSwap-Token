@@ -524,15 +524,18 @@ var Server = class extends eventemitter3.EventEmitter {
       * @return {Undefined}
       */
       emit(event, ...params) {
-        const socket_ids = [...self.namespaces[name].clients.keys()];
-        for (let i = 0, id; id = socket_ids[i]; ++i) {
-          self.namespaces[name].clients.get(id).send(
-            self.dataPack.encode({
-              notification: event,
-              params: params || []
-            })
-          );
-        }
+        const nsEvent = self.namespaces[name].events[event];
+        if (nsEvent)
+          for (const socket_id of nsEvent.sockets) {
+            const socket = self.namespaces[name].clients.get(socket_id);
+            if (!socket) continue;
+            socket.send(
+              self.dataPack.encode({
+                notification: event,
+                params
+              })
+            );
+          }
       },
       /**
       * Returns a name of this namespace.
@@ -894,5 +897,5 @@ exports.DefaultDataPack = DefaultDataPack;
 exports.Server = Server;
 exports.WebSocket = WebSocket;
 exports.createError = createError;
-//# sourceMappingURL=out.js.map
+//# sourceMappingURL=index.cjs.map
 //# sourceMappingURL=index.cjs.map
