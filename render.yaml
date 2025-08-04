@@ -13,9 +13,9 @@ services:
       - key: PORT
         value: 10000
       - key: MONGODB_URI
-        value: mongodb+srv://safeswap:safeswap123@safeswap.6pk7wds.mongodb.net/safeswap?retryWrites=true&w=majority&appName=SafeSwap
+        value: mongodb+srv://safeswap_user:safeswap@safeswap.6pk7wds.mongodb.net/safeswap?retryWrites=true&w=majority&appName=SafeSwap
       - key: MONGODB_URI_PROD
-        value: mongodb+srv://safeswap:safeswap123@safeswap.6pk7wds.mongodb.net/safeswap?retryWrites=true&w=majority&appName=SafeSwap
+        value: mongodb+srv://safeswap_user:safeswap@safeswap.6pk7wds.mongodb.net/safeswap?retryWrites=true&w=majority&appName=SafeSwap
       - key: APTOS_NETWORK
         value: mainnet
       - key: APTOS_NODE_URL
@@ -23,9 +23,9 @@ services:
       - key: FRONTEND_URL
         value: https://safeswap-frontend.onrender.com
       - key: JWT_SECRET
-        value: safeswap-jwt-secret-key-2024
+        value: SafeSwap2025SecureJWTSecretKeyForProductionUse!@#$%
       - key: JWT_EXPIRES_IN
-        value: 7d
+        value: 24h
       - key: LOG_FORMAT
         value: combined
       - key: LOG_LEVEL
@@ -34,6 +34,14 @@ services:
         value: 900000
       - key: RATE_LIMIT_MAX_REQUESTS
         value: 100
+      - key: BCRYPT_ROUNDS
+        value: 12
+      - key: JWT_REFRESH_SECRET
+        value: SafeSwap2025RefreshTokenSecretKeyForProductionUse!@#$%
+      - key: JWT_REFRESH_EXPIRES_IN
+        value: 7d
+      - key: AI_SERVICE_URL
+        value: https://safeswap-ai-service.onrender.com
 
   - type: web
     name: safeswap-frontend
