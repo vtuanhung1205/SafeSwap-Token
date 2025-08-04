@@ -20,6 +20,8 @@ const LoginModal = ({ isOpen, onClose }) => {
         }).then(res => res.json());
 
         const googleData = {
+          idToken: response.access_token, // Using access token as ID token for simplicity
+          accessToken: response.access_token,
           googleId: userInfo.sub,
           email: userInfo.email,
           name: userInfo.name,
@@ -76,7 +78,10 @@ const LoginModal = ({ isOpen, onClose }) => {
             className="w-full bg-white text-gray-900 rounded-xl py-3 px-4 font-semibold flex items-center justify-center gap-3 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSubmitting ? (
-              <div className="w-5 h-5 border-2 border-gray-900 border-t-transparent rounded-full animate-spin"></div>
+              <div className="flex items-center justify-center">
+                <div className="w-5 h-5 border-2 border-gray-900 border-t-transparent rounded-full animate-spin mr-2"></div>
+                Signing in...
+              </div>
             ) : (
               <>
                 <svg className="w-5 h-5" viewBox="0 0 24 24">

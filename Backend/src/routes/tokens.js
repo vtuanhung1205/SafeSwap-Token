@@ -1,9 +1,10 @@
 const express = require('express');
-const router = express.Router();
-
-const aptosService = require('../services/aptosService');
+const { body, param, query, validationResult } = require('express-validator');
 const { auth, optionalAuth } = require('../middleware/auth');
+const aptosService = require('../services/aptosService');
 const logger = require('../utils/logger');
+
+const router = express.Router();
 
 // Get token metadata
 router.get('/:tokenAddress/:tokenName', optionalAuth, async (req, res) => {
@@ -13,7 +14,7 @@ router.get('/:tokenAddress/:tokenName', optionalAuth, async (req, res) => {
     if (!aptosService.isValidAddress(tokenAddress)) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid token address'
+        error: 'Invalid token address format'
       });
     }
     
@@ -48,45 +49,11 @@ router.get('/balances', auth, async (req, res) => {
     if (!aptosService.isValidAddress(userAddress)) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid wallet address'
+        error: 'Invalid address format'
       });
     }
     
-    // Get account resources to find all tokens
-    const resources = await aptosService.getAccountResources(userAddress);
-    
-    const balances = [];
-    
-    // Parse coin resources
-    for (const resource of resources) {
-      if (resource.type.includes('::coin::CoinStore<')) {
-        const tokenInfo = resource.type.match(/CoinStore<(.+)>/);
-        if (tokenInfo) {
-          const fullTokenType = tokenInfo[1];
-          const [tokenAddress, tokenName] = fullTokenType.split('::');
-          
-          try {
-            const balance = await aptosService.getTokenBalance(
-              userAddress, 
-              tokenAddress, 
-              tokenName
-            );
-            
-            if (balance.amount !== '0') {
-              balances.push({
-                tokenAddress,
-                tokenName,
-                fullTokenType,
-                balance: balance.amount,
-                decimals: balance.decimals
-              });
-            }
-          } catch (error) {
-            logger.error(`Error getting balance for ${fullTokenType}:`, error);
-          }
-        }
-      }
-    }
+    const balances = await aptosService.getAllTokenBalances(userAddress);
     
     res.json({
       success: true,
@@ -126,13 +93,7 @@ router.get('/balance/:tokenAddress/:tokenName', auth, async (req, res) => {
     
     res.json({
       success: true,
-      data: {
-        tokenAddress,
-        tokenName,
-        balance: balance.amount,
-        decimals: balance.decimals,
-        formattedBalance: (parseFloat(balance.amount) / Math.pow(10, balance.decimals)).toFixed(balance.decimals)
-      }
+      data: balance
     });
   } catch (error) {
     logger.error('Error getting token balance:', error);
@@ -147,28 +108,31 @@ router.get('/balance/:tokenAddress/:tokenName', auth, async (req, res) => {
 router.get('/popular/list', optionalAuth, async (req, res) => {
   try {
     // This would typically come from a database or external API
-    // For now, return a static list of popular Aptos tokens
+    // For now, return a mock list of popular Aptos tokens
     const popularTokens = [
       {
         address: '0x1::aptos_coin::AptosCoin',
         name: 'AptosCoin',
         symbol: 'APT',
         decimals: 8,
-        logo: 'https://raw.githubusercontent.com/aptos-labs/aptos-core/main/ecosystem/aptos-token/assets/APT.png'
+        logo: 'https://raw.githubusercontent.com/aptos-labs/aptos-core/main/ecosystem/aptos-token/assets/APT.png',
+        description: 'The native token of the Aptos blockchain'
       },
       {
-        address: '0x1000000fa32d122c18a6a31c009ce5e71674f22d06ae5817d427082c4b31880c::coin::T',
-        name: 'T',
-        symbol: 'T',
-        decimals: 6,
-        logo: null
-      },
-      {
-        address: '0x1000000fa32d122c18a6a31c009ce5e71674f22d06ae5817d427082c4b31880c::coin::USDC',
-        name: 'USDC',
+        address: '0x1::coin::USDC',
+        name: 'USD Coin',
         symbol: 'USDC',
         decimals: 6,
-        logo: 'https://cryptologos.cc/logos/usd-coin-usdc-logo.png'
+        logo: 'https://cryptologos.cc/logos/usd-coin-usdc-logo.png',
+        description: 'USD Coin is a stablecoin pegged to the US dollar'
+      },
+      {
+        address: '0x1::coin::USDT',
+        name: 'Tether',
+        symbol: 'USDT',
+        decimals: 6,
+        logo: 'https://cryptologos.cc/logos/tether-usdt-logo.png',
+        description: 'Tether is a stablecoin pegged to the US dollar'
       }
     ];
     
@@ -225,38 +189,6 @@ router.get('/search', optionalAuth, async (req, res) => {
   }
 });
 
-// Get token price (placeholder)
-router.get('/price/:tokenAddress/:tokenName', optionalAuth, async (req, res) => {
-  try {
-    const { tokenAddress, tokenName } = req.params;
-    
-    // This would integrate with price APIs like CoinGecko
-    // For now, return mock data
-    const mockPrice = {
-      usd: 1.0,
-      usd_24h_change: 0.5,
-      usd_24h_vol: 1000000,
-      market_cap: 5000000000
-    };
-    
-    res.json({
-      success: true,
-      data: {
-        tokenAddress,
-        tokenName,
-        price: mockPrice,
-        lastUpdated: new Date().toISOString()
-      }
-    });
-  } catch (error) {
-    logger.error('Error getting token price:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to get token price'
-    });
-  }
-});
-
 // Get token transfer history
 router.get('/:tokenAddress/:tokenName/transfers', auth, async (req, res) => {
   try {
@@ -278,17 +210,13 @@ router.get('/:tokenAddress/:tokenName/transfers', auth, async (req, res) => {
       });
     }
     
-    // Get account transactions
-    const transactions = await aptosService.getAccountTransactions(userAddress, parseInt(limit));
+    const transfers = await aptosService.getAccountTransactions(userAddress, { limit: parseInt(limit) });
     
-    // Filter transactions related to this token
-    const tokenTransfers = transactions.filter(tx => {
-      if (tx.payload && tx.payload.type === 'entry_function_payload') {
-        const functionName = tx.payload.function;
-        return functionName.includes('transfer') && functionName.includes(tokenName);
-      }
-      return false;
-    });
+    // Filter transactions related to this specific token
+    const tokenTransfers = transfers.filter(tx => 
+      tx.payload?.function?.includes(tokenAddress) ||
+      tx.payload?.function?.includes(tokenName)
+    );
     
     res.json({
       success: true,
@@ -303,17 +231,22 @@ router.get('/:tokenAddress/:tokenName/transfers', auth, async (req, res) => {
   }
 });
 
-// Validate token address
-router.post('/validate', optionalAuth, async (req, res) => {
+// Validate token
+router.post('/validate', auth, [
+  body('tokenAddress').notEmpty().withMessage('Token address is required'),
+  body('tokenName').notEmpty().withMessage('Token name is required')
+], async (req, res) => {
   try {
-    const { tokenAddress, tokenName } = req.body;
-    
-    if (!tokenAddress || !tokenName) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
       return res.status(400).json({
         success: false,
-        error: 'Token address and name are required'
+        error: 'Validation failed',
+        details: errors.array()
       });
     }
+    
+    const { tokenAddress, tokenName } = req.body;
     
     if (!aptosService.isValidAddress(tokenAddress)) {
       return res.status(400).json({
@@ -322,6 +255,7 @@ router.post('/validate', optionalAuth, async (req, res) => {
       });
     }
     
+    // Check if token exists on Aptos
     try {
       const metadata = await aptosService.getTokenMetadata(tokenAddress, tokenName);
       
@@ -329,7 +263,7 @@ router.post('/validate', optionalAuth, async (req, res) => {
         success: true,
         data: {
           isValid: true,
-          metadata
+          metadata: metadata
         }
       });
     } catch (error) {
@@ -337,7 +271,7 @@ router.post('/validate', optionalAuth, async (req, res) => {
         success: true,
         data: {
           isValid: false,
-          error: 'Token not found or invalid'
+          error: 'Token not found on Aptos blockchain'
         }
       });
     }

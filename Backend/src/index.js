@@ -4,10 +4,11 @@ const helmet = require('helmet');
 const compression = require('compression');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
-const { createServer } = require('http');
-const { Server } = require('socket.io');
+const http = require('http');
+const socketIo = require('socket.io');
 require('dotenv').config();
 
+// Import custom modules
 const connectDB = require('./config/database');
 const logger = require('./utils/logger');
 const aptosService = require('./services/aptosService');
@@ -22,8 +23,10 @@ const analyticsRoutes = require('./routes/analytics');
 const walletRoutes = require('./routes/wallet');
 
 const app = express();
-const server = createServer(app);
-const io = new Server(server, {
+const server = http.createServer(app);
+
+// Socket.IO setup
+const io = socketIo(server, {
   cors: {
     origin: process.env.FRONTEND_URL || "http://localhost:5173",
     methods: ["GET", "POST"]
@@ -32,9 +35,11 @@ const io = new Server(server, {
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
-  message: 'Too many requests from this IP, please try again later.'
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100, // limit each IP to 100 requests per windowMs
+  message: {
+    error: 'Too many requests from this IP, please try again later.'
+  }
 });
 
 // Middleware
@@ -44,10 +49,10 @@ app.use(cors({
   origin: process.env.FRONTEND_URL || "http://localhost:5173",
   credentials: true
 }));
+app.use(morgan('combined', { stream: { write: message => logger.info(message.trim()) } }));
+app.use(limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-app.use(morgan('combined', { stream: { write: message => logger.info(message.trim()) } }));
-app.use('/api', limiter);
 
 // Health check
 app.get('/health', (req, res) => {
@@ -80,12 +85,6 @@ io.on('connection', (socket) => {
   socket.on('subscribe-transactions', (userId) => {
     socket.join(`transactions-${userId}`);
     logger.info(`User ${userId} subscribed to transaction updates`);
-  });
-  
-  // Handle token price updates
-  socket.on('subscribe-prices', () => {
-    socket.join('price-updates');
-    logger.info(`Client ${socket.id} subscribed to price updates`);
   });
   
   socket.on('disconnect', () => {

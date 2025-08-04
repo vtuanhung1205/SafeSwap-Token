@@ -23,11 +23,6 @@ class TransactionService {
       this.checkPendingTransactions();
     });
     
-    // Schedule periodic price updates
-    cron.schedule('*/60 * * * * *', () => {
-      this.updateTokenPrices();
-    });
-    
     logger.info('Transaction monitoring started');
   }
 
@@ -266,24 +261,6 @@ class TransactionService {
     }
     
     return transactionData;
-  }
-
-  // Update token prices
-  async updateTokenPrices() {
-    try {
-      // This would integrate with price APIs like CoinGecko
-      // For now, just log the action
-      logger.debug('Updating token prices...');
-      
-      if (this.io) {
-        this.io.to('price-updates').emit('price-update', {
-          timestamp: new Date(),
-          prices: {} // Would contain actual price data
-        });
-      }
-    } catch (error) {
-      logger.error('Error updating token prices:', error);
-    }
   }
 
   // Get transaction statistics

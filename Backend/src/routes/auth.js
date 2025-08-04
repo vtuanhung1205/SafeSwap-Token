@@ -1,96 +1,179 @@
 const express = require('express');
-const { body, validationResult } = require('express-validator');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const router = express.Router();
-
+const { body, validationResult } = require('express-validator');
+const fetch = require('node-fetch');
 const User = require('../models/User');
-const { auth, authLimiter } = require('../middleware/auth');
+const { auth, optionalAuth } = require('../middleware/auth');
 const logger = require('../utils/logger');
 
-// Register user
-router.post('/register', authLimiter, [
-  body('username')
-    .isLength({ min: 3, max: 30 })
-    .withMessage('Username must be between 3 and 30 characters')
-    .matches(/^[a-zA-Z0-9_]+$/)
-    .withMessage('Username can only contain letters, numbers, and underscores'),
-  body('email')
-    .isEmail()
-    .withMessage('Please provide a valid email address'),
-  body('password')
-    .isLength({ min: 6 })
-    .withMessage('Password must be at least 6 characters long'),
-  body('walletAddress')
-    .optional()
-    .isString()
-    .withMessage('Wallet address must be a string')
-], async (req, res) => {
+const router = express.Router();
+
+// Google OAuth verification
+const verifyGoogleToken = async (idToken) => {
   try {
-    // Check validation errors
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
+    const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`);
+    if (!response.ok) {
+      throw new Error('Invalid Google token');
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    logger.error('Google token verification failed:', error);
+    throw new Error('Google authentication failed');
+  }
+};
+
+// @route   POST /api/auth/google
+// @desc    Google OAuth login/register
+// @access  Public
+router.post('/google', async (req, res) => {
+  try {
+    const { idToken, accessToken } = req.body;
+
+    if (!idToken) {
       return res.status(400).json({
         success: false,
-        errors: errors.array()
+        error: 'Google ID token is required'
       });
     }
 
-    const { username, email, password, walletAddress, firstName, lastName } = req.body;
-
-    // Check if user already exists
-    const existingUser = await User.findOne({
-      $or: [{ email }, { username }]
-    });
-
-    if (existingUser) {
-      return res.status(400).json({
-        success: false,
-        error: 'User with this email or username already exists'
+    // Verify Google token
+    const googleUser = await verifyGoogleToken(idToken);
+    
+    // Check if user exists
+    let user = await User.findOne({ email: googleUser.email });
+    
+    if (!user) {
+      // Create new user
+      user = new User({
+        email: googleUser.email,
+        profile: {
+          firstName: googleUser.given_name || '',
+          lastName: googleUser.family_name || '',
+          displayName: googleUser.name || '',
+          avatar: googleUser.picture || ''
+        },
+        authProvider: 'google',
+        googleId: googleUser.sub,
+        isEmailVerified: googleUser.email_verified || false,
+        accountStatus: 'active'
       });
+      
+      await user.save();
+      logger.info(`New Google user registered: ${user.email}`);
+    } else {
+      // Update existing user's Google info
+      user.googleId = googleUser.sub;
+      user.authProvider = 'google';
+      user.profile.avatar = googleUser.picture || user.profile.avatar;
+      user.isEmailVerified = googleUser.email_verified || user.isEmailVerified;
+      
+      await user.save();
+      logger.info(`Existing user logged in via Google: ${user.email}`);
     }
-
-    // Check if wallet address is already registered
-    if (walletAddress) {
-      const existingWallet = await User.findByWalletAddress(walletAddress);
-      if (existingWallet) {
-        return res.status(400).json({
-          success: false,
-          error: 'Wallet address is already registered'
-        });
-      }
-    }
-
-    // Create new user
-    const user = new User({
-      username,
-      email,
-      password,
-      walletAddress: walletAddress?.toLowerCase(),
-      firstName,
-      lastName
-    });
-
-    // Generate referral code
-    user.generateReferralCode();
-
-    await user.save();
 
     // Generate JWT token
     const token = jwt.sign(
       { userId: user._id },
       process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      { expiresIn: process.env.JWT_EXPIRES_IN }
     );
 
-    // Remove password from response
-    const userResponse = user.toObject();
-    delete userResponse.password;
+    // Update user stats
+    await user.updateStats('login');
+
+    res.json({
+      success: true,
+      data: {
+        user: {
+          id: user._id,
+          email: user.email,
+          profile: user.profile,
+          walletAddress: user.walletAddress,
+          walletType: user.walletType,
+          accountStatus: user.accountStatus,
+          isEmailVerified: user.isEmailVerified,
+          authProvider: user.authProvider
+        },
+        token
+      }
+    });
+  } catch (error) {
+    logger.error('Google auth error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Google authentication failed'
+    });
+  }
+});
+
+// @route   POST /api/auth/register
+// @desc    Register new user
+// @access  Public
+router.post('/register', [
+  body('email').isEmail().normalizeEmail(),
+  body('password').isLength({ min: 6 }),
+  body('firstName').trim().notEmpty(),
+  body('lastName').trim().notEmpty()
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Validation failed',
+        details: errors.array()
+      });
+    }
+
+    const { email, password, firstName, lastName, referralCode } = req.body;
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(409).json({
+        success: false,
+        error: 'User with this email already exists'
+      });
+    }
+
+    // Create new user
+    const user = new User({
+      email,
+      password,
+      profile: {
+        firstName,
+        lastName,
+        displayName: `${firstName} ${lastName}`
+      },
+      authProvider: 'email',
+      referralCode: referralCode || null
+    });
+
+    await user.save();
+    logger.info(`New user registered: ${user.email}`);
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN }
+    );
 
     res.status(201).json({
       success: true,
-      message: 'User registered successfully',
       data: {
-        user: userResponse,
+        user: {
+          id: user._id,
+          email: user.email,
+          profile: user.profile,
+          walletAddress: user.walletAddress,
+          walletType: user.walletType,
+          accountStatus: user.accountStatus,
+          isEmailVerified: user.isEmailVerified,
+          authProvider: user.authProvider
+        },
         token
       }
     });
@@ -98,46 +181,44 @@ router.post('/register', authLimiter, [
     logger.error('Registration error:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to register user'
+      error: 'Registration failed'
     });
   }
 });
 
-// Login user
-router.post('/login', authLimiter, [
-  body('email')
-    .isEmail()
-    .withMessage('Please provide a valid email address'),
-  body('password')
-    .notEmpty()
-    .withMessage('Password is required')
+// @route   POST /api/auth/login
+// @desc    Login user
+// @access  Public
+router.post('/login', [
+  body('email').isEmail().normalizeEmail(),
+  body('password').notEmpty()
 ], async (req, res) => {
   try {
-    // Check validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({
         success: false,
-        errors: errors.array()
+        error: 'Validation failed',
+        details: errors.array()
       });
     }
 
     const { email, password } = req.body;
 
-    // Find user by email
+    // Find user
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(401).json({
         success: false,
-        error: 'Invalid email or password'
+        error: 'Invalid credentials'
       });
     }
 
-    // Check if account is active
-    if (!user.isActive) {
+    // Check if user uses Google auth
+    if (user.authProvider === 'google') {
       return res.status(401).json({
         success: false,
-        error: 'Account is deactivated'
+        error: 'Please use Google to sign in'
       });
     }
 
@@ -146,7 +227,15 @@ router.post('/login', authLimiter, [
     if (!isPasswordValid) {
       return res.status(401).json({
         success: false,
-        error: 'Invalid email or password'
+        error: 'Invalid credentials'
+      });
+    }
+
+    // Check account status
+    if (user.accountStatus !== 'active') {
+      return res.status(403).json({
+        success: false,
+        error: 'Account is not active'
       });
     }
 
@@ -154,26 +243,25 @@ router.post('/login', authLimiter, [
     const token = jwt.sign(
       { userId: user._id },
       process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      { expiresIn: process.env.JWT_EXPIRES_IN }
     );
 
-    // Update last login
-    user.sessions.push({
-      token,
-      device: req.headers['user-agent'] || 'Unknown',
-      ip: req.ip
-    });
-    await user.save();
-
-    // Remove password from response
-    const userResponse = user.toObject();
-    delete userResponse.password;
+    // Update user stats
+    await user.updateStats('login');
 
     res.json({
       success: true,
-      message: 'Login successful',
       data: {
-        user: userResponse,
+        user: {
+          id: user._id,
+          email: user.email,
+          profile: user.profile,
+          walletAddress: user.walletAddress,
+          walletType: user.walletType,
+          accountStatus: user.accountStatus,
+          isEmailVerified: user.isEmailVerified,
+          authProvider: user.authProvider
+        },
         token
       }
     });
@@ -181,67 +269,94 @@ router.post('/login', authLimiter, [
     logger.error('Login error:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to login'
+      error: 'Login failed'
     });
   }
 });
 
-// Get current user profile
+// @route   GET /api/auth/profile
+// @desc    Get current user profile
+// @access  Private
 router.get('/profile', auth, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select('-password');
-    
+    const user = await User.findById(req.user.userId).select('-password');
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+
     res.json({
       success: true,
-      data: user
+      data: {
+        id: user._id,
+        email: user.email,
+        profile: user.profile,
+        walletAddress: user.walletAddress,
+        walletType: user.walletType,
+        accountStatus: user.accountStatus,
+        isEmailVerified: user.isEmailVerified,
+        authProvider: user.authProvider
+      }
     });
   } catch (error) {
-    logger.error('Error getting user profile:', error);
+    logger.error('Get profile error:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to get user profile'
+      error: 'Failed to get profile'
     });
   }
 });
 
-// Update user profile
+// @route   PUT /api/auth/profile
+// @desc    Update user profile
+// @access  Private
 router.put('/profile', auth, [
-  body('firstName').optional().isString().withMessage('First name must be a string'),
-  body('lastName').optional().isString().withMessage('Last name must be a string'),
-  body('avatar').optional().isURL().withMessage('Avatar must be a valid URL'),
-  body('preferences').optional().isObject().withMessage('Preferences must be an object')
+  body('firstName').optional().trim().notEmpty(),
+  body('lastName').optional().trim().notEmpty(),
+  body('displayName').optional().trim().notEmpty()
 ], async (req, res) => {
   try {
-    // Check validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({
         success: false,
-        errors: errors.array()
+        error: 'Validation failed',
+        details: errors.array()
       });
     }
 
-    const { firstName, lastName, avatar, preferences } = req.body;
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
 
-    if (firstName !== undefined) user.firstName = firstName;
-    if (lastName !== undefined) user.lastName = lastName;
-    if (avatar !== undefined) user.avatar = avatar;
-    if (preferences !== undefined) user.preferences = { ...user.preferences, ...preferences };
+    // Update profile fields
+    if (req.body.firstName) user.profile.firstName = req.body.firstName;
+    if (req.body.lastName) user.profile.lastName = req.body.lastName;
+    if (req.body.displayName) user.profile.displayName = req.body.displayName;
 
     await user.save();
 
-    // Remove password from response
-    const userResponse = user.toObject();
-    delete userResponse.password;
-
     res.json({
       success: true,
-      message: 'Profile updated successfully',
-      data: userResponse
+      data: {
+        id: user._id,
+        email: user.email,
+        profile: user.profile,
+        walletAddress: user.walletAddress,
+        walletType: user.walletType,
+        accountStatus: user.accountStatus,
+        isEmailVerified: user.isEmailVerified,
+        authProvider: user.authProvider
+      }
     });
   } catch (error) {
-    logger.error('Error updating user profile:', error);
+    logger.error('Update profile error:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to update profile'
@@ -249,28 +364,45 @@ router.put('/profile', auth, [
   }
 });
 
-// Change password
+// @route   PUT /api/auth/change-password
+// @desc    Change user password
+// @access  Private
 router.put('/change-password', auth, [
-  body('currentPassword').notEmpty().withMessage('Current password is required'),
-  body('newPassword').isLength({ min: 6 }).withMessage('New password must be at least 6 characters long')
+  body('currentPassword').notEmpty(),
+  body('newPassword').isLength({ min: 6 })
 ], async (req, res) => {
   try {
-    // Check validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({
         success: false,
-        errors: errors.array()
+        error: 'Validation failed',
+        details: errors.array()
       });
     }
 
     const { currentPassword, newPassword } = req.body;
-    const user = await User.findById(req.user.id);
+
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+
+    // Check if user uses Google auth
+    if (user.authProvider === 'google') {
+      return res.status(400).json({
+        success: false,
+        error: 'Password change not available for Google users'
+      });
+    }
 
     // Verify current password
-    const isCurrentPasswordValid = await user.comparePassword(currentPassword);
-    if (!isCurrentPasswordValid) {
-      return res.status(400).json({
+    const isPasswordValid = await user.comparePassword(currentPassword);
+    if (!isPasswordValid) {
+      return res.status(401).json({
         success: false,
         error: 'Current password is incorrect'
       });
@@ -285,7 +417,7 @@ router.put('/change-password', auth, [
       message: 'Password changed successfully'
     });
   } catch (error) {
-    logger.error('Error changing password:', error);
+    logger.error('Change password error:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to change password'
@@ -293,134 +425,26 @@ router.put('/change-password', auth, [
   }
 });
 
-// Connect wallet
+// @route   POST /api/auth/connect-wallet
+// @desc    Connect wallet to user account
+// @access  Private
 router.post('/connect-wallet', auth, [
-  body('walletAddress').isString().notEmpty().withMessage('Wallet address is required'),
-  body('walletType').optional().isIn(['petra', 'martian', 'pontem', 'other']).withMessage('Invalid wallet type')
+  body('walletAddress').notEmpty(),
+  body('walletType').optional().isIn(['petra', 'martian', 'pontem', 'fewcha', 'nightly', 'other'])
 ], async (req, res) => {
   try {
-    // Check validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({
         success: false,
-        errors: errors.array()
+        error: 'Validation failed',
+        details: errors.array()
       });
     }
 
     const { walletAddress, walletType = 'other' } = req.body;
 
-    // Check if wallet is already connected to another account
-    const existingWallet = await User.findByWalletAddress(walletAddress);
-    if (existingWallet && existingWallet._id.toString() !== req.user.id) {
-      return res.status(400).json({
-        success: false,
-        error: 'Wallet address is already connected to another account'
-      });
-    }
-
-    // Update user's wallet
-    const user = await User.findById(req.user.id);
-    user.walletAddress = walletAddress.toLowerCase();
-    user.walletType = walletType;
-    await user.save();
-
-    res.json({
-      success: true,
-      message: 'Wallet connected successfully',
-      data: {
-        walletAddress: user.walletAddress,
-        walletType: user.walletType
-      }
-    });
-  } catch (error) {
-    logger.error('Error connecting wallet:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to connect wallet'
-    });
-  }
-});
-
-// Disconnect wallet
-router.delete('/disconnect-wallet', auth, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id);
-    user.walletAddress = null;
-    user.walletType = 'other';
-    await user.save();
-
-    res.json({
-      success: true,
-      message: 'Wallet disconnected successfully'
-    });
-  } catch (error) {
-    logger.error('Error disconnecting wallet:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to disconnect wallet'
-    });
-  }
-});
-
-// Logout
-router.post('/logout', auth, async (req, res) => {
-  try {
-    const token = req.header('Authorization')?.replace('Bearer ', '');
-    
-    if (token) {
-      // Remove session token
-      await User.findByIdAndUpdate(req.user.id, {
-        $pull: { sessions: { token } }
-      });
-    }
-
-    res.json({
-      success: true,
-      message: 'Logged out successfully'
-    });
-  } catch (error) {
-    logger.error('Error logging out:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to logout'
-    });
-  }
-});
-
-// Refresh token
-router.post('/refresh', auth, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id);
-    
-    // Generate new token
-    const token = jwt.sign(
-      { userId: user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
-    );
-
-    res.json({
-      success: true,
-      data: { token }
-    });
-  } catch (error) {
-    logger.error('Error refreshing token:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to refresh token'
-    });
-  }
-});
-
-// Forgot password (placeholder)
-router.post('/forgot-password', authLimiter, [
-  body('email').isEmail().withMessage('Please provide a valid email address')
-], async (req, res) => {
-  try {
-    const { email } = req.body;
-    
-    const user = await User.findOne({ email });
+    const user = await User.findById(req.user.userId);
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -428,14 +452,175 @@ router.post('/forgot-password', authLimiter, [
       });
     }
 
-    // TODO: Implement password reset email functionality
+    // Update wallet info
+    user.walletAddress = walletAddress;
+    user.walletType = walletType;
+    await user.save();
+
+    res.json({
+      success: true,
+      data: {
+        id: user._id,
+        email: user.email,
+        profile: user.profile,
+        walletAddress: user.walletAddress,
+        walletType: user.walletType,
+        accountStatus: user.accountStatus,
+        isEmailVerified: user.isEmailVerified,
+        authProvider: user.authProvider
+      }
+    });
+  } catch (error) {
+    logger.error('Connect wallet error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to connect wallet'
+    });
+  }
+});
+
+// @route   DELETE /api/auth/disconnect-wallet
+// @desc    Disconnect wallet from user account
+// @access  Private
+router.delete('/disconnect-wallet', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+
+    // Remove wallet info
+    user.walletAddress = null;
+    user.walletType = 'other';
+    await user.save();
+
+    res.json({
+      success: true,
+      data: {
+        id: user._id,
+        email: user.email,
+        profile: user.profile,
+        walletAddress: user.walletAddress,
+        walletType: user.walletType,
+        accountStatus: user.accountStatus,
+        isEmailVerified: user.isEmailVerified,
+        authProvider: user.authProvider
+      }
+    });
+  } catch (error) {
+    logger.error('Disconnect wallet error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to disconnect wallet'
+    });
+  }
+});
+
+// @route   POST /api/auth/logout
+// @desc    Logout user
+// @access  Private
+router.post('/logout', auth, async (req, res) => {
+  try {
+    // In JWT-based auth, logout is handled client-side
+    // But we can log the logout event
+    const user = await User.findById(req.user.userId);
+    if (user) {
+      await user.updateStats('logout');
+      logger.info(`User logged out: ${user.email}`);
+    }
+
+    res.json({
+      success: true,
+      message: 'Logged out successfully'
+    });
+  } catch (error) {
+    logger.error('Logout error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Logout failed'
+    });
+  }
+});
+
+// @route   POST /api/auth/refresh
+// @desc    Refresh JWT token
+// @access  Private
+router.post('/refresh', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+
+    // Generate new token
+    const token = jwt.sign(
+      { userId: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN }
+    );
+
+    res.json({
+      success: true,
+      data: { token }
+    });
+  } catch (error) {
+    logger.error('Token refresh error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to refresh token'
+    });
+  }
+});
+
+// @route   POST /api/auth/forgot-password
+// @desc    Send password reset email
+// @access  Public
+router.post('/forgot-password', [
+  body('email').isEmail().normalizeEmail()
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Validation failed',
+        details: errors.array()
+      });
+    }
+
+    const { email } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      // Don't reveal if user exists or not
+      return res.json({
+        success: true,
+        message: 'If an account with this email exists, a password reset link has been sent'
+      });
+    }
+
+    // Check if user uses Google auth
+    if (user.authProvider === 'google') {
+      return res.status(400).json({
+        success: false,
+        error: 'Password reset not available for Google users'
+      });
+    }
+
+    // TODO: Implement password reset email sending
     // For now, just return success
     res.json({
       success: true,
       message: 'Password reset instructions sent to your email'
     });
   } catch (error) {
-    logger.error('Error in forgot password:', error);
+    logger.error('Forgot password error:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to process password reset'

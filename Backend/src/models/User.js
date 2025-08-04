@@ -2,16 +2,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema({
-  // Basic information
-  username: {
-    type: String,
-    required: true,
-    unique: true,
-    trim: true,
-    minlength: 3,
-    maxlength: 30
-  },
-  
+  // Basic Info
   email: {
     type: String,
     required: true,
@@ -19,144 +10,190 @@ const userSchema = new mongoose.Schema({
     lowercase: true,
     trim: true
   },
-  
   password: {
     type: String,
-    required: true,
+    required: function() {
+      return this.authProvider === 'email';
+    },
     minlength: 6
   },
   
-  // Profile information
-  firstName: {
+  // Authentication
+  authProvider: {
     type: String,
-    trim: true
+    enum: ['email', 'google'],
+    default: 'email'
   },
-  
-  lastName: {
+  googleId: {
     type: String,
-    trim: true
+    sparse: true
   },
   
-  avatar: {
-    type: String
+  // Profile
+  profile: {
+    firstName: {
+      type: String,
+      trim: true
+    },
+    lastName: {
+      type: String,
+      trim: true
+    },
+    displayName: {
+      type: String,
+      trim: true
+    },
+    avatar: {
+      type: String
+    },
+    bio: {
+      type: String,
+      maxlength: 500
+    },
+    location: {
+      type: String
+    },
+    website: {
+      type: String
+    }
   },
   
-  // Wallet information
+  // Wallet Info
   walletAddress: {
     type: String,
-    unique: true,
-    sparse: true,
-    index: true
+    lowercase: true,
+    trim: true
   },
-  
   walletType: {
     type: String,
-    enum: ['petra', 'martian', 'pontem', 'other'],
+    enum: ['petra', 'martian', 'pontem', 'fewcha', 'nightly', 'other'],
     default: 'other'
   },
   
-  // Account status
-  isActive: {
-    type: Boolean,
-    default: true
+  // Account Status
+  accountStatus: {
+    type: String,
+    enum: ['active', 'suspended', 'pending', 'deleted'],
+    default: 'active'
   },
-  
-  isVerified: {
-    type: Boolean,
-    default: false
-  },
-  
-  emailVerified: {
+  isEmailVerified: {
     type: Boolean,
     default: false
   },
+  emailVerificationToken: String,
+  emailVerificationExpires: Date,
   
-  // Security settings
+  // Security
+  passwordResetToken: String,
+  passwordResetExpires: Date,
   twoFactorEnabled: {
     type: Boolean,
     default: false
   },
-  
-  twoFactorSecret: {
-    type: String
+  twoFactorSecret: String,
+  loginAttempts: {
+    type: Number,
+    default: 0
   },
+  lockUntil: Date,
   
   // Preferences
   preferences: {
-    notifications: {
-      email: { type: Boolean, default: true },
-      push: { type: Boolean, default: true },
-      sms: { type: Boolean, default: false }
-    },
-    privacy: {
-      showTransactions: { type: Boolean, default: true },
-      showBalance: { type: Boolean, default: true }
-    },
     theme: {
       type: String,
       enum: ['light', 'dark', 'auto'],
-      default: 'auto'
+      default: 'dark'
     },
     language: {
       type: String,
       default: 'en'
+    },
+    notifications: {
+      email: {
+        type: Boolean,
+        default: true
+      },
+      push: {
+        type: Boolean,
+        default: true
+      },
+      sms: {
+        type: Boolean,
+        default: false
+      }
+    },
+    privacy: {
+      profileVisibility: {
+        type: String,
+        enum: ['public', 'private', 'friends'],
+        default: 'public'
+      },
+      showWalletAddress: {
+        type: Boolean,
+        default: false
+      }
     }
   },
   
-  // API keys and integrations
+  // API Keys
   apiKeys: [{
     name: String,
     key: String,
     permissions: [String],
-    createdAt: { type: Date, default: Date.now },
+    createdAt: {
+      type: Date,
+      default: Date.now
+    },
     lastUsed: Date
   }],
   
-  // Session management
+  // Sessions
   sessions: [{
     token: String,
     device: String,
     ip: String,
-    createdAt: { type: Date, default: Date.now },
-    lastActivity: { type: Date, default: Date.now }
+    createdAt: {
+      type: Date,
+      default: Date.now
+    },
+    lastActivity: {
+      type: Date,
+      default: Date.now
+    }
   }],
   
-  // Risk assessment
+  // Risk Profile
   riskProfile: {
     level: {
       type: String,
       enum: ['low', 'medium', 'high'],
       default: 'medium'
     },
-    score: {
-      type: Number,
-      min: 0,
-      max: 100,
-      default: 50
-    },
-    factors: [{
-      type: String
-    }]
+    factors: [String],
+    lastUpdated: {
+      type: Date,
+      default: Date.now
+    }
   },
   
-  // Transaction limits
+  // Transaction Limits
   limits: {
     daily: {
       type: Number,
-      default: 10000
+      default: 10000 // USD
     },
     monthly: {
       type: Number,
-      default: 100000
+      default: 100000 // USD
     },
     single: {
       type: Number,
-      default: 5000
+      default: 5000 // USD
     }
   },
   
   // Statistics
-  stats: {
+  statistics: {
     totalTransactions: {
       type: Number,
       default: 0
@@ -165,14 +202,18 @@ const userSchema = new mongoose.Schema({
       type: Number,
       default: 0
     },
-    lastTransaction: Date,
-    joinDate: {
+    lastLogin: Date,
+    loginCount: {
+      type: Number,
+      default: 0
+    },
+    registrationDate: {
       type: Date,
       default: Date.now
     }
   },
   
-  // KYC/AML information
+  // KYC/AML
   kyc: {
     status: {
       type: String,
@@ -182,153 +223,175 @@ const userSchema = new mongoose.Schema({
     documents: [{
       type: String,
       url: String,
-      verified: Boolean,
-      uploadedAt: { type: Date, default: Date.now }
+      status: {
+        type: String,
+        enum: ['pending', 'approved', 'rejected'],
+        default: 'pending'
+      },
+      uploadedAt: {
+        type: Date,
+        default: Date.now
+      }
     }],
     verifiedAt: Date
   },
   
-  // Referral system
+  // Referral System
   referralCode: {
     type: String,
     unique: true,
     sparse: true
   },
-  
   referredBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   },
-  
   referrals: [{
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User'
     },
-    bonus: {
-      type: Number,
-      default: 0
+    joinedAt: {
+      type: Date,
+      default: Date.now
     }
   }],
   
-  // Support tickets
+  // Support Tickets
   supportTickets: [{
-    id: String,
     subject: String,
-    status: {
-      type: String,
-      enum: ['open', 'in_progress', 'resolved', 'closed'],
-      default: 'open'
-    },
     priority: {
       type: String,
       enum: ['low', 'medium', 'high', 'urgent'],
       default: 'medium'
     },
-    createdAt: { type: Date, default: Date.now },
-    updatedAt: { type: Date, default: Date.now }
+    status: {
+      type: String,
+      enum: ['open', 'in_progress', 'resolved', 'closed'],
+      default: 'open'
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now
+    },
+    updatedAt: {
+      type: Date,
+      default: Date.now
+    }
   }]
 }, {
-  timestamps: true,
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
+  timestamps: true
 });
 
 // Indexes
 userSchema.index({ email: 1 });
+userSchema.index({ googleId: 1 });
 userSchema.index({ walletAddress: 1 });
-userSchema.index({ username: 1 });
-userSchema.index({ 'stats.lastTransaction': -1 });
+userSchema.index({ referralCode: 1 });
+userSchema.index({ 'statistics.lastLogin': -1 });
 
-// Virtual for full name
+// Virtuals
 userSchema.virtual('fullName').get(function() {
-  if (this.firstName && this.lastName) {
-    return `${this.firstName} ${this.lastName}`;
+  if (this.profile.firstName && this.profile.lastName) {
+    return `${this.profile.firstName} ${this.profile.lastName}`;
   }
-  return this.username;
+  return this.profile.displayName || this.email;
 });
 
-// Virtual for account age
 userSchema.virtual('accountAge').get(function() {
-  return Date.now() - this.createdAt.getTime();
+  return Math.floor((Date.now() - this.statistics.registrationDate) / (1000 * 60 * 60 * 24));
 });
 
-// Pre-save middleware to hash password
+// Pre-save middleware
 userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
-  
-  try {
-    const salt = await bcrypt.genSalt(12);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (error) {
-    next(error);
+  // Only hash password if it's modified and user uses email auth
+  if (this.isModified('password') && this.authProvider === 'email') {
+    try {
+      const salt = await bcrypt.genSalt(10);
+      this.password = await bcrypt.hash(this.password, salt);
+    } catch (error) {
+      return next(error);
+    }
   }
+  
+  // Generate referral code if not exists
+  if (!this.referralCode) {
+    this.generateReferralCode();
+  }
+  
+  next();
 });
 
-// Method to compare password
+// Instance methods
 userSchema.methods.comparePassword = async function(candidatePassword) {
+  if (this.authProvider !== 'email') {
+    return false;
+  }
   return bcrypt.compare(candidatePassword, this.password);
 };
 
-// Method to generate referral code
 userSchema.methods.generateReferralCode = function() {
-  const timestamp = Date.now().toString(36);
-  const random = Math.random().toString(36).substr(2, 5);
-  this.referralCode = `SAFE${timestamp}${random}`.toUpperCase();
-  return this.referralCode;
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let result = '';
+  for (let i = 0; i < 8; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  this.referralCode = result;
 };
 
-// Method to update statistics
-userSchema.methods.updateStats = function(transactionData) {
-  this.stats.totalTransactions += 1;
-  this.stats.totalVolume += parseFloat(transactionData.amount) || 0;
-  this.stats.lastTransaction = new Date();
-  return this.save();
+userSchema.methods.updateStats = async function(action) {
+  switch (action) {
+    case 'login':
+      this.statistics.lastLogin = new Date();
+      this.statistics.loginCount += 1;
+      break;
+    case 'logout':
+      // Update last activity
+      break;
+    case 'transaction':
+      this.statistics.totalTransactions += 1;
+      break;
+  }
+  await this.save();
 };
 
-// Method to check transaction limits
 userSchema.methods.checkLimits = function(amount) {
-  const today = new Date();
-  const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+  const now = new Date();
+  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   
-  // This would need to be implemented with actual transaction queries
-  // For now, return true
-  return true;
+  // This is a simplified check - in real implementation, you'd track daily/monthly usage
+  return {
+    daily: amount <= this.limits.daily,
+    monthly: amount <= this.limits.monthly,
+    single: amount <= this.limits.single
+  };
 };
 
-// Static method to find by wallet address
+// Static methods
 userSchema.statics.findByWalletAddress = function(address) {
   return this.findOne({ walletAddress: address.toLowerCase() });
 };
 
-// Static method to get user statistics
-userSchema.statics.getUserStats = function(userId) {
+userSchema.statics.getUserStats = async function() {
   return this.aggregate([
-    { $match: { _id: mongoose.Types.ObjectId(userId) } },
     {
-      $lookup: {
-        from: 'transactions',
-        localField: '_id',
-        foreignField: 'userId',
-        as: 'transactions'
-      }
-    },
-    {
-      $project: {
-        username: 1,
-        email: 1,
-        walletAddress: 1,
-        stats: 1,
-        totalTransactions: { $size: '$transactions' },
-        totalVolume: {
+      $group: {
+        _id: null,
+        totalUsers: { $sum: 1 },
+        activeUsers: {
           $sum: {
-            $map: {
-              input: '$transactions',
-              as: 'tx',
-              in: { $toDouble: '$$tx.amount' }
-            }
+            $cond: [{ $eq: ['$accountStatus', 'active'] }, 1, 0]
+          }
+        },
+        verifiedUsers: {
+          $sum: {
+            $cond: [{ $eq: ['$isEmailVerified', true] }, 1, 0]
+          }
+        },
+        usersWithWallet: {
+          $sum: {
+            $cond: [{ $ne: ['$walletAddress', null] }, 1, 0]
           }
         }
       }
@@ -336,4 +399,6 @@ userSchema.statics.getUserStats = function(userId) {
   ]);
 };
 
-module.exports = mongoose.model('User', userSchema); 
+const User = mongoose.model('User', userSchema);
+
+module.exports = User; 
