@@ -13,13 +13,17 @@ services:
       - key: PORT
         value: 10000
       - key: MONGODB_URI
-        sync: false # Set via Render dashboard
+        value: mongodb+srv://safeswap_user:safeswap@safeswap.6pk7wds.mongodb.net/safeswap?retryWrites=true&w=majority&appName=SafeSwap
       - key: APTOS_NETWORK
-        value: testnet
+        value: mainnet
       - key: APTOS_NODE_URL
-        value: https://fullnode.testnet.aptoslabs.com/v1
-      - key: ALLOWED_ORIGINS
+        value: https://fullnode.mainnet.aptoslabs.com/v1
+      - key: FRONTEND_URL
         value: https://safeswap-frontend.onrender.com
+      - key: JWT_SECRET
+        value: safeswap-jwt-secret-key-2024
+      - key: JWT_EXPIRES_IN
+        value: 7d
       - key: LOG_FORMAT
         value: combined
       - key: LOG_LEVEL
