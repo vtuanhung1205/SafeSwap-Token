@@ -8,23 +8,26 @@ const connectDB = async () => {
     console.log('Database connection - MONGODB_URI_PROD:', process.env.MONGODB_URI_PROD ? 'SET' : 'NOT SET');
     
     const mongoURI = process.env.NODE_ENV === 'production' 
-      ? process.env.MONGODB_URI_PROD 
+      ? (process.env.MONGODB_URI_PROD || process.env.MONGODB_URI)
       : process.env.MONGODB_URI;
 
     if (!mongoURI) {
       throw new Error('MongoDB URI is not defined in environment variables');
     }
 
+    console.log('Attempting to connect to MongoDB...');
     const conn = await mongoose.connect(mongoURI, {
       maxPoolSize: 10,
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
     });
 
+    console.log(`MongoDB Connected: ${conn.connection.host}`);
     logger.info(`MongoDB Connected: ${conn.connection.host}`);
 
     // Handle connection events
     mongoose.connection.on('error', (err) => {
+      console.error('MongoDB connection error:', err);
       logger.error('MongoDB connection error:', err);
     });
 
@@ -44,6 +47,7 @@ const connectDB = async () => {
     });
 
   } catch (error) {
+    console.error('Database connection failed:', error);
     logger.error('Database connection failed:', error);
     process.exit(1);
   }
