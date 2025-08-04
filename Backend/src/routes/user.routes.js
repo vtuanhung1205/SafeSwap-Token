@@ -282,4 +282,117 @@ router.get('/wallet/info', (req, res) => {
   });
 });
 
+/**
+ * Legacy endpoint for auth profile compatibility
+ * Returns user profile (deprecated)
+ */
+router.get('/auth/profile', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Auth profile endpoint deprecated. Please use wallet-based authentication.',
+    data: {
+      user: null,
+      profile: null,
+      deprecated: true,
+      newEndpoint: '/api/user/me'
+    }
+  });
+});
+
+/**
+ * Legacy endpoint for auth logout compatibility
+ * Handles logout (deprecated)
+ */
+router.post('/auth/logout', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Auth logout endpoint deprecated. Please use wallet-based authentication.',
+    data: {
+      loggedOut: true,
+      deprecated: true,
+      newEndpoint: '/api/user/disconnect'
+    }
+  });
+});
+
+/**
+ * Legacy endpoint for auth validate compatibility
+ * Validates session (deprecated)
+ */
+router.get('/auth/validate', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Auth validate endpoint deprecated. Please use wallet-based authentication.',
+    data: {
+      isValid: false,
+      deprecated: true,
+      newEndpoint: '/api/user/validate'
+    }
+  });
+});
+
+/**
+ * Legacy endpoint for wallet connect compatibility
+ * Connects wallet (deprecated)
+ */
+router.post('/wallet/connect', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Wallet connect endpoint deprecated. Please use wallet-based authentication.',
+    data: {
+      connected: false,
+      deprecated: true,
+      newEndpoint: '/api/user/connect'
+    }
+  });
+});
+
+/**
+ * Legacy endpoint for wallet disconnect compatibility
+ * Disconnects wallet (deprecated)
+ */
+router.post('/wallet/disconnect', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Wallet disconnect endpoint deprecated. Please use wallet-based authentication.',
+    data: {
+      disconnected: true,
+      deprecated: true,
+      newEndpoint: '/api/user/disconnect'
+    }
+  });
+});
+
+/**
+ * Legacy endpoint for wallet balance compatibility
+ * Returns wallet balance (deprecated)
+ */
+router.get('/wallet/balance', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Wallet balance endpoint deprecated. Please use wallet-based authentication.',
+    data: {
+      balances: [],
+      deprecated: true,
+      newEndpoint: '/api/user/me'
+    }
+  });
+});
+
+/**
+ * Legacy endpoint for wallet transactions compatibility
+ * Returns wallet transactions (deprecated)
+ */
+router.get('/wallet/transactions', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Wallet transactions endpoint deprecated. Please use wallet-based authentication.',
+    data: {
+      transactions: [],
+      deprecated: true,
+      newEndpoint: '/api/transactions/history'
+    }
+  });
+});
+
 module.exports = router; 

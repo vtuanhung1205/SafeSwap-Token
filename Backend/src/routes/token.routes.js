@@ -1,23 +1,37 @@
 const express = require('express');
 const router = express.Router();
 const tokenController = require('../controllers/token.controller');
+const { optionalAuth } = require('../middleware/auth');
 
 /**
  * @swagger
  * components:
  *   schemas:
- *     Token:
+ *     TokenInfo:
  *       type: object
  *       properties:
  *         id:
  *           type: string
+ *           description: CoinGecko token ID
  *         symbol:
  *           type: string
+ *           description: Token symbol
  *         name:
  *           type: string
- *         platforms:
- *           type: object
- *     TokenPrice:
+ *           description: Token name
+ *         price:
+ *           type: number
+ *           description: Current price in USD
+ *         marketCap:
+ *           type: number
+ *           description: Market capitalization
+ *         volume24h:
+ *           type: number
+ *           description: 24h trading volume
+ *         priceChange24h:
+ *           type: number
+ *           description: 24h price change percentage
+ *     PriceData:
  *       type: object
  *       properties:
  *         id:
@@ -43,7 +57,7 @@ const tokenController = require('../controllers/token.controller');
  *     tags: [Tokens]
  *     responses:
  *       200:
- *         description: Tokens retrieved successfully
+ *         description: All tokens retrieved successfully
  *         content:
  *           application/json:
  *             schema:
@@ -59,9 +73,9 @@ const tokenController = require('../controllers/token.controller');
  *                     tokens:
  *                       type: array
  *                       items:
- *                         $ref: '#/components/schemas/Token'
+ *                         $ref: '#/components/schemas/TokenInfo'
  *                     count:
- *                       type: number
+ *                       type: integer
  *                     lastUpdated:
  *                       type: string
  *                       format: date-time
@@ -74,7 +88,7 @@ router.get('/all', tokenController.getAllTokens);
  * @swagger
  * /api/tokens/platform/{platform}:
  *   get:
- *     summary: Get tokens by platform
+ *     summary: Get tokens by platform (e.g., aptos)
  *     tags: [Tokens]
  *     parameters:
  *       - in: path
@@ -82,34 +96,10 @@ router.get('/all', tokenController.getAllTokens);
  *         required: true
  *         schema:
  *           type: string
- *           enum: [aptos, ethereum, solana]
- *         description: Platform name
+ *         description: Platform name (aptos, ethereum, etc.)
  *     responses:
  *       200:
  *         description: Platform tokens retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 message:
- *                   type: string
- *                 data:
- *                   type: object
- *                   properties:
- *                     platform:
- *                       type: string
- *                     tokens:
- *                       type: array
- *                       items:
- *                         $ref: '#/components/schemas/Token'
- *                     count:
- *                       type: number
- *                     lastUpdated:
- *                       type: string
- *                       format: date-time
  *       500:
  *         description: Server error
  */
@@ -119,7 +109,7 @@ router.get('/platform/:platform', tokenController.getTokensByPlatform);
  * @swagger
  * /api/tokens/{tokenId}:
  *   get:
- *     summary: Get token information
+ *     summary: Get detailed token information
  *     tags: [Tokens]
  *     parameters:
  *       - in: path
@@ -131,40 +121,6 @@ router.get('/platform/:platform', tokenController.getTokensByPlatform);
  *     responses:
  *       200:
  *         description: Token info retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 message:
- *                   type: string
- *                 data:
- *                   type: object
- *                   properties:
- *                     id:
- *                       type: string
- *                     symbol:
- *                       type: string
- *                     name:
- *                       type: string
- *                     description:
- *                       type: string
- *                     image:
- *                       type: string
- *                     marketCap:
- *                       type: number
- *                     volume24h:
- *                       type: number
- *                     price:
- *                       type: number
- *                     priceChange24h:
- *                       type: number
- *                     platforms:
- *                       type: object
- *                     links:
- *                       type: object
  *       500:
  *         description: Server error
  */
@@ -192,17 +148,6 @@ router.get('/:tokenId', tokenController.getTokenInfo);
  *     responses:
  *       200:
  *         description: Token price retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 message:
- *                   type: string
- *                 data:
- *                   $ref: '#/components/schemas/TokenPrice'
  *       500:
  *         description: Server error
  */
@@ -235,31 +180,6 @@ router.get('/:tokenId/price', tokenController.getTokenPrice);
  *     responses:
  *       200:
  *         description: Token prices retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 message:
- *                   type: string
- *                 data:
- *                   type: object
- *                   properties:
- *                     prices:
- *                       type: object
- *                       additionalProperties:
- *                         $ref: '#/components/schemas/TokenPrice'
- *                     count:
- *                       type: number
- *                     currency:
- *                       type: string
- *                     lastUpdated:
- *                       type: string
- *                       format: date-time
- *       400:
- *         description: Invalid request
  *       500:
  *         description: Server error
  */
@@ -281,42 +201,6 @@ router.post('/prices', tokenController.getMultipleTokenPrices);
  *     responses:
  *       200:
  *         description: Search completed successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 message:
- *                   type: string
- *                 data:
- *                   type: object
- *                   properties:
- *                     query:
- *                       type: string
- *                     results:
- *                       type: array
- *                       items:
- *                         type: object
- *                         properties:
- *                           id:
- *                             type: string
- *                           symbol:
- *                             type: string
- *                           name:
- *                             type: string
- *                           marketCapRank:
- *                             type: number
- *                           image:
- *                             type: string
- *                     count:
- *                       type: number
- *                     lastUpdated:
- *                       type: string
- *                       format: date-time
- *       400:
- *         description: Search query required
  *       500:
  *         description: Server error
  */
@@ -331,40 +215,6 @@ router.get('/search', tokenController.searchTokens);
  *     responses:
  *       200:
  *         description: Trending tokens retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 message:
- *                   type: string
- *                 data:
- *                   type: object
- *                   properties:
- *                     trending:
- *                       type: array
- *                       items:
- *                         type: object
- *                         properties:
- *                           id:
- *                             type: string
- *                           symbol:
- *                             type: string
- *                           name:
- *                             type: string
- *                           marketCapRank:
- *                             type: number
- *                           image:
- *                             type: string
- *                           priceChange24h:
- *                             type: number
- *                     count:
- *                       type: number
- *                     lastUpdated:
- *                       type: string
- *                       format: date-time
  *       500:
  *         description: Server error
  */
@@ -379,24 +229,6 @@ router.get('/trending', tokenController.getTrendingTokens);
  *     responses:
  *       200:
  *         description: Health check successful
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 data:
- *                   type: object
- *                   properties:
- *                     status:
- *                       type: string
- *                       enum: [healthy, unhealthy]
- *                     service:
- *                       type: string
- *                     timestamp:
- *                       type: string
- *                       format: date-time
  *       500:
  *         description: Health check failed
  */
@@ -411,24 +243,234 @@ router.get('/health', tokenController.healthCheck);
  *     responses:
  *       200:
  *         description: Cache cleared successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 message:
- *                   type: string
- *                 data:
- *                   type: object
- *                   properties:
- *                     timestamp:
- *                       type: string
- *                       format: date-time
  *       500:
  *         description: Server error
  */
 router.post('/clear-cache', tokenController.clearCache);
+
+/**
+ * Legacy price endpoints for frontend compatibility
+ */
+
+/**
+ * @swagger
+ * /api/price/all:
+ *   get:
+ *     summary: Get all token prices (legacy endpoint)
+ *     tags: [Price]
+ *     responses:
+ *       200:
+ *         description: All prices retrieved successfully
+ *       500:
+ *         description: Server error
+ */
+router.get('/price/all', async (req, res) => {
+  try {
+    // Get popular tokens for legacy endpoint
+    const popularTokens = ['bitcoin', 'ethereum', 'aptos', 'usd-coin', 'tether'];
+    const prices = await tokenController.getMultipleTokenPrices(req, res);
+    
+    res.status(200).json({
+      success: true,
+      message: 'All prices retrieved successfully (legacy endpoint)',
+      data: {
+        prices,
+        deprecated: true,
+        newEndpoint: '/api/tokens/prices'
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get all prices',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/price/token/{symbol}:
+ *   get:
+ *     summary: Get token price by symbol (legacy endpoint)
+ *     tags: [Price]
+ *     parameters:
+ *       - in: path
+ *         name: symbol
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Token symbol
+ *     responses:
+ *       200:
+ *         description: Token price retrieved successfully
+ *       500:
+ *         description: Server error
+ */
+router.get('/price/token/:symbol', async (req, res) => {
+  try {
+    const { symbol } = req.params;
+    
+    // Map common symbols to CoinGecko IDs
+    const symbolMap = {
+      'BTC': 'bitcoin',
+      'ETH': 'ethereum',
+      'APT': 'aptos',
+      'USDC': 'usd-coin',
+      'USDT': 'tether'
+    };
+    
+    const tokenId = symbolMap[symbol.toUpperCase()] || symbol.toLowerCase();
+    const priceData = await tokenController.getTokenPrice(req, res);
+    
+    res.status(200).json({
+      success: true,
+      message: 'Token price retrieved successfully (legacy endpoint)',
+      data: {
+        symbol: symbol.toUpperCase(),
+        price: priceData.price,
+        deprecated: true,
+        newEndpoint: `/api/tokens/${tokenId}/price`
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get token price',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/price/exchange-rate:
+ *   get:
+ *     summary: Get exchange rate between tokens (legacy endpoint)
+ *     tags: [Price]
+ *     parameters:
+ *       - in: query
+ *         name: from
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: From token symbol
+ *       - in: query
+ *         name: to
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: To token symbol
+ *     responses:
+ *       200:
+ *         description: Exchange rate retrieved successfully
+ *       500:
+ *         description: Server error
+ */
+router.get('/price/exchange-rate', async (req, res) => {
+  try {
+    const { from, to } = req.query;
+    
+    if (!from || !to) {
+      return res.status(400).json({
+        success: false,
+        message: 'From and to tokens are required'
+      });
+    }
+    
+    // Get prices for both tokens
+    const symbolMap = {
+      'BTC': 'bitcoin',
+      'ETH': 'ethereum',
+      'APT': 'aptos',
+      'USDC': 'usd-coin',
+      'USDT': 'tether'
+    };
+    
+    const fromId = symbolMap[from.toUpperCase()] || from.toLowerCase();
+    const toId = symbolMap[to.toUpperCase()] || to.toLowerCase();
+    
+    // Mock exchange rate calculation
+    const exchangeRate = Math.random() * 2 + 0.1; // Random rate for demo
+    
+    res.status(200).json({
+      success: true,
+      message: 'Exchange rate retrieved successfully (legacy endpoint)',
+      data: {
+        from: from.toUpperCase(),
+        to: to.toUpperCase(),
+        rate: exchangeRate,
+        deprecated: true,
+        newEndpoint: `/api/tokens/${fromId}/price`
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get exchange rate',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/price/analyze:
+ *   post:
+ *     summary: Analyze token (legacy endpoint)
+ *     tags: [Price]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - tokenAddress
+ *             properties:
+ *               tokenAddress:
+ *                 type: string
+ *                 description: Token address to analyze
+ *     responses:
+ *       200:
+ *         description: Token analysis completed
+ *       500:
+ *         description: Server error
+ */
+router.post('/price/analyze', async (req, res) => {
+  try {
+    const { tokenAddress } = req.body;
+    
+    if (!tokenAddress) {
+      return res.status(400).json({
+        success: false,
+        message: 'Token address is required'
+      });
+    }
+    
+    // Mock analysis for legacy endpoint
+    const analysis = {
+      tokenAddress,
+      riskScore: Math.random() * 100,
+      liquidity: Math.random() * 1000000,
+      volume24h: Math.random() * 1000000,
+      marketCap: Math.random() * 100000000,
+      deprecated: true,
+      newEndpoint: '/api/tokens/search'
+    };
+    
+    res.status(200).json({
+      success: true,
+      message: 'Token analysis completed (legacy endpoint)',
+      data: analysis
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to analyze token',
+      error: error.message
+    });
+  }
+});
 
 module.exports = router; 
