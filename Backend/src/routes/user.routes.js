@@ -269,7 +269,7 @@ router.get('/status', (req, res) => {
  * Legacy endpoint for wallet info compatibility
  * Returns wallet information (deprecated)
  */
-router.get('/wallet/info', (req, res) => {
+router.get('/info', (req, res) => {
   res.status(200).json({
     success: true,
     message: 'Wallet info endpoint deprecated. Please use wallet-based authentication.',
@@ -335,7 +335,7 @@ router.get('/auth/validate', (req, res) => {
  * Legacy endpoint for wallet connect compatibility
  * Connects wallet (deprecated)
  */
-router.post('/wallet/connect', (req, res) => {
+router.post('/connect', (req, res) => {
   res.status(200).json({
     success: true,
     message: 'Wallet connect endpoint deprecated. Please use wallet-based authentication.',
@@ -351,7 +351,7 @@ router.post('/wallet/connect', (req, res) => {
  * Legacy endpoint for wallet disconnect compatibility
  * Disconnects wallet (deprecated)
  */
-router.post('/wallet/disconnect', (req, res) => {
+router.post('/disconnect', (req, res) => {
   res.status(200).json({
     success: true,
     message: 'Wallet disconnect endpoint deprecated. Please use wallet-based authentication.',
@@ -367,7 +367,7 @@ router.post('/wallet/disconnect', (req, res) => {
  * Legacy endpoint for wallet balance compatibility
  * Returns wallet balance (deprecated)
  */
-router.get('/wallet/balance', (req, res) => {
+router.get('/balance', (req, res) => {
   res.status(200).json({
     success: true,
     message: 'Wallet balance endpoint deprecated. Please use wallet-based authentication.',
@@ -383,7 +383,7 @@ router.get('/wallet/balance', (req, res) => {
  * Legacy endpoint for wallet transactions compatibility
  * Returns wallet transactions (deprecated)
  */
-router.get('/wallet/transactions', (req, res) => {
+router.get('/transactions', (req, res) => {
   res.status(200).json({
     success: true,
     message: 'Wallet transactions endpoint deprecated. Please use wallet-based authentication.',
