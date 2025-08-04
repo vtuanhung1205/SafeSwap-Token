@@ -12,15 +12,15 @@ const api = {
   },
   linkNewWallet: async (authToken, wallet) => {
     console.log("Linking new wallet:", wallet);
-    // We will move the toast from here to the useEffect for better timing.
     return { success: true };
   }
 };
 
 const WalletConnect = ({ onWalletConnected }) => {
-  const { connected, account, disconnect, wallet, select, wallets } = useWallet();
-  const { isAuthenticated, authToken, loginWithGoogle } = useAuth(); 
+  // --- FIX 1 of 2: Renamed to match your AuthContext ---
+  const { isAuthenticated, authToken, googleLogin } = useAuth(); 
   
+  const { connected, account, disconnect, wallet, select, wallets } = useWallet();
   const [isConnecting, setIsConnecting] = useState(false);
   const [showLoginPromptModal, setShowLoginPromptModal] = useState(false);
   const [showLinkedWalletModal, setShowLinkedWalletModal] = useState(false); 
@@ -28,7 +28,6 @@ const WalletConnect = ({ onWalletConnected }) => {
   const [linkedWallets, setLinkedWallets] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Effect to handle the login-to-wallet flow
   useEffect(() => {
     if (isAuthenticated && showLoginPromptModal) {
       setShowLoginPromptModal(false);
@@ -36,22 +35,12 @@ const WalletConnect = ({ onWalletConnected }) => {
     }
   }, [isAuthenticated, showLoginPromptModal]);
 
-  // --- MODIFIED EFFECT ---
-  // This effect now handles BOTH the success notification and the backend sync.
   useEffect(() => {
     const syncWallet = async () => {
-      // Ensure we only proceed when a connection is fully established.
       if (!isAuthenticated || !connected || !account || isConnecting) return;
-
       try {
         setIsConnecting(true);
-        
-        // --- ACTION 1: Show Success Toast ---
-        // This is the perfect place to show the notification because this effect
-        // only runs when 'connected' becomes true.
         toast.success("Wallet connected successfully!");
-
-        // --- ACTION 2: Sync with backend (existing logic) ---
         const addressString = String(account.address);
         const isAlreadyLinked = linkedWallets.some(w => w.address === addressString);
         if (!isAlreadyLinked) {
@@ -65,18 +54,14 @@ const WalletConnect = ({ onWalletConnected }) => {
         toast.error("Failed to sync wallet with backend.");
       } finally {
         setIsConnecting(false);
-        // Close all modals upon successful connection.
         setShowLinkedWalletModal(false);
         setShowAddNewWalletModal(false);
       }
     };
-    
-    const timeoutId = setTimeout(syncWallet, 100); // Reduced delay for faster feedback
+    const timeoutId = setTimeout(syncWallet, 100);
     return () => clearTimeout(timeoutId);
-  }, [connected, account]); // Simplified dependencies to focus on connection state
+  }, [connected, account]);
 
-
-  // --- UNCHANGED LOGIC for opening modals and handling login ---
   const handleConnectClick = () => {
     if (connected) return;
     setShowLoginPromptModal(true);
@@ -103,9 +88,10 @@ const WalletConnect = ({ onWalletConnected }) => {
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     try {
-      await loginWithGoogle();
+      // --- FIX 2 of 2: Renamed to match your AuthContext ---
+      await googleLogin();
     } catch (error) {
-      toast.error("Google login failed.");
+      toast.error("Google login failed. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -117,35 +103,22 @@ const WalletConnect = ({ onWalletConnected }) => {
 
   return (
     <>
-      {/* --- MODIFIED: The main component render logic --- */}
       {!connected ? (
-        // STATE 1: Default "Connect Wallet" button
-        <button 
-          onClick={handleConnectClick}
-          className="w-full py-3 rounded-xl font-medium transition bg-cyan-600 text-white hover:bg-cyan-700"
-        >
+        <button onClick={handleConnectClick} className="w-full py-3 rounded-xl font-medium transition bg-cyan-600 text-white hover:bg-cyan-700">
           Connect Wallet
         </button>
       ) : (
-        // STATE 2: New "Connected" UI with address and disconnect button
         <div className="flex items-center justify-between w-full bg-[#111112] rounded-xl p-2 border border-[#2a2a35]">
           <div className="flex items-center">
             <img src={wallet?.adapter.icon} alt={wallet?.adapter.name} className="w-7 h-7 rounded-full mr-2" />
-            <span className="text-white font-mono text-sm">
-              {formatAddress(account?.address)}
-            </span>
+            <span className="text-white font-mono text-sm">{formatAddress(account?.address)}</span>
           </div>
-          <button 
-            onClick={handleDisconnect}
-            className="text-gray-400 hover:text-red-500 transition p-2 rounded-lg"
-            title="Disconnect"
-          >
+          <button onClick={handleDisconnect} className="text-gray-400 hover:text-red-500 transition p-2 rounded-lg" title="Disconnect">
             <LogOut size={18} />
           </button>
         </div>
       )}
 
-      {/* --- ALL MODALS BELOW ARE UNCHANGED --- */}
       {showLoginPromptModal && !isAuthenticated && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
           <div className="bg-[#1c1c24] rounded-2xl p-8 border border-[#2a2a35] shadow-lg w-full max-w-sm text-center">
