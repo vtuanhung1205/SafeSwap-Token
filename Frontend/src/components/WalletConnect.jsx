@@ -20,49 +20,12 @@ const WalletConnect = ({ onWalletConnected }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
 
-  // This core useEffect for syncing the wallet with your backend remains UNCHANGED.
+  // Only disconnect wallet if user is not authenticated
   useEffect(() => {
-    const syncWallet = async () => {
-      if (!isAuthenticated) {
-        if (connected) {
-          disconnect();
-        }
-        return;
-      }
-      
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      if (connected && account && !isConnecting && isAuthenticated) {
-        try {
-          setIsConnecting(true);
-          
-          let addressString = typeof account.address === 'object' ? account.address.hexString : String(account.address);
-          let publicKeyString = typeof account.publicKey === 'object' ? account.publicKey.hexString : String(account.publicKey);
-          
-          if (!addressString || !publicKeyString) {
-            throw new Error("Invalid wallet address or public key");
-          }
-          
-          const result = await connectWallet({
-            address: addressString,
-            publicKey: publicKeyString
-          });
-          
-          if (result.success && onWalletConnected) {
-            onWalletConnected({...account, address: addressString, publicKey: publicKeyString});
-          }
-        } catch (error) {
-          console.error("Wallet sync error:", error);
-        } finally {
-          setIsConnecting(false);
-          setIsModalOpen(false); // Close modal after successful connection
-        }
-      }
-    };
-    
-    const timeoutId = setTimeout(syncWallet, 500);
-    return () => clearTimeout(timeoutId);
-  }, [connected, account, wallet, onWalletConnected, isConnecting, isAuthenticated, disconnect, connectWallet]);
+    if (!isAuthenticated && connected) {
+      disconnect();
+    }
+  }, [isAuthenticated, connected, disconnect]);
 
   // --- Event Handlers (Logic is the same, adapted for new UI flow) ---
   const handleConnectClick = () => {
@@ -82,10 +45,39 @@ const WalletConnect = ({ onWalletConnected }) => {
     disconnect();
   };
 
-  const handleWalletSelect = (walletName) => {
-    select(walletName);
-    // The useEffect will handle the rest once the `connected` state changes.
-    // We can optimistically show a connecting state inside the modal if desired.
+  const handleWalletSelect = async (walletName) => {
+    try {
+      setIsConnecting(true);
+      select(walletName);
+      
+      // Wait for wallet to connect
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      if (connected && account && isAuthenticated) {
+        let addressString = typeof account.address === 'object' ? account.address.hexString : String(account.address);
+        let publicKeyString = typeof account.publicKey === 'object' ? account.publicKey.hexString : String(account.publicKey);
+        
+        if (!addressString || !publicKeyString) {
+          throw new Error("Invalid wallet address or public key");
+        }
+        
+        const result = await connectWallet({
+          address: addressString,
+          publicKey: publicKeyString
+        });
+        
+        if (result.success && onWalletConnected) {
+          onWalletConnected({...account, address: addressString, publicKey: publicKeyString});
+          setIsModalOpen(false);
+          toast.success("Wallet connected successfully!");
+        }
+      }
+    } catch (error) {
+      console.error("Wallet connection error:", error);
+      toast.error("Failed to connect wallet");
+    } finally {
+      setIsConnecting(false);
+    }
   };
 
   const formatAddress = (address) => {
