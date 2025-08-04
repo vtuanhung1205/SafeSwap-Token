@@ -3,19 +3,19 @@ const swaggerJSDoc = require('swagger-jsdoc');
 const swaggerDefinition = {
   openapi: '3.0.0',
   info: {
-    title: 'SafeSwap Backend API',
-    version: '1.0.0',
+    title: 'SafeSwap Backend API - Optimized for Production',
+    version: '2.0.0',
     description:
-      'This is the official API documentation for the SafeSwap Backend service. It provides endpoints for user authentication, wallet management, token swapping, and price information.',
+      'This is the official API documentation for the SafeSwap Backend service. Optimized for production with wallet-based authentication and CoinGecko integration. Provides endpoints for user sessions, token swapping, price information, and transaction history.',
     contact: {
       name: 'SafeSwap Team',
-      url: 'https://safeswap.io', // Replace with your actual project URL
-      email: 'support@safeswap.io', // Replace with your support email
+      url: 'https://safeswap.io',
+      email: 'support@safeswap.io',
     },
   },
   servers: [
     {
-      url: 'http://localhost:5000',
+      url: 'http://localhost:3001',
       description: 'Development server',
     },
     {
@@ -27,8 +27,9 @@ const swaggerDefinition = {
     securitySchemes: {
       sessionAuth: {
         type: 'apiKey',
-        in: 'cookie',
-        name: 'sessionId',
+        in: 'header',
+        name: 'X-Session-ID',
+        description: 'Session ID for wallet-based authentication'
       },
     },
   },
@@ -37,6 +38,24 @@ const swaggerDefinition = {
       sessionAuth: [],
     },
   ],
+  tags: [
+    {
+      name: 'User',
+      description: 'User session and wallet management'
+    },
+    {
+      name: 'Swap',
+      description: 'Token swapping operations'
+    },
+    {
+      name: 'Tokens',
+      description: 'Token information and price data from CoinGecko'
+    },
+    {
+      name: 'Transactions',
+      description: 'Transaction history and status tracking'
+    }
+  ]
 };
 
 const options = {
