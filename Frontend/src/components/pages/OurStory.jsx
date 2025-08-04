@@ -155,7 +155,7 @@ const OurStory = () => {
             <TeamMember
               imgSrc={avt1}
               name="Võ Đức Duy"
-              role="UX/UI & Frontend"
+              role="UX/UI & Frontend Developer"
               glowColor="cyan"
             />
             <TeamMember
