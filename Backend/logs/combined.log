@@ -552,3 +552,134 @@
 {"level":"info","message":"Updated price for BTC: $114388","service":"safeswap-backend","timestamp":"2025-08-04 02:20:00"}
 {"level":"info","message":"Updated price for APT: $4.23","service":"safeswap-backend","timestamp":"2025-08-04 02:20:00"}
 {"level":"info","message":"Updated price for SOL: $161.79","service":"safeswap-backend","timestamp":"2025-08-04 02:20:00"}
+{"level":"warn","message":"AI_SERVICE_URL is not set. Using fallback scam detection.","service":"safeswap-backend","timestamp":"2025-08-04 14:26:57"}
+{"level":"info","message":"🔗 Connecting to MongoDB: mongodb://localhost:27017/safeswap","service":"safeswap-backend","timestamp":"2025-08-04 14:26:58"}
+{"level":"info","message":"📦 MongoDB connected successfully","service":"safeswap-backend","timestamp":"2025-08-04 14:26:58"}
+{"level":"info","message":"📍 Connected to: mongodb://localhost:27017/safeswap","service":"safeswap-backend","timestamp":"2025-08-04 14:26:58"}
+{"level":"info","message":"🏓 Database ping successful","service":"safeswap-backend","timestamp":"2025-08-04 14:26:58"}
+{"level":"info","message":"Database connected successfully","service":"safeswap-backend","timestamp":"2025-08-04 14:26:58"}
+{"level":"info","message":"PriceFeedService initialized with 6 prices from database.","service":"safeswap-backend","timestamp":"2025-08-04 14:26:58"}
+{"level":"info","message":"Price feed service initialized","service":"safeswap-backend","timestamp":"2025-08-04 14:26:58"}
+{"level":"info","message":"Scheduling price update job. It will run every 5 minutes.","service":"safeswap-backend","timestamp":"2025-08-04 14:26:58"}
+{"level":"info","message":"Running initial price update...","service":"safeswap-backend","timestamp":"2025-08-04 14:26:58"}
+{"level":"info","message":"SafeSwap Backend API server running on port 5000","service":"safeswap-backend","timestamp":"2025-08-04 14:26:58"}
+{"level":"info","message":"Environment: development","service":"safeswap-backend","timestamp":"2025-08-04 14:26:58"}
+{"level":"info","message":"Health check: http://localhost:5000/health","service":"safeswap-backend","timestamp":"2025-08-04 14:26:58"}
+{"level":"warn","message":"CoinGecko price fetch failed for USDC:","service":"safeswap-backend","timestamp":"2025-08-04 14:26:58"}
+{"level":"info","message":"Updated price for BTC: $114502","service":"safeswap-backend","timestamp":"2025-08-04 14:26:58"}
+{"level":"info","message":"Updated price for USDC: $1","service":"safeswap-backend","timestamp":"2025-08-04 14:26:58"}
+{"level":"info","message":"Updated price for ETH: $3539.99","service":"safeswap-backend","timestamp":"2025-08-04 14:26:58"}
+{"level":"info","message":"Updated price for APT: $4.25","service":"safeswap-backend","timestamp":"2025-08-04 14:26:58"}
+{"level":"info","message":"Updated price for USDT: $1","service":"safeswap-backend","timestamp":"2025-08-04 14:26:58"}
+{"level":"info","message":"Updated price for SOL: $162.32","service":"safeswap-backend","timestamp":"2025-08-04 14:26:59"}
+{"level":"info","message":"Auto-created wallet for Google user swagger@build.com: 0x93698cd43b0ac8675eca8a95f41301b35555d4fa00b4aa9c82fa2b395a69093f","service":"safeswap-backend","timestamp":"2025-08-04 14:27:59"}
+{"level":"info","message":"New user created via Google OAuth: swagger@build.com","service":"safeswap-backend","timestamp":"2025-08-04 14:27:59"}
+{"level":"info","message":"Session created for user: swagger@build.com","service":"safeswap-backend","timestamp":"2025-08-04 14:27:59"}
+{"level":"info","message":"Google OAuth successful for user: swagger@build.com, sessionId: session_1754292479199_pesrle4ef","service":"safeswap-backend","timestamp":"2025-08-04 14:27:59"}
+{"level":"info","message":"Auth check - URL: /connect, SessionId: session_1754292479199_pesrle4ef, Cookies:","service":"safeswap-backend","sessionId":"session_1754292479199_pesrle4ef","timestamp":"2025-08-04 14:27:59"}
+{"level":"info","message":"Authenticated user: swagger@build.com for /connect","service":"safeswap-backend","timestamp":"2025-08-04 14:27:59"}
+{"ip":"::1","level":"warn","message":"Error occurred: Authentication required to connect wallet","method":"POST","originalMessage":"Authentication required to connect wallet","service":"safeswap-backend","stack":"Error: Authentication required to connect wallet\n    at createError (D:\\Attacker\\SafeSwap-Token\\Backend\\src\\middleware\\errorHandler.js:54:17)\n    at WalletController.connectWallet (D:\\Attacker\\SafeSwap-Token\\Backend\\src\\controllers\\wallet.controller.js:29:15)\n    at D:\\Attacker\\SafeSwap-Token\\Backend\\src\\middleware\\errorHandler.js:61:19\n    at Layer.handle [as handle_request] (D:\\Attacker\\SafeSwap-Token\\Backend\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at next (D:\\Attacker\\SafeSwap-Token\\Backend\\node_modules\\express\\lib\\router\\route.js:149:13)\n    at D:\\Attacker\\SafeSwap-Token\\Backend\\node_modules\\express-rate-limit\\dist\\index.cjs:807:7\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async D:\\Attacker\\SafeSwap-Token\\Backend\\node_modules\\express-rate-limit\\dist\\index.cjs:691:5","statusCode":401,"timestamp":"2025-08-04 14:27:59","url":"/api/wallet/connect","userAgent":"axios/1.10.0"}
+{"level":"info","message":"Auth check - URL: /list, SessionId: session_1754292479199_pesrle4ef, Cookies:","service":"safeswap-backend","sessionId":"session_1754292479199_pesrle4ef","timestamp":"2025-08-04 14:27:59"}
+{"level":"info","message":"Authenticated user: swagger@build.com for /list","service":"safeswap-backend","timestamp":"2025-08-04 14:27:59"}
+{"level":"info","message":"Auth check - URL: /689060ff7fe4a521adc7023e/info, SessionId: session_1754292479199_pesrle4ef, Cookies:","service":"safeswap-backend","sessionId":"session_1754292479199_pesrle4ef","timestamp":"2025-08-04 14:27:59"}
+{"level":"info","message":"Authenticated user: swagger@build.com for /689060ff7fe4a521adc7023e/info","service":"safeswap-backend","timestamp":"2025-08-04 14:27:59"}
+{"ip":"::1","level":"warn","message":"Error occurred: Access denied: Wallet not found or you do not own this wallet","method":"GET","originalMessage":"Access denied: Wallet not found or you do not own this wallet","service":"safeswap-backend","stack":"Error: Access denied: Wallet not found or you do not own this wallet\n    at createError (D:\\Attacker\\SafeSwap-Token\\Backend\\src\\middleware\\errorHandler.js:54:17)\n    at WalletController.validateWalletOwnership (D:\\Attacker\\SafeSwap-Token\\Backend\\src\\controllers\\wallet.controller.js:17:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async WalletController.getWalletInfo (D:\\Attacker\\SafeSwap-Token\\Backend\\src\\controllers\\wallet.controller.js:270:22)","statusCode":403,"timestamp":"2025-08-04 14:27:59","url":"/api/wallet/689060ff7fe4a521adc7023e/info","userAgent":"axios/1.10.0"}
+{"level":"info","message":"Auth check - URL: /689060ff7fe4a521adc7023e/set-default, SessionId: session_1754292479199_pesrle4ef, Cookies:","service":"safeswap-backend","sessionId":"session_1754292479199_pesrle4ef","timestamp":"2025-08-04 14:27:59"}
+{"level":"info","message":"Authenticated user: swagger@build.com for /689060ff7fe4a521adc7023e/set-default","service":"safeswap-backend","timestamp":"2025-08-04 14:27:59"}
+{"ip":"::1","level":"warn","message":"Error occurred: Access denied: Wallet not found or you do not own this wallet","method":"POST","originalMessage":"Access denied: Wallet not found or you do not own this wallet","service":"safeswap-backend","stack":"Error: Access denied: Wallet not found or you do not own this wallet\n    at createError (D:\\Attacker\\SafeSwap-Token\\Backend\\src\\middleware\\errorHandler.js:54:17)\n    at WalletController.validateWalletOwnership (D:\\Attacker\\SafeSwap-Token\\Backend\\src\\controllers\\wallet.controller.js:17:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async WalletController.setDefaultWallet (D:\\Attacker\\SafeSwap-Token\\Backend\\src\\controllers\\wallet.controller.js:302:22)","statusCode":403,"timestamp":"2025-08-04 14:27:59","url":"/api/wallet/689060ff7fe4a521adc7023e/set-default","userAgent":"axios/1.10.0"}
+{"level":"info","message":"Auth check - URL: /689060ff7fe4a521adc7023e/name, SessionId: session_1754292479199_pesrle4ef, Cookies:","service":"safeswap-backend","sessionId":"session_1754292479199_pesrle4ef","timestamp":"2025-08-04 14:27:59"}
+{"level":"info","message":"Authenticated user: swagger@build.com for /689060ff7fe4a521adc7023e/name","service":"safeswap-backend","timestamp":"2025-08-04 14:27:59"}
+{"ip":"::1","level":"warn","message":"Error occurred: Access denied: Wallet not found or you do not own this wallet","method":"PUT","originalMessage":"Access denied: Wallet not found or you do not own this wallet","service":"safeswap-backend","stack":"Error: Access denied: Wallet not found or you do not own this wallet\n    at createError (D:\\Attacker\\SafeSwap-Token\\Backend\\src\\middleware\\errorHandler.js:54:17)\n    at WalletController.validateWalletOwnership (D:\\Attacker\\SafeSwap-Token\\Backend\\src\\controllers\\wallet.controller.js:17:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async WalletController.updateWalletName (D:\\Attacker\\SafeSwap-Token\\Backend\\src\\controllers\\wallet.controller.js:338:22)","statusCode":403,"timestamp":"2025-08-04 14:27:59","url":"/api/wallet/689060ff7fe4a521adc7023e/name","userAgent":"axios/1.10.0"}
+{"level":"info","message":"Auth check - URL: /all, SessionId: session_1754292479199_pesrle4ef, Cookies:","service":"safeswap-backend","sessionId":"session_1754292479199_pesrle4ef","timestamp":"2025-08-04 14:27:59"}
+{"level":"info","message":"Authenticated user: swagger@build.com for /all","service":"safeswap-backend","timestamp":"2025-08-04 14:27:59"}
+{"ip":"::1","level":"warn","message":"Error occurred: Authentication required","method":"GET","originalMessage":"Authentication required","service":"safeswap-backend","stack":"Error: Authentication required\n    at createError (D:\\Attacker\\SafeSwap-Token\\Backend\\src\\middleware\\errorHandler.js:54:17)\n    at WalletController.getAllUserWallets (D:\\Attacker\\SafeSwap-Token\\Backend\\src\\controllers\\wallet.controller.js:196:15)\n    at D:\\Attacker\\SafeSwap-Token\\Backend\\src\\middleware\\errorHandler.js:61:19\n    at Layer.handle [as handle_request] (D:\\Attacker\\SafeSwap-Token\\Backend\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at next (D:\\Attacker\\SafeSwap-Token\\Backend\\node_modules\\express\\lib\\router\\route.js:149:13)\n    at D:\\Attacker\\SafeSwap-Token\\Backend\\node_modules\\express-rate-limit\\dist\\index.cjs:807:7\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async D:\\Attacker\\SafeSwap-Token\\Backend\\node_modules\\express-rate-limit\\dist\\index.cjs:691:5","statusCode":401,"timestamp":"2025-08-04 14:27:59","url":"/api/wallet/all","userAgent":"axios/1.10.0"}
+{"level":"info","message":"Auth check - URL: /stats, SessionId: session_1754292479199_pesrle4ef, Cookies:","service":"safeswap-backend","sessionId":"session_1754292479199_pesrle4ef","timestamp":"2025-08-04 14:27:59"}
+{"level":"info","message":"Authenticated user: swagger@build.com for /stats","service":"safeswap-backend","timestamp":"2025-08-04 14:27:59"}
+{"level":"info","message":"Auth check - URL: /type/trading, SessionId: session_1754292479199_pesrle4ef, Cookies:","service":"safeswap-backend","sessionId":"session_1754292479199_pesrle4ef","timestamp":"2025-08-04 14:27:59"}
+{"level":"info","message":"Authenticated user: swagger@build.com for /type/trading","service":"safeswap-backend","timestamp":"2025-08-04 14:27:59"}
+{"level":"info","message":"Auth check - URL: /category/personal, SessionId: session_1754292479199_pesrle4ef, Cookies:","service":"safeswap-backend","sessionId":"session_1754292479199_pesrle4ef","timestamp":"2025-08-04 14:27:59"}
+{"level":"info","message":"Authenticated user: swagger@build.com for /category/personal","service":"safeswap-backend","timestamp":"2025-08-04 14:27:59"}
+{"level":"info","message":"Auth check - URL: /689060ff7fe4a521adc7023e/priority, SessionId: session_1754292479199_pesrle4ef, Cookies:","service":"safeswap-backend","sessionId":"session_1754292479199_pesrle4ef","timestamp":"2025-08-04 14:27:59"}
+{"level":"info","message":"Authenticated user: swagger@build.com for /689060ff7fe4a521adc7023e/priority","service":"safeswap-backend","timestamp":"2025-08-04 14:27:59"}
+{"ip":"::1","level":"warn","message":"Error occurred: Access denied: Wallet not found or you do not own this wallet","method":"PUT","originalMessage":"Access denied: Wallet not found or you do not own this wallet","service":"safeswap-backend","stack":"Error: Access denied: Wallet not found or you do not own this wallet\n    at createError (D:\\Attacker\\SafeSwap-Token\\Backend\\src\\middleware\\errorHandler.js:54:17)\n    at WalletController.validateWalletOwnership (D:\\Attacker\\SafeSwap-Token\\Backend\\src\\controllers\\wallet.controller.js:17:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async WalletController.updateWalletPriority (D:\\Attacker\\SafeSwap-Token\\Backend\\src\\controllers\\wallet.controller.js:688:22)","statusCode":403,"timestamp":"2025-08-04 14:27:59","url":"/api/wallet/689060ff7fe4a521adc7023e/priority","userAgent":"axios/1.10.0"}
+{"level":"info","message":"Running scheduled price update for popular tokens...","service":"safeswap-backend","timestamp":"2025-08-04 14:30:00"}
+{"level":"warn","message":"CoinGecko price fetch failed for BTC:","service":"safeswap-backend","timestamp":"2025-08-04 14:30:00"}
+{"level":"info","message":"Updated price for BTC: $114501.99","service":"safeswap-backend","timestamp":"2025-08-04 14:30:00"}
+{"level":"info","message":"Updated price for USDC: $0.999738","service":"safeswap-backend","timestamp":"2025-08-04 14:30:00"}
+{"level":"info","message":"Updated price for ETH: $3538.62","service":"safeswap-backend","timestamp":"2025-08-04 14:30:00"}
+{"level":"info","message":"Updated price for APT: $4.25","service":"safeswap-backend","timestamp":"2025-08-04 14:30:00"}
+{"level":"info","message":"Updated price for USDT: $1","service":"safeswap-backend","timestamp":"2025-08-04 14:30:00"}
+{"level":"info","message":"Updated price for SOL: $162.38","service":"safeswap-backend","timestamp":"2025-08-04 14:30:00"}
+{"level":"info","message":"Running scheduled price update for popular tokens...","service":"safeswap-backend","timestamp":"2025-08-04 14:35:00"}
+{"level":"warn","message":"CoinGecko price fetch failed for USDT:","service":"safeswap-backend","timestamp":"2025-08-04 14:35:00"}
+{"level":"info","message":"Updated price for BTC: $114504","service":"safeswap-backend","timestamp":"2025-08-04 14:35:00"}
+{"level":"info","message":"Updated price for USDT: $1","service":"safeswap-backend","timestamp":"2025-08-04 14:35:00"}
+{"level":"info","message":"Updated price for USDC: $0.9997","service":"safeswap-backend","timestamp":"2025-08-04 14:35:00"}
+{"level":"info","message":"Updated price for ETH: $3539.91","service":"safeswap-backend","timestamp":"2025-08-04 14:35:00"}
+{"level":"info","message":"Updated price for APT: $4.25","service":"safeswap-backend","timestamp":"2025-08-04 14:35:00"}
+{"level":"info","message":"Updated price for SOL: $162.6","service":"safeswap-backend","timestamp":"2025-08-04 14:35:01"}
+{"level":"info","message":"Running scheduled price update for popular tokens...","service":"safeswap-backend","timestamp":"2025-08-04 14:40:00"}
+{"level":"info","message":"Updated price for USDC: $0.999715","service":"safeswap-backend","timestamp":"2025-08-04 14:40:00"}
+{"level":"info","message":"Updated price for BTC: $114588","service":"safeswap-backend","timestamp":"2025-08-04 14:40:00"}
+{"level":"info","message":"Updated price for USDT: $0.999974","service":"safeswap-backend","timestamp":"2025-08-04 14:40:00"}
+{"level":"info","message":"Updated price for ETH: $3545.76","service":"safeswap-backend","timestamp":"2025-08-04 14:40:01"}
+{"level":"info","message":"Updated price for APT: $4.27","service":"safeswap-backend","timestamp":"2025-08-04 14:40:01"}
+{"level":"info","message":"Updated price for SOL: $162.82","service":"safeswap-backend","timestamp":"2025-08-04 14:40:01"}
+{"level":"info","message":"Running scheduled price update for popular tokens...","service":"safeswap-backend","timestamp":"2025-08-04 14:45:00"}
+{"level":"info","message":"Updated price for BTC: $114658","service":"safeswap-backend","timestamp":"2025-08-04 14:45:00"}
+{"level":"info","message":"Updated price for USDC: $0.999606","service":"safeswap-backend","timestamp":"2025-08-04 14:45:01"}
+{"level":"info","message":"Updated price for USDT: $0.99998","service":"safeswap-backend","timestamp":"2025-08-04 14:45:01"}
+{"level":"info","message":"Updated price for ETH: $3547.79","service":"safeswap-backend","timestamp":"2025-08-04 14:45:01"}
+{"level":"info","message":"Updated price for APT: $4.27","service":"safeswap-backend","timestamp":"2025-08-04 14:45:01"}
+{"level":"info","message":"Updated price for SOL: $162.8","service":"safeswap-backend","timestamp":"2025-08-04 14:45:01"}
+{"level":"info","message":"Running scheduled price update for popular tokens...","service":"safeswap-backend","timestamp":"2025-08-04 14:50:00"}
+{"level":"info","message":"Updated price for USDT: $0.999983","service":"safeswap-backend","timestamp":"2025-08-04 14:50:00"}
+{"level":"info","message":"Updated price for BTC: $114691","service":"safeswap-backend","timestamp":"2025-08-04 14:50:00"}
+{"level":"info","message":"Updated price for APT: $4.27","service":"safeswap-backend","timestamp":"2025-08-04 14:50:00"}
+{"level":"info","message":"Updated price for ETH: $3548.89","service":"safeswap-backend","timestamp":"2025-08-04 14:50:00"}
+{"level":"info","message":"Updated price for USDC: $0.999711","service":"safeswap-backend","timestamp":"2025-08-04 14:50:00"}
+{"level":"info","message":"Updated price for SOL: $163.23","service":"safeswap-backend","timestamp":"2025-08-04 14:50:00"}
+{"level":"info","message":"Running scheduled price update for popular tokens...","service":"safeswap-backend","timestamp":"2025-08-04 14:55:00"}
+{"level":"info","message":"Updated price for USDT: $0.999988","service":"safeswap-backend","timestamp":"2025-08-04 14:55:01"}
+{"level":"info","message":"Updated price for BTC: $114726","service":"safeswap-backend","timestamp":"2025-08-04 14:55:01"}
+{"level":"info","message":"Updated price for ETH: $3550.16","service":"safeswap-backend","timestamp":"2025-08-04 14:55:01"}
+{"level":"info","message":"Updated price for USDC: $0.999709","service":"safeswap-backend","timestamp":"2025-08-04 14:55:01"}
+{"level":"info","message":"Updated price for APT: $4.27","service":"safeswap-backend","timestamp":"2025-08-04 14:55:01"}
+{"level":"info","message":"Updated price for SOL: $163.05","service":"safeswap-backend","timestamp":"2025-08-04 14:55:01"}
+{"level":"info","message":"Running scheduled price update for popular tokens...","service":"safeswap-backend","timestamp":"2025-08-04 15:00:00"}
+{"level":"info","message":"Updated price for BTC: $114698","service":"safeswap-backend","timestamp":"2025-08-04 15:00:00"}
+{"level":"info","message":"Updated price for USDC: $0.999608","service":"safeswap-backend","timestamp":"2025-08-04 15:00:00"}
+{"level":"info","message":"Updated price for ETH: $3550.95","service":"safeswap-backend","timestamp":"2025-08-04 15:00:00"}
+{"level":"info","message":"Updated price for APT: $4.27","service":"safeswap-backend","timestamp":"2025-08-04 15:00:00"}
+{"level":"info","message":"Updated price for USDT: $0.999987","service":"safeswap-backend","timestamp":"2025-08-04 15:00:00"}
+{"level":"info","message":"Updated price for SOL: $163.1","service":"safeswap-backend","timestamp":"2025-08-04 15:00:01"}
+{"level":"info","message":"Running scheduled price update for popular tokens...","service":"safeswap-backend","timestamp":"2025-08-04 15:05:00"}
+{"level":"info","message":"Updated price for ETH: $3554.41","service":"safeswap-backend","timestamp":"2025-08-04 15:05:00"}
+{"level":"info","message":"Updated price for APT: $4.27","service":"safeswap-backend","timestamp":"2025-08-04 15:05:00"}
+{"level":"info","message":"Updated price for USDT: $0.999996","service":"safeswap-backend","timestamp":"2025-08-04 15:05:00"}
+{"level":"info","message":"Updated price for BTC: $114675","service":"safeswap-backend","timestamp":"2025-08-04 15:05:00"}
+{"level":"info","message":"Updated price for USDC: $0.999727","service":"safeswap-backend","timestamp":"2025-08-04 15:05:00"}
+{"level":"info","message":"Updated price for SOL: $163.65","service":"safeswap-backend","timestamp":"2025-08-04 15:05:02"}
+{"level":"info","message":"🔗 Connecting to MongoDB: mongodb://localhost:27017/safeswap","service":"safeswap-backend","timestamp":"2025-08-04 15:09:48"}
+{"level":"info","message":"📦 MongoDB connected successfully","service":"safeswap-backend","timestamp":"2025-08-04 15:09:48"}
+{"level":"info","message":"📍 Connected to: mongodb://localhost:27017/safeswap","service":"safeswap-backend","timestamp":"2025-08-04 15:09:48"}
+{"level":"info","message":"🏓 Database ping successful","service":"safeswap-backend","timestamp":"2025-08-04 15:09:48"}
+{"level":"info","message":"Running scheduled price update for popular tokens...","service":"safeswap-backend","timestamp":"2025-08-04 15:10:00"}
+{"level":"info","message":"Updated price for BTC: $114687","service":"safeswap-backend","timestamp":"2025-08-04 15:10:01"}
+{"level":"info","message":"Updated price for ETH: $3556","service":"safeswap-backend","timestamp":"2025-08-04 15:10:01"}
+{"level":"info","message":"Updated price for USDC: $0.999738","service":"safeswap-backend","timestamp":"2025-08-04 15:10:01"}
+{"level":"info","message":"Updated price for APT: $4.28","service":"safeswap-backend","timestamp":"2025-08-04 15:10:01"}
+{"level":"info","message":"Updated price for USDT: $0.999984","service":"safeswap-backend","timestamp":"2025-08-04 15:10:01"}
+{"level":"info","message":"Updated price for SOL: $163.7","service":"safeswap-backend","timestamp":"2025-08-04 15:10:01"}
+{"level":"info","message":"Running scheduled price update for popular tokens...","service":"safeswap-backend","timestamp":"2025-08-04 15:15:00"}
+{"level":"warn","message":"CoinGecko price fetch failed for USDC:","service":"safeswap-backend","timestamp":"2025-08-04 15:15:00"}
+{"level":"info","message":"Updated price for USDC: $1","service":"safeswap-backend","timestamp":"2025-08-04 15:15:00"}
+{"level":"info","message":"Updated price for BTC: $114678","service":"safeswap-backend","timestamp":"2025-08-04 15:15:00"}
+{"level":"info","message":"Updated price for APT: $4.27","service":"safeswap-backend","timestamp":"2025-08-04 15:15:00"}
+{"level":"info","message":"Updated price for ETH: $3557.81","service":"safeswap-backend","timestamp":"2025-08-04 15:15:00"}
+{"level":"info","message":"Updated price for USDT: $1","service":"safeswap-backend","timestamp":"2025-08-04 15:15:00"}
+{"level":"info","message":"Updated price for SOL: $163.6","service":"safeswap-backend","timestamp":"2025-08-04 15:15:01"}
+{"level":"info","message":"🔗 Connecting to MongoDB: mongodb://localhost:27017/safeswap","service":"safeswap-backend","timestamp":"2025-08-04 15:18:24"}
+{"level":"info","message":"📦 MongoDB connected successfully","service":"safeswap-backend","timestamp":"2025-08-04 15:18:24"}
+{"level":"info","message":"📍 Connected to: mongodb://localhost:27017/safeswap","service":"safeswap-backend","timestamp":"2025-08-04 15:18:24"}
+{"level":"info","message":"🏓 Database ping successful","service":"safeswap-backend","timestamp":"2025-08-04 15:18:24"}

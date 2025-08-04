@@ -90,6 +90,9 @@ app.use('/api/swap', swapRoutes);
 app.use('/api/tokens', tokenRoutes);
 app.use('/api/transactions', transactionRoutes);
 
+// Legacy auth route for frontend compatibility
+app.use('/api/auth', userRoutes);
+
 /**
  * Welcome route with API information
  */

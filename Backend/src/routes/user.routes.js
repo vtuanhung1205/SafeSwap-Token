@@ -228,4 +228,23 @@ router.get('/stats', userController.getSessionStats);
  */
 router.get('/health', userController.healthCheck);
 
+/**
+ * Legacy endpoint for Google auth compatibility
+ * Redirects to new wallet-based authentication
+ */
+router.post('/google', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Google auth endpoint deprecated. Please use wallet-based authentication.',
+    data: {
+      sessionId: null,
+      walletAddress: null,
+      walletType: 'aptos',
+      expiresAt: null,
+      deprecated: true,
+      newEndpoint: '/api/user/connect'
+    }
+  });
+});
+
 module.exports = router; 
