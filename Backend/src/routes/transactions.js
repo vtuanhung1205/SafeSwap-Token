@@ -4,7 +4,7 @@ const router = express.Router();
 
 const transactionService = require('../services/transactionService');
 const aptosService = require('../services/aptosService');
-const auth = require('../middleware/auth');
+const { auth } = require('../middleware/auth');
 const logger = require('../utils/logger');
 
 // Get user transactions

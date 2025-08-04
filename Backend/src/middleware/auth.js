@@ -23,10 +23,10 @@ const auth = async (req, res, next) => {
       });
     }
 
-    if (!user.isActive) {
+    if (user.accountStatus !== 'active') {
       return res.status(401).json({
         success: false,
-        error: 'Account is deactivated.'
+        error: 'Account is not active.'
       });
     }
 
@@ -65,7 +65,7 @@ const optionalAuth = async (req, res, next) => {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       const user = await User.findById(decoded.userId).select('-password');
       
-      if (user && user.isActive) {
+      if (user && user.accountStatus === 'active') {
         req.user = user;
       }
     }
@@ -80,18 +80,63 @@ const optionalAuth = async (req, res, next) => {
 // Admin auth middleware
 const adminAuth = async (req, res, next) => {
   try {
-    await auth(req, res, () => {});
+    const token = req.header('Authorization')?.replace('Bearer ', '');
     
-    if (!req.user.isAdmin) {
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        error: 'Access denied. No token provided.'
+      });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.userId).select('-password');
+    
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid token. User not found.'
+      });
+    }
+
+    if (user.accountStatus !== 'active') {
+      return res.status(401).json({
+        success: false,
+        error: 'Account is not active.'
+      });
+    }
+
+    // Check if user is admin (you can add isAdmin field to User model)
+    if (!user.isAdmin) {
       return res.status(403).json({
         success: false,
         error: 'Access denied. Admin privileges required.'
       });
     }
-    
+
+    req.user = user;
     next();
   } catch (error) {
-    next(error);
+    logger.error('Admin authentication error:', error);
+    
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid token.'
+      });
+    }
+    
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        success: false,
+        error: 'Token expired.'
+      });
+    }
+    
+    res.status(500).json({
+      success: false,
+      error: 'Authentication failed.'
+    });
   }
 };
 
@@ -104,31 +149,15 @@ const createRateLimiter = (windowMs, max, message) => {
     max,
     message: {
       success: false,
-      error: message || 'Too many requests from this IP, please try again later.'
-    },
-    standardHeaders: true,
-    legacyHeaders: false,
+      error: message
+    }
   });
 };
 
 // Specific rate limiters
-const authLimiter = createRateLimiter(
-  15 * 60 * 1000, // 15 minutes
-  5, // 5 requests per window
-  'Too many authentication attempts. Please try again later.'
-);
-
-const transactionLimiter = createRateLimiter(
-  60 * 1000, // 1 minute
-  10, // 10 requests per minute
-  'Too many transaction requests. Please try again later.'
-);
-
-const apiLimiter = createRateLimiter(
-  15 * 60 * 1000, // 15 minutes
-  100, // 100 requests per 15 minutes
-  'Too many API requests. Please try again later.'
-);
+const authLimiter = createRateLimiter(15 * 60 * 1000, 5, 'Too many authentication attempts. Please try again later.');
+const transactionLimiter = createRateLimiter(60 * 1000, 10, 'Too many transaction requests. Please try again later.');
+const apiLimiter = createRateLimiter(15 * 60 * 1000, 100, 'Too many API requests. Please try again later.');
 
 module.exports = {
   auth,
