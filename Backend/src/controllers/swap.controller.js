@@ -216,10 +216,83 @@ class SwapController {
   }
 
   /**
-   * Lấy trạng thái transaction
+   * Lấy lịch sử swap của user
+   * @route GET /api/swap/history
+   */
+  async getSwapHistory(req, res) {
+    try {
+      const walletAddress = req.user?.walletAddress || req.query.walletAddress;
+      
+      if (!walletAddress) {
+        return res.status(400).json({
+          success: false,
+          message: 'Wallet address is required'
+        });
+      }
+
+      const { limit = 20, status } = req.query;
+      const options = {
+        limit: parseInt(limit),
+        status
+      };
+
+      const transactions = await transactionService.getUserTransactions(walletAddress, options);
+      
+      res.status(200).json({
+        success: true,
+        message: 'Swap history retrieved successfully',
+        data: {
+          walletAddress,
+          transactions,
+          count: transactions.length,
+          lastUpdated: new Date().toISOString()
+        }
+      });
+    } catch (error) {
+      logger.error('Error getting swap history:', error.message);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to get swap history',
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Lấy thống kê swap
+   * @route GET /api/swap/stats
+   */
+  async getSwapStats(req, res) {
+    try {
+      const walletAddress = req.user?.walletAddress || req.query.walletAddress;
+      const stats = await transactionService.getTransactionStats(walletAddress);
+      
+      res.status(200).json({
+        success: true,
+        message: 'Swap stats retrieved successfully',
+        data: {
+          totalSwaps: stats.totalTransactions,
+          totalVolume: stats.totalVolume,
+          successRate: parseFloat(stats.successRate),
+          avgAmount: stats.totalVolume / Math.max(stats.totalTransactions, 1),
+          lastUpdated: new Date().toISOString()
+        }
+      });
+    } catch (error) {
+      logger.error('Error getting swap stats:', error.message);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to get swap stats',
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Lấy trạng thái transaction swap
    * @route GET /api/swap/transaction/:hash
    */
-  async getTransactionStatus(req, res) {
+  async getSwapTransactionStatus(req, res) {
     try {
       const { hash } = req.params;
       
@@ -260,49 +333,6 @@ class SwapController {
       res.status(500).json({
         success: false,
         message: 'Failed to get transaction status',
-        error: error.message
-      });
-    }
-  }
-
-  /**
-   * Lấy lịch sử swap của user
-   * @route GET /api/swap/history
-   */
-  async getSwapHistory(req, res) {
-    try {
-      const walletAddress = req.user?.walletAddress || req.query.walletAddress;
-      
-      if (!walletAddress) {
-        return res.status(400).json({
-          success: false,
-          message: 'Wallet address is required'
-        });
-      }
-
-      const { limit = 20, status } = req.query;
-      const options = {
-        limit: parseInt(limit),
-        status
-      };
-
-      const transactions = await transactionService.getUserTransactions(walletAddress, options);
-      
-      res.status(200).json({
-        success: true,
-        message: 'Swap history retrieved successfully',
-        data: {
-          walletAddress,
-          transactions,
-          count: transactions.length,
-          lastUpdated: new Date().toISOString()
-        }
-      });
-    } catch (error) {
-      logger.error('Error getting swap history:', error.message);
-      res.status(500).json({
-        success: false,
-        message: 'Failed to get swap history',
         error: error.message
       });
     }
