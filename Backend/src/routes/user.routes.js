@@ -247,4 +247,22 @@ router.post('/google', (req, res) => {
   });
 });
 
+/**
+ * Legacy endpoint for auth status compatibility
+ * Returns current authentication status
+ */
+router.get('/status', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Auth status endpoint - use wallet-based authentication',
+    data: {
+      isAuthenticated: false,
+      user: null,
+      sessionId: null,
+      deprecated: true,
+      newEndpoint: '/api/user/me'
+    }
+  });
+});
+
 module.exports = router; 
