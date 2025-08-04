@@ -109,7 +109,7 @@ const WalletConnect = ({ onWalletConnected }) => {
       ) : (
         <div className="flex items-center justify-between w-full bg-[#111112] rounded-xl p-3 border border-[#2a2a35]">
           <div className="flex items-center">
-            <img src={wallet?.adapter.icon} alt={wallet?.adapter.name} className="w-6 h-6 rounded-full mr-3" />
+            <img src={wallet?.adapter?.icon || '/default-wallet-icon.png'} alt={wallet?.adapter?.name || 'Wallet'} className="w-6 h-6 rounded-full mr-3" />
             <span className="text-white font-mono text-sm">
               {formatAddress(account?.address)}
             </span>
@@ -148,8 +148,8 @@ const WalletConnect = ({ onWalletConnected }) => {
                   className="flex items-center w-full p-3 hover:bg-[#2a2a35] rounded-lg transition"
                 >
                   <img
-                    src={wallet.adapter.icon}
-                    alt={wallet.adapter.name}
+                    src={wallet.adapter?.icon || '/default-wallet-icon.png'}
+                    alt={wallet.adapter?.name || 'Wallet'}
                     className="w-8 h-8 rounded-full mr-4"
                   />
                   <span className="text-white font-medium text-lg">

@@ -337,7 +337,7 @@ const SwapForm = () => {
                   className="flex items-center space-x-2 bg-[#1c1c24] px-3 py-2 rounded-lg border border-[#2a2a35] hover:border-cyan-600 transition"
                   onClick={() => setShowTokenModal("from")}
                 >
-                  <img src={fromToken.icon} alt={fromToken.name} className="w-5 h-5 rounded-full" />
+                  <img src={fromToken?.icon || '/default-token-icon.png'} alt={fromToken?.name || 'Token'} className="w-5 h-5 rounded-full" />
                   <span className="text-white">{fromToken.symbol}</span>
                   <ChevronDown />
                 </button>
@@ -390,7 +390,7 @@ const SwapForm = () => {
                   className="flex items-center space-x-2 bg-[#1c1c24] px-3 py-2 rounded-lg border border-[#2a2a35] hover:border-cyan-600 transition"
                   onClick={() => setShowTokenModal("to")}
                 >
-                  <img src={toToken.icon} alt={toToken.name} className="w-5 h-5 rounded-full" />
+                  <img src={toToken?.icon || '/default-token-icon.png'} alt={toToken?.name || 'Token'} className="w-5 h-5 rounded-full" />
                   <span className="text-white">{toToken.symbol}</span>
                   <ChevronDown />
                 </button>
@@ -483,7 +483,7 @@ const SwapForm = () => {
                     }}
                   >
                     <div className="flex items-center space-x-3">
-                      <img src={token.icon} alt={token.name} className="w-8 h-8 rounded-full" />
+                      <img src={token?.icon || '/default-token-icon.png'} alt={token?.name || 'Token'} className="w-8 h-8 rounded-full" />
                       <div className="text-left">
                         <div className="text-white font-medium">{token.symbol}</div>
                         <div className="text-gray-400 text-sm">{token.name}</div>
