@@ -1,196 +1,269 @@
 const express = require('express');
-const { TokenController } = require('../controllers/token.controller');
-const { asyncHandler } = require('../middleware/errorHandler');
-const { authenticate, requireAdmin } = require('../middleware/auth');
-const { standardRateLimiter } = require('../middleware/rateLimiter');
-
 const router = express.Router();
-const tokenController = new TokenController();
+const tokenController = require('../controllers/token.controller');
 
 /**
  * @swagger
- * /api/tokens:
+ * components:
+ *   schemas:
+ *     Token:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *         symbol:
+ *           type: string
+ *         name:
+ *           type: string
+ *         platforms:
+ *           type: object
+ *     TokenPrice:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *         price:
+ *           type: number
+ *         priceChange24h:
+ *           type: number
+ *         marketCap:
+ *           type: number
+ *         volume24h:
+ *           type: number
+ *         lastUpdated:
+ *           type: string
+ *           format: date-time
+ */
+
+/**
+ * @swagger
+ * /api/tokens/all:
  *   get:
- *     summary: Get all tokens with pagination
+ *     summary: Get all tokens from CoinGecko
  *     tags: [Tokens]
- *     parameters:
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *           default: 1
- *         description: Page number
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           default: 20
- *         description: Number of tokens per page
- *       - in: query
- *         name: chainId
- *         schema:
- *           type: string
- *           default: aptos-testnet
- *         description: Blockchain network
- *       - in: query
- *         name: isActive
- *         schema:
- *           type: boolean
- *           default: true
- *         description: Filter by active status
- *       - in: query
- *         name: isVerified
- *         schema:
- *           type: boolean
- *         description: Filter by verification status
- *       - in: query
- *         name: sortBy
- *         schema:
- *           type: string
- *           default: marketCap
- *         description: Sort field
- *       - in: query
- *         name: sortOrder
- *         schema:
- *           type: string
- *           enum: [asc, desc]
- *           default: desc
- *         description: Sort order
  *     responses:
  *       200:
- *         description: Tokens retrieved successfully.
+ *         description: Tokens retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     tokens:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Token'
+ *                     count:
+ *                       type: number
+ *                     lastUpdated:
+ *                       type: string
+ *                       format: date-time
+ *       500:
+ *         description: Server error
  */
-router.get('/', asyncHandler(tokenController.getAllTokens.bind(tokenController)));
+router.get('/all', tokenController.getAllTokens);
 
 /**
  * @swagger
- * /api/tokens/address/{address}:
+ * /api/tokens/platform/{platform}:
  *   get:
- *     summary: Get token by address
+ *     summary: Get tokens by platform
  *     tags: [Tokens]
  *     parameters:
  *       - in: path
- *         name: address
+ *         name: platform
  *         required: true
  *         schema:
  *           type: string
- *         description: Token address
+ *           enum: [aptos, ethereum, solana]
+ *         description: Platform name
  *     responses:
  *       200:
- *         description: Token retrieved successfully.
- *       404:
- *         description: Token not found.
+ *         description: Platform tokens retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     platform:
+ *                       type: string
+ *                     tokens:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Token'
+ *                     count:
+ *                       type: number
+ *                     lastUpdated:
+ *                       type: string
+ *                       format: date-time
+ *       500:
+ *         description: Server error
  */
-router.get('/address/:address', asyncHandler(tokenController.getTokenByAddress.bind(tokenController)));
+router.get('/platform/:platform', tokenController.getTokensByPlatform);
 
 /**
  * @swagger
- * /api/tokens/symbol/{symbol}:
+ * /api/tokens/{tokenId}:
  *   get:
- *     summary: Get token by symbol
+ *     summary: Get token information
  *     tags: [Tokens]
  *     parameters:
  *       - in: path
- *         name: symbol
+ *         name: tokenId
  *         required: true
  *         schema:
  *           type: string
- *         description: Token symbol
+ *         description: CoinGecko token ID
  *     responses:
  *       200:
- *         description: Token retrieved successfully.
- *       404:
- *         description: Token not found.
+ *         description: Token info retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     symbol:
+ *                       type: string
+ *                     name:
+ *                       type: string
+ *                     description:
+ *                       type: string
+ *                     image:
+ *                       type: string
+ *                     marketCap:
+ *                       type: number
+ *                     volume24h:
+ *                       type: number
+ *                     price:
+ *                       type: number
+ *                     priceChange24h:
+ *                       type: number
+ *                     platforms:
+ *                       type: object
+ *                     links:
+ *                       type: object
+ *       500:
+ *         description: Server error
  */
-router.get('/symbol/:symbol', asyncHandler(tokenController.getTokenBySymbol.bind(tokenController)));
+router.get('/:tokenId', tokenController.getTokenInfo);
 
 /**
  * @swagger
- * /api/tokens/top-gainers:
+ * /api/tokens/{tokenId}/price:
  *   get:
- *     summary: Get top gaining tokens
+ *     summary: Get token price
  *     tags: [Tokens]
  *     parameters:
- *       - in: query
- *         name: limit
+ *       - in: path
+ *         name: tokenId
+ *         required: true
  *         schema:
- *           type: integer
- *           default: 10
- *         description: Number of tokens to return
+ *           type: string
+ *         description: CoinGecko token ID
+ *       - in: query
+ *         name: currency
+ *         schema:
+ *           type: string
+ *           default: usd
+ *         description: Currency for price
  *     responses:
  *       200:
- *         description: Top gainers retrieved successfully.
+ *         description: Token price retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   $ref: '#/components/schemas/TokenPrice'
+ *       500:
+ *         description: Server error
  */
-router.get('/top-gainers', asyncHandler(tokenController.getTopGainers.bind(tokenController)));
+router.get('/:tokenId/price', tokenController.getTokenPrice);
 
 /**
  * @swagger
- * /api/tokens/top-losers:
- *   get:
- *     summary: Get top losing tokens
+ * /api/tokens/prices:
+ *   post:
+ *     summary: Get multiple token prices
  *     tags: [Tokens]
- *     parameters:
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           default: 10
- *         description: Number of tokens to return
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - tokenIds
+ *             properties:
+ *               tokenIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: Array of CoinGecko token IDs
+ *               currency:
+ *                 type: string
+ *                 default: usd
+ *                 description: Currency for prices
  *     responses:
  *       200:
- *         description: Top losers retrieved successfully.
+ *         description: Token prices retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     prices:
+ *                       type: object
+ *                       additionalProperties:
+ *                         $ref: '#/components/schemas/TokenPrice'
+ *                     count:
+ *                       type: number
+ *                     currency:
+ *                       type: string
+ *                     lastUpdated:
+ *                       type: string
+ *                       format: date-time
+ *       400:
+ *         description: Invalid request
+ *       500:
+ *         description: Server error
  */
-router.get('/top-losers', asyncHandler(tokenController.getTopLosers.bind(tokenController)));
-
-/**
- * @swagger
- * /api/tokens/market-cap:
- *   get:
- *     summary: Get tokens by market cap
- *     tags: [Tokens]
- *     parameters:
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           default: 20
- *         description: Number of tokens to return
- *     responses:
- *       200:
- *         description: Tokens by market cap retrieved successfully.
- */
-router.get('/market-cap', asyncHandler(tokenController.getTokensByMarketCap.bind(tokenController)));
-
-/**
- * @swagger
- * /api/tokens/low-risk:
- *   get:
- *     summary: Get low risk tokens
- *     tags: [Tokens]
- *     parameters:
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           default: 20
- *         description: Number of tokens to return
- *     responses:
- *       200:
- *         description: Low risk tokens retrieved successfully.
- */
-router.get('/low-risk', asyncHandler(tokenController.getLowRiskTokens.bind(tokenController)));
-
-/**
- * @swagger
- * /api/tokens/verified:
- *   get:
- *     summary: Get verified tokens
- *     tags: [Tokens]
- *     responses:
- *       200:
- *         description: Verified tokens retrieved successfully.
- */
-router.get('/verified', asyncHandler(tokenController.getVerifiedTokens.bind(tokenController)));
+router.post('/prices', tokenController.getMultipleTokenPrices);
 
 /**
  * @swagger
@@ -200,188 +273,162 @@ router.get('/verified', asyncHandler(tokenController.getVerifiedTokens.bind(toke
  *     tags: [Tokens]
  *     parameters:
  *       - in: query
- *         name: q
+ *         name: query
  *         required: true
  *         schema:
  *           type: string
  *         description: Search query
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           default: 10
- *         description: Number of results to return
  *     responses:
  *       200:
- *         description: Search results retrieved successfully.
- *       400:
- *         description: Search query is required.
- */
-router.get('/search', asyncHandler(tokenController.searchTokens.bind(tokenController)));
-
-/**
- * @swagger
- * /api/tokens:
- *   post:
- *     summary: Create new token (Admin only)
- *     tags: [Tokens]
- *     security:
- *       - sessionAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - symbol
- *               - name
- *               - address
- *             properties:
- *               symbol:
- *                 type: string
- *                 description: Token symbol
- *               name:
- *                 type: string
- *                 description: Token name
- *               address:
- *                 type: string
- *                 description: Token address
- *               decimals:
- *                 type: integer
- *                 description: Token decimals
- *               description:
- *                 type: string
- *                 description: Token description
- *     responses:
- *       201:
- *         description: Token created successfully.
- *       400:
- *         description: Invalid token data.
- *       401:
- *         description: Unauthorized.
- *       409:
- *         description: Token already exists.
- */
-router.post('/', authenticate, requireAdmin, asyncHandler(tokenController.createToken.bind(tokenController)));
-
-/**
- * @swagger
- * /api/tokens/{address}/price:
- *   put:
- *     summary: Update token price (Admin only)
- *     tags: [Tokens]
- *     security:
- *       - sessionAuth: []
- *     parameters:
- *       - in: path
- *         name: address
- *         required: true
- *         schema:
- *           type: string
- *         description: Token address
- *     responses:
- *       200:
- *         description: Token price updated successfully.
- *       401:
- *         description: Unauthorized.
- *       404:
- *         description: Token not found.
- */
-router.put('/:address/price', authenticate, requireAdmin, asyncHandler(tokenController.updateTokenPrice.bind(tokenController)));
-
-/**
- * @swagger
- * /api/tokens/{address}/risk:
- *   put:
- *     summary: Update token risk score (Admin only)
- *     tags: [Tokens]
- *     security:
- *       - sessionAuth: []
- *     parameters:
- *       - in: path
- *         name: address
- *         required: true
- *         schema:
- *           type: string
- *         description: Token address
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - riskScore
- *             properties:
- *               riskScore:
- *                 type: number
- *                 minimum: 0
- *                 maximum: 100
- *                 description: Risk score (0-100)
- *               riskFactors:
- *                 type: array
- *                 items:
+ *         description: Search completed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
  *                   type: string
- *                 description: Risk factors
- *     responses:
- *       200:
- *         description: Token risk updated successfully.
- *       401:
- *         description: Unauthorized.
- *       404:
- *         description: Token not found.
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     query:
+ *                       type: string
+ *                     results:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: string
+ *                           symbol:
+ *                             type: string
+ *                           name:
+ *                             type: string
+ *                           marketCapRank:
+ *                             type: number
+ *                           image:
+ *                             type: string
+ *                     count:
+ *                       type: number
+ *                     lastUpdated:
+ *                       type: string
+ *                       format: date-time
+ *       400:
+ *         description: Search query required
+ *       500:
+ *         description: Server error
  */
-router.put('/:address/risk', authenticate, requireAdmin, asyncHandler(tokenController.updateTokenRisk.bind(tokenController)));
+router.get('/search', tokenController.searchTokens);
 
 /**
  * @swagger
- * /api/tokens/{address}/verify:
- *   put:
- *     summary: Verify token (Admin only)
+ * /api/tokens/trending:
+ *   get:
+ *     summary: Get trending tokens
  *     tags: [Tokens]
- *     security:
- *       - sessionAuth: []
- *     parameters:
- *       - in: path
- *         name: address
- *         required: true
- *         schema:
- *           type: string
- *         description: Token address
  *     responses:
  *       200:
- *         description: Token verified successfully.
- *       401:
- *         description: Unauthorized.
- *       404:
- *         description: Token not found.
+ *         description: Trending tokens retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     trending:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: string
+ *                           symbol:
+ *                             type: string
+ *                           name:
+ *                             type: string
+ *                           marketCapRank:
+ *                             type: number
+ *                           image:
+ *                             type: string
+ *                           priceChange24h:
+ *                             type: number
+ *                     count:
+ *                       type: number
+ *                     lastUpdated:
+ *                       type: string
+ *                       format: date-time
+ *       500:
+ *         description: Server error
  */
-router.put('/:address/verify', authenticate, requireAdmin, asyncHandler(tokenController.verifyToken.bind(tokenController)));
+router.get('/trending', tokenController.getTrendingTokens);
 
 /**
  * @swagger
- * /api/tokens/{address}/deactivate:
- *   put:
- *     summary: Deactivate token (Admin only)
+ * /api/tokens/health:
+ *   get:
+ *     summary: Health check for CoinGecko service
  *     tags: [Tokens]
- *     security:
- *       - sessionAuth: []
- *     parameters:
- *       - in: path
- *         name: address
- *         required: true
- *         schema:
- *           type: string
- *         description: Token address
  *     responses:
  *       200:
- *         description: Token deactivated successfully.
- *       401:
- *         description: Unauthorized.
- *       404:
- *         description: Token not found.
+ *         description: Health check successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     status:
+ *                       type: string
+ *                       enum: [healthy, unhealthy]
+ *                     service:
+ *                       type: string
+ *                     timestamp:
+ *                       type: string
+ *                       format: date-time
+ *       500:
+ *         description: Health check failed
  */
-router.put('/:address/deactivate', authenticate, requireAdmin, asyncHandler(tokenController.deactivateToken.bind(tokenController)));
+router.get('/health', tokenController.healthCheck);
+
+/**
+ * @swagger
+ * /api/tokens/clear-cache:
+ *   post:
+ *     summary: Clear CoinGecko cache
+ *     tags: [Tokens]
+ *     responses:
+ *       200:
+ *         description: Cache cleared successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     timestamp:
+ *                       type: string
+ *                       format: date-time
+ *       500:
+ *         description: Server error
+ */
+router.post('/clear-cache', tokenController.clearCache);
 
 module.exports = router; 

@@ -1,10 +1,13 @@
 const { User } = require('../models/User.model');
 const { Session } = require('../models/Session.model');
+const { Wallet } = require('../models/Wallet.model');
+const { AptosBlockchainService } = require('./aptosBlockchain.service');
 const { createError } = require('../middleware/errorHandler');
 const { logger } = require('../utils/logger');
 
 class AuthService {
   constructor() {
+    this.aptosService = new AptosBlockchainService();
     // No longer need in-memory storage
     // this.sessions = new Map();
   }
@@ -49,12 +52,88 @@ class AuthService {
 
       await newUser.save();
       
+      // Auto-create wallet for new Google users
+      await this.autoCreateWalletForGoogleUser(newUser);
+      
       logger.info(`New user created via Google OAuth: ${email}`);
       return newUser;
     } catch (error) {
       logger.error('Failed to create user from Google profile:', error);
       throw error;
     }
+  }
+
+  async autoCreateWalletForGoogleUser(user) {
+    try {
+      // Check if user already has a wallet
+      const existingWallet = await Wallet.findOne({ userId: user._id });
+      if (existingWallet) {
+        logger.info(`User ${user.email} already has wallet: ${existingWallet.address}`);
+        return existingWallet;
+      }
+
+      // Generate a deterministic wallet address based on Google ID
+      const walletAddress = this.generateDeterministicAddress(user.googleId);
+      const publicKey = this.generateDeterministicPublicKey(user.googleId);
+
+      // Create new wallet
+      const newWallet = new Wallet({
+        userId: user._id,
+        address: walletAddress,
+        publicKey: publicKey,
+        name: `${user.name}'s Wallet`,
+        description: `Auto-created wallet for ${user.email}`,
+        chainId: 'aptos-testnet',
+        isConnected: true,
+        lastSyncAt: new Date(),
+        accountType: 'google_auto_created',
+        security: {
+          requireConfirmation: true,
+          confirmationThreshold: 100,
+          dailyLimit: 1000,
+          dailyTransactions: 0,
+          lastTransactionDate: new Date()
+        },
+        permissions: {
+          canSwap: true,
+          canTransfer: true,
+          canStake: false,
+          canVote: false
+        },
+        metadata: {
+          source: 'google_auto_created',
+          tags: ['google', 'auto_created'],
+          color: '#10B981',
+          notes: 'Auto-created wallet for Google user'
+        }
+      });
+
+      await newWallet.save();
+
+      // Set as default wallet
+      user.defaultWalletId = newWallet._id;
+      await user.save();
+
+      logger.info(`Auto-created wallet for Google user ${user.email}: ${walletAddress}`);
+      return newWallet;
+    } catch (error) {
+      logger.error('Failed to auto-create wallet for Google user:', error);
+      // Don't throw error to avoid breaking the auth flow
+      return null;
+    }
+  }
+
+  generateDeterministicAddress(googleId) {
+    // Generate deterministic address based on Google ID
+    // This is a simplified version - in production, you'd want a more secure method
+    const hash = require('crypto').createHash('sha256').update(googleId + 'SALT').digest('hex');
+    return '0x' + hash.substring(0, 64);
+  }
+
+  generateDeterministicPublicKey(googleId) {
+    // Generate deterministic public key based on Google ID
+    const hash = require('crypto').createHash('sha256').update(googleId + 'PUBLIC_KEY_SALT').digest('hex');
+    return '0x' + hash.substring(0, 64);
   }
 
   async createSession(user, req = null) {

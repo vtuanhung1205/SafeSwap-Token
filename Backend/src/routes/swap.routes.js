@@ -1,63 +1,134 @@
 const express = require('express');
-const { SwapController } = require('../controllers/swap.controller');
-const { asyncHandler } = require('../middleware/errorHandler');
-const { authenticate } = require('../middleware/auth');
-const { standardRateLimiter } = require('../middleware/rateLimiter');
-
 const router = express.Router();
-const swapController = new SwapController();
+const swapController = require('../controllers/swap.controller');
+const { authenticate, optionalAuth } = require('../middleware/auth');
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     SwapQuoteRequest:
+ *       type: object
+ *       required:
+ *         - fromToken
+ *         - toToken
+ *         - amount
+ *       properties:
+ *         fromToken:
+ *           type: string
+ *           description: CoinGecko token ID or address
+ *           example: "aptos"
+ *         toToken:
+ *           type: string
+ *           description: CoinGecko token ID or address
+ *           example: "usd-coin"
+ *         amount:
+ *           type: number
+ *           description: Amount of source token to swap
+ *           example: 10
+ *         slippage:
+ *           type: number
+ *           default: 0.5
+ *           description: Allowed slippage percentage
+ *         walletAddress:
+ *           type: string
+ *           description: Wallet address (optional)
+ *           example: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+ *     SwapQuoteResponse:
+ *       type: object
+ *       properties:
+ *         success:
+ *           type: boolean
+ *         message:
+ *           type: string
+ *         data:
+ *           type: object
+ *           properties:
+ *             quoteId:
+ *               type: string
+ *             fromToken:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                 symbol:
+ *                   type: string
+ *                 name:
+ *                   type: string
+ *                 amount:
+ *                   type: number
+ *                 amountUSD:
+ *                   type: number
+ *                 price:
+ *                   type: number
+ *             toToken:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                 symbol:
+ *                   type: string
+ *                 name:
+ *                   type: string
+ *                 amount:
+ *                   type: number
+ *                 amountUSD:
+ *                   type: number
+ *                 price:
+ *                   type: number
+ *             exchangeRate:
+ *               type: number
+ *             slippage:
+ *               type: number
+ *             gasEstimate:
+ *               type: object
+ *               properties:
+ *                 gasUsed:
+ *                   type: number
+ *                 gasPrice:
+ *                   type: number
+ *                 gasCost:
+ *                   type: number
+ *             validUntil:
+ *               type: string
+ *               format: date-time
+ *             timestamp:
+ *               type: string
+ *               format: date-time
+ */
 
 /**
  * @swagger
  * /api/swap/quote:
  *   post:
- *     summary: Get SafeSwap quote
- *     tags: [SafeSwap]
+ *     summary: Get swap quote
+ *     tags: [Swap]
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - fromToken
- *               - toToken
- *               - amount
- *             properties:
- *               fromToken:
- *                 type: string
- *                 description: Address of the source token
- *                 example: 0x1::aptos_coin::AptosCoin
- *               toToken:
- *                 type: string
- *                 description: Address of the target token
- *                 example: 0xf22bede237a07e121b56d91a491eb7bcdfd1f5907926a9e58338f964a01b17fa::asset::USDC
- *               amount:
- *                 type: number
- *                 description: Amount of source token to swap
- *                 example: 10
- *               slippage:
- *                 type: number
- *                 default: 0.5
- *                 description: Allowed slippage percentage
+ *             $ref: '#/components/schemas/SwapQuoteRequest'
  *     responses:
  *       200:
- *         description: SafeSwap quote calculated successfully.
+ *         description: Quote generated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SwapQuoteResponse'
  *       400:
- *         description: Invalid request parameters or unsupported token pair.
+ *         description: Invalid request parameters
  *       500:
- *         description: Unable to get quote.
+ *         description: Server error
  */
-router.post('/quote', asyncHandler(swapController.getQuote.bind(swapController)));
+router.post('/quote', swapController.getQuote);
 
 /**
  * @swagger
  * /api/swap/execute:
  *   post:
- *     summary: Execute SafeSwap transaction
- *     tags: [SafeSwap]
- *     security:
- *       - sessionAuth: []
+ *     summary: Execute swap transaction
+ *     tags: [Swap]
  *     requestBody:
  *       required: true
  *       content:
@@ -69,182 +140,236 @@ router.post('/quote', asyncHandler(swapController.getQuote.bind(swapController))
  *               - toToken
  *               - fromAmount
  *               - toAmount
- *               - quoteId
+ *               - walletAddress
+ *               - signature
  *             properties:
  *               fromToken:
  *                 type: string
- *                 description: Address of the source token
+ *                 description: CoinGecko token ID or address
  *               toToken:
  *                 type: string
- *                 description: Address of the target token
+ *                 description: CoinGecko token ID or address
  *               fromAmount:
  *                 type: number
  *                 description: Amount of source token to swap
  *               toAmount:
  *                 type: number
  *                 description: Amount of target token to receive
- *               quoteId:
- *                 type: string
- *                 description: Quote ID from the quote endpoint
  *               slippage:
  *                 type: number
  *                 default: 0.5
  *                 description: Allowed slippage percentage
+ *               walletAddress:
+ *                 type: string
+ *                 description: Wallet address
+ *                 example: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+ *               signature:
+ *                 type: string
+ *                 description: Transaction signature
  *     responses:
  *       200:
- *         description: SafeSwap executed successfully.
+ *         description: Swap executed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     transactionHash:
+ *                       type: string
+ *                     status:
+ *                       type: string
+ *                     fromToken:
+ *                       type: string
+ *                     toToken:
+ *                       type: string
+ *                     fromAmount:
+ *                       type: number
+ *                     toAmount:
+ *                       type: number
+ *                     gasUsed:
+ *                       type: number
+ *                     timestamp:
+ *                       type: string
+ *                       format: date-time
  *       400:
- *         description: Invalid request or insufficient balance.
- *       401:
- *         description: Authentication required.
- *       403:
- *         description: Access denied.
- *       404:
- *         description: Quote not found or expired.
+ *         description: Invalid request parameters
+ *       500:
+ *         description: Server error
  */
-router.post('/execute', authenticate, standardRateLimiter, asyncHandler(swapController.executeSwap.bind(swapController)));
+router.post('/execute', swapController.executeSwap);
 
 /**
  * @swagger
- * /api/swap/transaction/{transactionId}:
+ * /api/swap/transaction/{hash}:
  *   get:
  *     summary: Get transaction status
- *     tags: [SafeSwap]
- *     security:
- *       - sessionAuth: []
+ *     tags: [Swap]
  *     parameters:
  *       - in: path
- *         name: transactionId
+ *         name: hash
  *         required: true
  *         schema:
  *           type: string
- *         description: ID of the transaction
+ *         description: Transaction hash
  *     responses:
  *       200:
- *         description: Transaction status retrieved successfully.
- *       401:
- *         description: Authentication required.
+ *         description: Transaction status retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     transactionHash:
+ *                       type: string
+ *                     status:
+ *                       type: string
+ *                       enum: [pending, completed, failed, cancelled, submitted]
+ *                     fromToken:
+ *                       type: string
+ *                     toToken:
+ *                       type: string
+ *                     fromAmount:
+ *                       type: number
+ *                     toAmount:
+ *                       type: number
+ *                     gasUsed:
+ *                       type: number
+ *                     blockNumber:
+ *                       type: number
+ *                     timestamp:
+ *                       type: string
+ *                       format: date-time
+ *                     errorMessage:
+ *                       type: string
+ *       400:
+ *         description: Transaction hash required
  *       404:
- *         description: Transaction not found.
+ *         description: Transaction not found
+ *       500:
+ *         description: Server error
  */
-router.get('/transaction/:transactionId', authenticate, asyncHandler(swapController.getTransactionStatus.bind(swapController)));
+router.get('/transaction/:hash', swapController.getTransactionStatus);
 
 /**
  * @swagger
  * /api/swap/history:
  *   get:
- *     summary: Get user's SafeSwap transaction history
- *     tags: [SafeSwap]
+ *     summary: Get swap history
+ *     tags: [Swap]
  *     security:
  *       - sessionAuth: []
  *     parameters:
  *       - in: query
- *         name: page
+ *         name: walletAddress
  *         schema:
- *           type: integer
- *           default: 1
- *         description: Page number
+ *           type: string
+ *         description: Wallet address (if not authenticated)
  *       - in: query
  *         name: limit
  *         schema:
- *           type: integer
+ *           type: number
  *           default: 20
- *         description: Number of transactions per page
+ *         description: Number of transactions to return
  *       - in: query
  *         name: status
  *         schema:
  *           type: string
- *           enum: [pending, completed, failed, cancelled]
+ *           enum: [pending, completed, failed, cancelled, submitted]
  *         description: Filter by transaction status
  *     responses:
  *       200:
- *         description: Transaction history retrieved successfully
+ *         description: Swap history retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     walletAddress:
+ *                       type: string
+ *                     transactions:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           transactionHash:
+ *                             type: string
+ *                           fromToken:
+ *                             type: string
+ *                           toToken:
+ *                             type: string
+ *                           fromAmount:
+ *                             type: number
+ *                           toAmount:
+ *                             type: number
+ *                           status:
+ *                             type: string
+ *                           timestamp:
+ *                             type: string
+ *                             format: date-time
+ *                     count:
+ *                       type: number
+ *                     lastUpdated:
+ *                       type: string
+ *                       format: date-time
+ *       400:
+ *         description: Wallet address required
  *       401:
- *         description: Authentication required
+ *         description: Not authenticated
+ *       500:
+ *         description: Server error
  */
-router.get('/history', authenticate, asyncHandler(swapController.getTransactionHistory.bind(swapController)));
+router.get('/history', optionalAuth, swapController.getSwapHistory);
 
 /**
  * @swagger
- * /api/swap/dex-info:
+ * /api/swap/health:
  *   get:
- *     summary: Get SafeSwap DEX information
- *     tags: [SafeSwap]
+ *     summary: Health check for swap service
+ *     tags: [Swap]
  *     responses:
  *       200:
- *         description: DEX information retrieved successfully
+ *         description: Health check successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     coinGecko:
+ *                       type: object
+ *                     transaction:
+ *                       type: object
+ *                     timestamp:
+ *                       type: string
+ *                       format: date-time
+ *       500:
+ *         description: Health check failed
  */
-router.get('/dex-info', asyncHandler(swapController.getDexInfo.bind(swapController)));
-
-/**
- * @swagger
- * /api/swap/pools:
- *   get:
- *     summary: Get SafeSwap liquidity pools
- *     tags: [SafeSwap]
- *     responses:
- *       200:
- *         description: Liquidity pools retrieved successfully
- */
-router.get('/pools', asyncHandler(swapController.getLiquidityPools.bind(swapController)));
-
-/**
- * @swagger
- * /api/swap/pool/{poolAddress}:
- *   get:
- *     summary: Get pool information
- *     tags: [SafeSwap]
- *     parameters:
- *       - in: path
- *         name: poolAddress
- *         required: true
- *         schema:
- *           type: string
- *         description: Pool address
- *     responses:
- *       200:
- *         description: Pool information retrieved successfully
- */
-router.get('/pool/:poolAddress', asyncHandler(swapController.getPoolInfo.bind(swapController)));
-
-/**
- * @swagger
- * /api/swap/pairs:
- *   get:
- *     summary: Get supported token pairs
- *     tags: [SafeSwap]
- *     responses:
- *       200:
- *         description: Supported pairs retrieved successfully
- */
-router.get('/pairs', asyncHandler(swapController.getSupportedPairs.bind(swapController)));
-
-/**
- * @swagger
- * /api/swap/token-distribution:
- *   get:
- *     summary: Get SafeSwap token distribution
- *     tags: [SafeSwap]
- *     responses:
- *       200:
- *         description: Token distribution retrieved successfully
- */
-router.get('/token-distribution', asyncHandler(swapController.getTokenDistribution.bind(swapController)));
-
-/**
- * @swagger
- * /api/swap/positions:
- *   get:
- *     summary: Get user's liquidity positions
- *     tags: [SafeSwap]
- *     security:
- *       - sessionAuth: []
- *     responses:
- *       200:
- *         description: User positions retrieved successfully
- *       401:
- *         description: Authentication required
- */
-router.get('/positions', authenticate, asyncHandler(swapController.getUserPositions.bind(swapController)));
+router.get('/health', swapController.healthCheck);
 
 module.exports = router;

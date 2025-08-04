@@ -1,17 +1,11 @@
-const { User } = require('./User.model');
-const { Wallet } = require('./Wallet.model');
+/**
+ * Models Index - Export các model đã được tối ưu
+ * Chỉ giữ lại các model cần thiết cho production
+ */
+const { Session } = require('./Session.model');
 const { SwapTransaction } = require('./SwapTransaction.model');
-const { TokenPrice } = require('./TokenPrice.model');
-const { Token } = require('./Token.model');
-const { LiquidityPool } = require('./LiquidityPool.model');
-const { OrderBook } = require('./OrderBook.model');
 
 module.exports = {
-  User,
-  Wallet,
+  Session,
   SwapTransaction,
-  TokenPrice,
-  Token,
-  LiquidityPool,
-  OrderBook,
 };

@@ -1,13 +1,26 @@
 const mongoose = require('mongoose');
 
+/**
+ * SwapTransaction Model - Lưu lịch sử swap transactions
+ * Tối ưu cho production với real funds, chỉ lưu thông tin cần thiết
+ */
 const swapTransactionSchema = new mongoose.Schema(
   {
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+    // Wallet identification (thay thế userId)
+    walletAddress: {
+      type: String,
       required: true,
+      trim: true,
+      index: true,
+      validate: {
+        validator: function(v) {
+          return /^0x[a-fA-F0-9]{64}$/.test(v);
+        },
+        message: 'Invalid Aptos wallet address format'
+      }
     },
-    // Aptos specific fields
+    
+    // Token information
     fromToken: {
       type: String,
       required: true,
@@ -20,7 +33,6 @@ const swapTransactionSchema = new mongoose.Schema(
       uppercase: true,
       trim: true,
     },
-    // Token addresses (Aptos resource addresses)
     fromTokenAddress: {
       type: String,
       required: true,
@@ -43,6 +55,8 @@ const swapTransactionSchema = new mongoose.Schema(
         message: 'Invalid Aptos token address format'
       }
     },
+    
+    // Amounts and rates
     fromAmount: {
       type: Number,
       required: true,
@@ -58,7 +72,14 @@ const swapTransactionSchema = new mongoose.Schema(
       required: true,
       min: 0,
     },
-    // Aptos transaction fields
+    slippage: {
+      type: Number,
+      default: 0.5, // 0.5% default slippage
+      min: 0,
+      max: 50,
+    },
+    
+    // Transaction details
     transactionHash: {
       type: String,
       required: true,
@@ -71,7 +92,6 @@ const swapTransactionSchema = new mongoose.Schema(
         message: 'Invalid Aptos transaction hash format'
       }
     },
-    // Aptos specific transaction fields
     sequenceNumber: {
       type: Number,
       required: true,
@@ -82,7 +102,8 @@ const swapTransactionSchema = new mongoose.Schema(
       required: true,
       min: 0,
     },
-    // Aptos gas fields
+    
+    // Gas information
     gasUsed: {
       type: Number,
       default: null,
@@ -98,66 +119,18 @@ const swapTransactionSchema = new mongoose.Schema(
       default: null,
       min: 0,
     },
+    
+    // Status and metadata
     status: {
       type: String,
       enum: ['pending', 'completed', 'failed', 'cancelled', 'submitted'],
       default: 'pending',
     },
-    scamRisk: {
-      type: Number,
-      default: 0,
-      min: 0,
-      max: 100,
-    },
-    fee: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
-    slippage: {
-      type: Number,
-      default: 0.5, // 0.5% default slippage
-      min: 0,
-      max: 50,
-    },
-    walletAddress: {
-      type: String,
-      required: true,
-      trim: true,
-      validate: {
-        validator: function(v) {
-          return /^0x[a-fA-F0-9]{64}$/.test(v);
-        },
-        message: 'Invalid Aptos wallet address format'
-      }
-    },
-    // Aptos specific fields
     chainId: {
       type: String,
       required: true,
       enum: ['aptos-mainnet', 'aptos-testnet', 'aptos-devnet'],
-      default: 'aptos-testnet',
-    },
-    // Move module information
-    moveModule: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    moveFunction: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    // Transaction payload
-    payload: {
-      type: mongoose.Schema.Types.Mixed,
-      default: {}
-    },
-    // Aptos transaction metadata
-    timestamp: {
-      type: Date,
-      default: Date.now,
+      default: 'aptos-mainnet',
     },
     blockNumber: {
       type: Number,
@@ -167,12 +140,16 @@ const swapTransactionSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
-    // For failed transactions
     errorCode: {
       type: String,
       default: null,
     },
-    // Transaction expiration
+    
+    // Timestamps
+    timestamp: {
+      type: Date,
+      default: Date.now,
+    },
     expirationTimestamp: {
       type: Date,
       default: function() {
@@ -185,27 +162,23 @@ const swapTransactionSchema = new mongoose.Schema(
   }
 );
 
-// Remove duplicate indexes - only use schema-level unique: true and necessary compound indexes
-swapTransactionSchema.index({ userId: 1 });
-swapTransactionSchema.index({ status: 1 });
-swapTransactionSchema.index({ createdAt: -1 });
-swapTransactionSchema.index({ walletAddress: 1 });
-swapTransactionSchema.index({ fromToken: 1, toToken: 1 });
-swapTransactionSchema.index({ chainId: 1 });
-swapTransactionSchema.index({ transactionHash: 1 });
-swapTransactionSchema.index({ sequenceNumber: 1, walletAddress: 1 });
+// Indexes for optimal query performance
+swapTransactionSchema.index({ walletAddress: 1, createdAt: -1 }); // User's transaction history
+swapTransactionSchema.index({ status: 1 }); // Filter by status
+swapTransactionSchema.index({ transactionHash: 1 }); // Find by hash
+swapTransactionSchema.index({ createdAt: -1 }); // Recent transactions
+swapTransactionSchema.index({ fromToken: 1, toToken: 1 }); // Token pair analytics
 
-// Virtual for transaction ID
-swapTransactionSchema.virtual('id').get(function() {
-  return this._id.toHexString();
-});
-
-// Virtual for transaction pair
+/**
+ * Virtual field: Transaction pair (e.g., "APT/USDC")
+ */
 swapTransactionSchema.virtual('pair').get(function() {
   return `${this.fromToken}/${this.toToken}`;
 });
 
-// Virtual for gas cost in APT
+/**
+ * Virtual field: Gas cost in APT
+ */
 swapTransactionSchema.virtual('gasCostApt').get(function() {
   if (this.gasUsed && this.gasUnitPrice) {
     return (this.gasUsed * this.gasUnitPrice) / 100000000; // Convert to APT
@@ -213,7 +186,13 @@ swapTransactionSchema.virtual('gasCostApt').get(function() {
   return 0;
 });
 
-// Instance methods
+/**
+ * Instance methods
+ */
+
+/**
+ * Đánh dấu transaction hoàn thành
+ */
 swapTransactionSchema.methods.markAsCompleted = async function(blockNumber, gasUsed, gasUnitPrice) {
   this.status = 'completed';
   this.blockNumber = blockNumber;
@@ -222,6 +201,9 @@ swapTransactionSchema.methods.markAsCompleted = async function(blockNumber, gasU
   return this.save();
 };
 
+/**
+ * Đánh dấu transaction thất bại
+ */
 swapTransactionSchema.methods.markAsFailed = async function(errorMessage, errorCode = null) {
   this.status = 'failed';
   this.errorMessage = errorMessage;
@@ -229,6 +211,9 @@ swapTransactionSchema.methods.markAsFailed = async function(errorMessage, errorC
   return this.save();
 };
 
+/**
+ * Đánh dấu transaction đã submit
+ */
 swapTransactionSchema.methods.markAsSubmitted = async function(sequenceNumber, version) {
   this.status = 'submitted';
   this.sequenceNumber = sequenceNumber;
@@ -236,27 +221,36 @@ swapTransactionSchema.methods.markAsSubmitted = async function(sequenceNumber, v
   return this.save();
 };
 
-swapTransactionSchema.methods.updateScamRisk = async function(riskScore) {
-  this.scamRisk = Math.max(0, Math.min(100, riskScore));
-  return this.save();
-};
+/**
+ * Static methods
+ */
 
-// Static methods
-swapTransactionSchema.statics.getByUser = function(userId, limit = 20) {
-  return this.find({ userId })
+/**
+ * Lấy lịch sử transactions của một wallet
+ */
+swapTransactionSchema.statics.getByWallet = function(walletAddress, limit = 50) {
+  return this.find({ walletAddress })
     .sort({ createdAt: -1 })
-    .limit(limit)
-    .populate('userId', 'email name');
+    .limit(limit);
 };
 
+/**
+ * Lấy transactions theo status
+ */
 swapTransactionSchema.statics.getByStatus = function(status) {
   return this.find({ status }).sort({ createdAt: -1 });
 };
 
+/**
+ * Lấy transactions theo chain
+ */
 swapTransactionSchema.statics.getByChain = function(chainId) {
   return this.find({ chainId }).sort({ createdAt: -1 });
 };
 
+/**
+ * Tính volume 24h
+ */
 swapTransactionSchema.statics.getVolume24h = async function() {
   const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
   
@@ -272,28 +266,33 @@ swapTransactionSchema.statics.getVolume24h = async function() {
         _id: null,
         totalVolume: { $sum: '$fromAmount' },
         transactionCount: { $sum: 1 },
-        totalFees: { $sum: '$fee' }
+        totalGasUsed: { $sum: '$gasUsed' }
       }
     }
   ]);
   
-  return result[0] || { totalVolume: 0, transactionCount: 0, totalFees: 0 };
+  return result[0] || { totalVolume: 0, transactionCount: 0, totalGasUsed: 0 };
 };
 
-// Transform toJSON output
+/**
+ * Lấy transaction theo hash
+ */
+swapTransactionSchema.statics.getByHash = function(transactionHash) {
+  return this.findOne({ transactionHash });
+};
+
+// Transform toJSON output - format numbers và loại bỏ fields không cần thiết
 swapTransactionSchema.set('toJSON', {
   virtuals: true,
   versionKey: false,
   transform: function(doc, ret) {
-    ret.id = ret._id;
-    delete ret._id;
-    delete ret.__v;
-    
     // Format amounts to 6 decimal places
     ret.fromAmount = parseFloat(ret.fromAmount.toFixed(6));
     ret.toAmount = parseFloat(ret.toAmount.toFixed(6));
     ret.exchangeRate = parseFloat(ret.exchangeRate.toFixed(6));
-    ret.fee = parseFloat(ret.fee.toFixed(6));
+    
+    // Loại bỏ các field nhạy cảm
+    delete ret.__v;
     
     return ret;
   },

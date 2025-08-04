@@ -1,416 +1,268 @@
-const { Token } = require('../models/Token.model');
-const { AptosBlockchainService } = require('../services/aptosBlockchain.service');
-const { createError } = require('../middleware/errorHandler');
+const coinGeckoService = require('../services/coinGecko.service');
 const { logger } = require('../utils/logger');
 
-const aptosService = new AptosBlockchainService();
-
+/**
+ * Token Controller - Quản lý token list và price data từ CoinGecko
+ * Tối ưu cho production, sử dụng cache để giảm API calls
+ */
 class TokenController {
   /**
-   * Get all tokens with pagination
+   * Lấy danh sách tất cả tokens
+   * @route GET /api/tokens/all
    */
-  async getAllTokens(req, res, next) {
+  async getAllTokens(req, res) {
     try {
-      const { 
-        page = 1, 
-        limit = 20, 
-        chainId = 'aptos-testnet',
-        isActive = true,
-        isVerified = null,
-        sortBy = 'marketCap',
-        sortOrder = 'desc'
-      } = req.query;
-
-      const skip = (parseInt(page) - 1) * parseInt(limit);
-      const sort = {};
-      sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
-
-      const filter = { chainId, isActive };
-      if (isVerified !== null) {
-        filter.isVerified = isVerified === 'true';
-      }
-
-      const tokens = await Token.find(filter)
-        .sort(sort)
-        .limit(parseInt(limit))
-        .skip(skip);
-
-      const total = await Token.countDocuments(filter);
-
-      res.json({
+      const tokens = await coinGeckoService.getAllTokens();
+      
+      res.status(200).json({
         success: true,
+        message: 'Tokens retrieved successfully',
         data: {
           tokens,
-          pagination: {
-            page: parseInt(page),
-            limit: parseInt(limit),
-            total,
-            pages: Math.ceil(total / parseInt(limit))
-          }
+          count: tokens.length,
+          lastUpdated: new Date().toISOString()
         }
       });
     } catch (error) {
-      next(error);
+      logger.error('Error getting all tokens:', error.message);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to get tokens',
+        error: error.message
+      });
     }
   }
 
   /**
-   * Get token by address
+   * Lấy danh sách tokens theo platform
+   * @route GET /api/tokens/platform/:platform
    */
-  async getTokenByAddress(req, res, next) {
+  async getTokensByPlatform(req, res) {
     try {
-      const { address } = req.params;
-
-      if (!address) {
-        throw createError(400, 'Token address is required');
-      }
-
-      const token = await Token.findOne({ address });
-      if (!token) {
-        throw createError(404, 'Token not found');
-      }
-
-      res.json({
-        success: true,
-        data: { token }
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  /**
-   * Get token by symbol
-   */
-  async getTokenBySymbol(req, res, next) {
-    try {
-      const { symbol } = req.params;
-
-      if (!symbol) {
-        throw createError(400, 'Token symbol is required');
-      }
-
-      const token = await Token.findOne({ symbol: symbol.toUpperCase() });
-      if (!token) {
-        throw createError(404, 'Token not found');
-      }
-
-      res.json({
-        success: true,
-        data: { token }
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  /**
-   * Get top gainers
-   */
-  async getTopGainers(req, res, next) {
-    try {
-      const { limit = 10, chainId = 'aptos-testnet' } = req.query;
-
-      const tokens = await Token.getTopGainers(parseInt(limit));
-
-      res.json({
-        success: true,
-        data: { tokens }
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  /**
-   * Get top losers
-   */
-  async getTopLosers(req, res, next) {
-    try {
-      const { limit = 10, chainId = 'aptos-testnet' } = req.query;
-
-      const tokens = await Token.getTopLosers(parseInt(limit));
-
-      res.json({
-        success: true,
-        data: { tokens }
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  /**
-   * Get tokens by market cap
-   */
-  async getTokensByMarketCap(req, res, next) {
-    try {
-      const { limit = 20, chainId = 'aptos-testnet' } = req.query;
-
-      const tokens = await Token.getByMarketCap(parseInt(limit));
-
-      res.json({
-        success: true,
-        data: { tokens }
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  /**
-   * Get low risk tokens
-   */
-  async getLowRiskTokens(req, res, next) {
-    try {
-      const { limit = 20, chainId = 'aptos-testnet' } = req.query;
-
-      const tokens = await Token.getLowRiskTokens(parseInt(limit));
-
-      res.json({
-        success: true,
-        data: { tokens }
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  /**
-   * Get verified tokens
-   */
-  async getVerifiedTokens(req, res, next) {
-    try {
-      const tokens = await Token.getVerifiedTokens();
-
-      res.json({
-        success: true,
-        data: { tokens }
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  /**
-   * Create new token
-   */
-  async createToken(req, res, next) {
-    try {
-      const tokenData = req.body;
-
-      // Validate required fields
-      if (!tokenData.symbol || !tokenData.name || !tokenData.address) {
-        throw createError(400, 'Symbol, name, and address are required');
-      }
-
-      // Validate Aptos address format
-      if (!aptosService.isValidAddress(tokenData.address)) {
-        throw createError(400, 'Invalid Aptos token address format');
-      }
-
-      // Check if token already exists
-      const existingToken = await Token.findOne({ 
-        $or: [
-          { address: tokenData.address },
-          { symbol: tokenData.symbol.toUpperCase() }
-        ]
-      });
-
-      if (existingToken) {
-        throw createError(409, 'Token already exists');
-      }
-
-      // Create token in database
-      const token = new Token({
-        symbol: tokenData.symbol.toUpperCase(),
-        name: tokenData.name,
-        address: tokenData.address,
-        decimals: tokenData.decimals || 6,
-        totalSupply: tokenData.totalSupply || 0,
-        isNative: tokenData.isNative || false,
-        chainId: tokenData.chainId || 'aptos-testnet',
-        coingeckoId: tokenData.coingeckoId,
-        price: tokenData.price || 0,
-        priceUSD: tokenData.priceUSD || 0,
-        change24h: tokenData.change24h || 0,
-        marketCap: tokenData.marketCap || 0,
-        volume24h: tokenData.volume24h || 0,
-        circulatingSupply: tokenData.circulatingSupply || 0,
-        maxSupply: tokenData.maxSupply || 0,
-        description: tokenData.description,
-        website: tokenData.website,
-        twitter: tokenData.twitter,
-        telegram: tokenData.telegram,
-        github: tokenData.github,
-        verified: tokenData.verified || false,
-        riskScore: tokenData.riskScore || 50,
-        riskFactors: tokenData.riskFactors || []
-      });
-
-      await token.save();
-
-      logger.info(`Token created: ${token.symbol}`);
-
-      res.status(201).json({
-        success: true,
-        message: 'Token created successfully',
-        data: { token }
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  /**
-   * Update token price
-   */
-  async updateTokenPrice(req, res, next) {
-    try {
-      const { address } = req.params;
-
-      if (!address) {
-        throw createError(400, 'Token address is required');
-      }
-
-      const token = await Token.findOne({ address });
-      if (!token) {
-        throw createError(404, 'Token not found');
-      }
-
-      // Mock price update for now
-      const newPrice = Math.random() * 100;
-      token.price = newPrice;
-      token.priceUSD = newPrice;
-      token.lastUpdated = new Date();
+      const { platform = 'aptos' } = req.params;
+      const tokens = await coinGeckoService.getTokensByPlatform(platform);
       
-      await token.save();
-
-      res.json({
+      res.status(200).json({
         success: true,
-        message: 'Token price updated successfully',
-        data: { token }
+        message: `${platform} tokens retrieved successfully`,
+        data: {
+          platform,
+          tokens,
+          count: tokens.length,
+          lastUpdated: new Date().toISOString()
+        }
       });
     } catch (error) {
-      next(error);
+      logger.error(`Error getting ${req.params.platform} tokens:`, error.message);
+      res.status(500).json({
+        success: false,
+        message: `Failed to get ${req.params.platform} tokens`,
+        error: error.message
+      });
     }
   }
 
   /**
-   * Update token scam risk
+   * Lấy thông tin chi tiết của một token
+   * @route GET /api/tokens/:tokenId
    */
-  async updateTokenRisk(req, res, next) {
+  async getTokenInfo(req, res) {
     try {
-      const { address } = req.params;
-      const { riskScore, riskFactors } = req.body;
-
-      if (!address) {
-        throw createError(400, 'Token address is required');
-      }
-
-      const token = await Token.findOne({ address });
-      if (!token) {
-        throw createError(404, 'Token not found');
-      }
-
-      await token.updateScamRisk(riskScore, riskFactors);
-
-      res.json({
+      const { tokenId } = req.params;
+      const tokenInfo = await coinGeckoService.getTokenInfo(tokenId);
+      
+      res.status(200).json({
         success: true,
-        message: 'Token risk updated successfully',
-        data: { token }
+        message: 'Token info retrieved successfully',
+        data: tokenInfo
       });
     } catch (error) {
-      next(error);
+      logger.error(`Error getting token info for ${req.params.tokenId}:`, error.message);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to get token info',
+        error: error.message
+      });
     }
   }
 
   /**
-   * Verify token
+   * Lấy giá của một token
+   * @route GET /api/tokens/:tokenId/price
    */
-  async verifyToken(req, res, next) {
+  async getTokenPrice(req, res) {
     try {
-      const { address } = req.params;
-
-      if (!address) {
-        throw createError(400, 'Token address is required');
-      }
-
-      const token = await Token.findOne({ address });
-      if (!token) {
-        throw createError(404, 'Token not found');
-      }
-
-      await token.verify();
-
-      res.json({
+      const { tokenId } = req.params;
+      const { currency = 'usd' } = req.query;
+      
+      const priceData = await coinGeckoService.getTokenPrice(tokenId, currency);
+      
+      res.status(200).json({
         success: true,
-        message: 'Token verified successfully',
-        data: { token }
+        message: 'Token price retrieved successfully',
+        data: priceData
       });
     } catch (error) {
-      next(error);
+      logger.error(`Error getting price for ${req.params.tokenId}:`, error.message);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to get token price',
+        error: error.message
+      });
     }
   }
 
   /**
-   * Deactivate token
+   * Lấy giá của nhiều tokens cùng lúc
+   * @route POST /api/tokens/prices
    */
-  async deactivateToken(req, res, next) {
+  async getMultipleTokenPrices(req, res) {
     try {
-      const { address } = req.params;
-
-      if (!address) {
-        throw createError(400, 'Token address is required');
+      const { tokenIds, currency = 'usd' } = req.body;
+      
+      if (!tokenIds || !Array.isArray(tokenIds) || tokenIds.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Token IDs array is required'
+        });
       }
 
-      const token = await Token.findOne({ address });
-      if (!token) {
-        throw createError(404, 'Token not found');
-      }
-
-      await token.deactivate();
-
-      res.json({
+      const prices = await coinGeckoService.getMultipleTokenPrices(tokenIds, currency);
+      
+      res.status(200).json({
         success: true,
-        message: 'Token deactivated successfully',
-        data: { token }
+        message: 'Token prices retrieved successfully',
+        data: {
+          prices,
+          count: Object.keys(prices).length,
+          currency,
+          lastUpdated: new Date().toISOString()
+        }
       });
     } catch (error) {
-      next(error);
+      logger.error('Error getting multiple token prices:', error.message);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to get token prices',
+        error: error.message
+      });
     }
   }
 
   /**
-   * Search tokens
+   * Tìm kiếm tokens
+   * @route GET /api/tokens/search
    */
-  async searchTokens(req, res, next) {
+  async searchTokens(req, res) {
     try {
-      const { q, limit = 10 } = req.query;
-
-      if (!q) {
-        throw createError(400, 'Search query is required');
+      const { query } = req.query;
+      
+      if (!query) {
+        return res.status(400).json({
+          success: false,
+          message: 'Search query is required'
+        });
       }
 
-      const tokens = await Token.find({
-        $or: [
-          { symbol: { $regex: q, $options: 'i' } },
-          { name: { $regex: q, $options: 'i' } },
-          { address: { $regex: q, $options: 'i' } }
-        ],
-        isActive: true
-      })
-      .limit(parseInt(limit))
-      .sort({ marketCap: -1 });
-
-      res.json({
+      const results = await coinGeckoService.searchTokens(query);
+      
+      res.status(200).json({
         success: true,
-        data: { tokens }
+        message: 'Search completed successfully',
+        data: {
+          query,
+          results,
+          count: results.length,
+          lastUpdated: new Date().toISOString()
+        }
       });
     } catch (error) {
-      next(error);
+      logger.error('Error searching tokens:', error.message);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to search tokens',
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Lấy trending tokens
+   * @route GET /api/tokens/trending
+   */
+  async getTrendingTokens(req, res) {
+    try {
+      const trending = await coinGeckoService.getTrendingTokens();
+      
+      res.status(200).json({
+        success: true,
+        message: 'Trending tokens retrieved successfully',
+        data: {
+          trending,
+          count: trending.length,
+          lastUpdated: new Date().toISOString()
+        }
+      });
+    } catch (error) {
+      logger.error('Error getting trending tokens:', error.message);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to get trending tokens',
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Health check cho CoinGecko service
+   * @route GET /api/tokens/health
+   */
+  async healthCheck(req, res) {
+    try {
+      const isHealthy = await coinGeckoService.healthCheck();
+      
+      res.status(200).json({
+        success: true,
+        data: {
+          status: isHealthy ? 'healthy' : 'unhealthy',
+          service: 'CoinGecko API',
+          timestamp: new Date().toISOString()
+        }
+      });
+    } catch (error) {
+      logger.error('Error in token health check:', error.message);
+      res.status(500).json({
+        success: false,
+        message: 'Health check failed',
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Clear cache của CoinGecko service
+   * @route POST /api/tokens/clear-cache
+   */
+  async clearCache(req, res) {
+    try {
+      coinGeckoService.clearCache();
+      
+      res.status(200).json({
+        success: true,
+        message: 'Cache cleared successfully',
+        data: {
+          timestamp: new Date().toISOString()
+        }
+      });
+    } catch (error) {
+      logger.error('Error clearing cache:', error.message);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to clear cache',
+        error: error.message
+      });
     }
   }
 }
 
-module.exports = { TokenController }; 
+module.exports = new TokenController(); 

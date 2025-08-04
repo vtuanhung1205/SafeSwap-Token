@@ -11,17 +11,15 @@ const { connectDatabase } = require('./config/database');
 const { logger } = require('./utils/logger');
 const { errorHandler } = require('./middleware/errorHandler');
 const { rateLimiter } = require('./middleware/rateLimiter');
-const authRoutes = require('./routes/auth.routes');
-const walletRoutes = require('./routes/wallet.routes');
+
+// Import optimized routes
+const userRoutes = require('./routes/user.routes');
 const swapRoutes = require('./routes/swap.routes');
-const priceRoutes = require('./routes/price.routes');
 const tokenRoutes = require('./routes/token.routes');
-const liquidityRoutes = require('./routes/liquidity.routes');
-const { WebSocketService } = require('./services/websocket.service');
-const { PriceFeedService } = require('./services/priceFeed.service');
+const transactionRoutes = require('./routes/transaction.routes');
+
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./config/swagger.config');
-const { schedulePriceUpdates } = require('./jobs/updatePrices.job'); // Import cron job
 
 // Load environment variables
 dotenv.config();
@@ -44,11 +42,10 @@ const corsOptions = {
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Cookie'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Cookie', 'X-Session-ID'],
   exposedHeaders: ['Set-Cookie'],
   optionsSuccessStatus: 200 // Some legacy browsers (IE11, various SmartTVs) choke on 204
 };
-
 
 const io = new Server(server, {
   cors: {
@@ -71,102 +68,108 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(rateLimiter);
 
-// Health check endpoint
+/**
+ * Health check endpoint
+ */
 app.get('/health', (req, res) => {
   res.status(200).json({
     status: 'OK',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV || 'development',
+    version: '2.0.0'
   });
 });
 
 // Swagger UI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// API Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/wallet', walletRoutes);
+// API Routes - Optimized for production
+app.use('/api/user', userRoutes);
 app.use('/api/swap', swapRoutes);
-app.use('/api/price', priceRoutes);
 app.use('/api/tokens', tokenRoutes);
-app.use('/api/liquidity', liquidityRoutes);
+app.use('/api/transactions', transactionRoutes);
 
-// Welcome route
+/**
+ * Welcome route with API information
+ */
 app.get('/', (req, res) => {
   res.json({
-    message: 'SafeSwap Backend API',
-    version: '1.0.0',
+    message: 'SafeSwap Backend API - Optimized for Production',
+    version: '2.0.0',
+    description: 'Wallet-based authentication with CoinGecko integration',
     endpoints: {
-      health: '/health',
-      auth: '/api/auth',
-      wallet: '/api/wallet',
+      user: '/api/user',
       swap: '/api/swap',
-      price: '/api/price',
-      tokens: '/api/tokens'
-    }
+      tokens: '/api/tokens',
+      transactions: '/api/transactions',
+      docs: '/api-docs',
+      health: '/health'
+    },
+    features: [
+      'Wallet-based authentication',
+      'CoinGecko token integration',
+      'Transaction history tracking',
+      'Real-time price feeds',
+      'Session management'
+    ],
+    timestamp: new Date().toISOString()
   });
 });
 
-// 404 handler
+/**
+ * 404 handler for undefined routes
+ */
 app.use('*', (req, res) => {
   res.status(404).json({
-    error: 'Route not found',
-    message: `Cannot ${req.method} ${req.originalUrl}`
+    success: false,
+    message: 'Route not found',
+    path: req.originalUrl,
+    timestamp: new Date().toISOString()
   });
 });
 
-// Error handling middleware (should be last)
+// Error handling middleware
 app.use(errorHandler);
 
-// Initialize services
-const webSocketService = new WebSocketService(io);
-
-// Graceful shutdown
+/**
+ * Graceful shutdown handler
+ */
 const gracefulShutdown = (signal) => {
   logger.info(`Received ${signal}. Starting graceful shutdown...`);
   
-  server.close((err) => {
-    if (err) {
-      logger.error('Error during server shutdown:', err);
-      process.exit(1);
-    }
-    
-    logger.info('Server closed successfully');
+  server.close(() => {
+    logger.info('HTTP server closed');
     process.exit(0);
   });
-
-  // Force shutdown after 10 seconds
+  
+  // Force close after 10 seconds
   setTimeout(() => {
-    logger.error('Forced shutdown after timeout');
+    logger.error('Could not close connections in time, forcefully shutting down');
     process.exit(1);
   }, 10000);
 };
 
+// Listen for shutdown signals
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
-// Start server
+/**
+ * Start server function
+ */
 const startServer = async () => {
   try {
     // Connect to database
     await connectDatabase();
     logger.info('Database connected successfully');
 
-    // Initialize price feed service AFTER database connection
-    const priceFeedService = new PriceFeedService();
-    await priceFeedService.initialize();
-    logger.info('Price feed service initialized');
-
-    // Start the price update cron job
-    schedulePriceUpdates();
-
-    const PORT = process.env.PORT || 5000;
+    const PORT = process.env.PORT || 3001;
     
     server.listen(PORT, () => {
-      logger.info(`SafeSwap Backend API server running on port ${PORT}`);
+      logger.info(`Server running on port ${PORT}`);
       logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
-      logger.info(`Health check: http://localhost:${PORT}/health`);
+      logger.info(`Swagger UI available at: http://localhost:${PORT}/api-docs`);
+      logger.info(`Health check available at: http://localhost:${PORT}/health`);
     });
 
   } catch (error) {
@@ -175,18 +178,7 @@ const startServer = async () => {
   }
 };
 
-// Handle unhandled promise rejections
-process.on('unhandledRejection', (reason, promise) => {
-  logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
-  process.exit(1);
-});
-
-// Handle uncaught exceptions
-process.on('uncaughtException', (error) => {
-  logger.error('Uncaught Exception:', error);
-  process.exit(1);
-});
-
+// Start the server
 startServer();
 
 module.exports = app;
