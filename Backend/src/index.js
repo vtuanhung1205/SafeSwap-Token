@@ -119,12 +119,22 @@ const startServer = async () => {
     logger.info('Database connected successfully');
     
     // Initialize Aptos service
-    await aptosService.initialize();
-    logger.info('Aptos service initialized');
+    try {
+      await aptosService.initialize();
+      logger.info('Aptos service initialized');
+    } catch (aptosError) {
+      logger.warn('Aptos service initialization failed:', aptosError.message);
+      // Continue without Aptos service
+    }
     
     // Start transaction monitoring
-    await transactionService.startMonitoring(io);
-    logger.info('Transaction monitoring started');
+    try {
+      await transactionService.startMonitoring(io);
+      logger.info('Transaction monitoring started');
+    } catch (monitoringError) {
+      logger.warn('Transaction monitoring failed:', monitoringError.message);
+      // Continue without monitoring
+    }
     
     server.listen(PORT, () => {
       logger.info(`Server running on port ${PORT}`);
