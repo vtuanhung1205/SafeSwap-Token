@@ -134,27 +134,50 @@ const Navbar = () => {
                 {isAuthenticated ? (
                   <div className="flex items-center space-x-4">
                     <WalletConnect onWalletConnected={handleWalletConnected} />
+                    {user?.walletAddress && (
+                      <div className="flex items-center space-x-2 bg-[#111112] px-3 py-1 rounded-lg border border-[#23232a]">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <span className="text-gray-400 text-xs">
+                          {user.walletAddress.slice(0, 6)}...{user.walletAddress.slice(-4)}
+                        </span>
+                      </div>
+                    )}
                     <div className="relative">
                       <button
                         onClick={() => setShowUserMenu(!showUserMenu)}
                         className="flex items-center space-x-3 bg-[#111112] px-4 py-2 rounded-xl border border-[#23232a] hover:border-cyan-600 transition"
                       >
                         {/* User Avatar and Info */}
-                        {user?.avatar ? (
-                          <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full" />
+                        {user?.profile?.avatar ? (
+                          <img src={user.profile.avatar} alt={user.profile.displayName} className="w-8 h-8 rounded-full" />
                         ) : (
                           <div className="w-8 h-8 bg-cyan-600 rounded-full flex items-center justify-center">
                             <User size={16} className="text-white" />
                           </div>
                         )}
                         <div className="text-left">
-                          <p className="text-white font-medium text-sm">{user?.name || "User"}</p>
+                          <p className="text-white font-medium text-sm">
+                            {user?.profile?.displayName || user?.profile?.firstName || user?.email?.split('@')[0] || "User"}
+                          </p>
                           <p className="text-gray-400 text-xs">{user?.email}</p>
                         </div>
                         <ChevronDown size={16} className="text-gray-400" />
                       </button>
                       {showUserMenu && (
                         <div className="absolute right-0 mt-2 w-64 bg-[#18181c] border border-[#23232a] rounded-xl shadow-lg py-2 z-50">
+                          {/* User Info Header */}
+                          <div className="px-4 py-3 border-b border-[#23232a]">
+                            <p className="text-white font-medium text-sm">
+                              {user?.profile?.displayName || user?.profile?.firstName || user?.email?.split('@')[0] || "User"}
+                            </p>
+                            <p className="text-gray-400 text-xs">{user?.email}</p>
+                            {user?.walletAddress && (
+                              <p className="text-cyan-400 text-xs mt-1">
+                                {user.walletAddress.slice(0, 6)}...{user.walletAddress.slice(-4)}
+                              </p>
+                            )}
+                          </div>
+                          
                           {/* Dropdown Content */}
                           <Link
                             to="/dashboard"
