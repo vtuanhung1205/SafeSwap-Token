@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
 import { Loader2, LogOut, PlusCircle, Wallet as WalletIcon } from 'lucide-react';
 
-// --- Mock functions (replace with your actual API/Auth calls) ---
+// Mock functions (replace with your actual API/Auth calls)
 const api = {
   getLinkedWallets: async (authToken) => {
     console.log("Fetching linked wallets...");
@@ -12,7 +12,7 @@ const api = {
   },
   linkNewWallet: async (authToken, wallet) => {
     console.log("Linking new wallet:", wallet);
-    toast.success(`${wallet.walletName} wallet linked!`);
+    // We will move the toast from here to the useEffect for better timing.
     return { success: true };
   }
 };
@@ -28,6 +28,7 @@ const WalletConnect = ({ onWalletConnected }) => {
   const [linkedWallets, setLinkedWallets] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Effect to handle the login-to-wallet flow
   useEffect(() => {
     if (isAuthenticated && showLoginPromptModal) {
       setShowLoginPromptModal(false);
@@ -35,11 +36,22 @@ const WalletConnect = ({ onWalletConnected }) => {
     }
   }, [isAuthenticated, showLoginPromptModal]);
 
+  // --- MODIFIED EFFECT ---
+  // This effect now handles BOTH the success notification and the backend sync.
   useEffect(() => {
     const syncWallet = async () => {
+      // Ensure we only proceed when a connection is fully established.
       if (!isAuthenticated || !connected || !account || isConnecting) return;
+
       try {
         setIsConnecting(true);
+        
+        // --- ACTION 1: Show Success Toast ---
+        // This is the perfect place to show the notification because this effect
+        // only runs when 'connected' becomes true.
+        toast.success("Wallet connected successfully!");
+
+        // --- ACTION 2: Sync with backend (existing logic) ---
         const addressString = String(account.address);
         const isAlreadyLinked = linkedWallets.some(w => w.address === addressString);
         if (!isAlreadyLinked) {
@@ -50,16 +62,21 @@ const WalletConnect = ({ onWalletConnected }) => {
         }
       } catch (error) {
         console.error("Wallet sync error:", error);
+        toast.error("Failed to sync wallet with backend.");
       } finally {
         setIsConnecting(false);
+        // Close all modals upon successful connection.
         setShowLinkedWalletModal(false);
         setShowAddNewWalletModal(false);
       }
     };
-    const timeoutId = setTimeout(syncWallet, 500);
+    
+    const timeoutId = setTimeout(syncWallet, 100); // Reduced delay for faster feedback
     return () => clearTimeout(timeoutId);
-  }, [connected, account, wallet]);
+  }, [connected, account]); // Simplified dependencies to focus on connection state
 
+
+  // --- UNCHANGED LOGIC for opening modals and handling login ---
   const handleConnectClick = () => {
     if (connected) return;
     setShowLoginPromptModal(true);
@@ -88,7 +105,7 @@ const WalletConnect = ({ onWalletConnected }) => {
     try {
       await loginWithGoogle();
     } catch (error) {
-      toast.error("Google login failed. Please try again.");
+      toast.error("Google login failed.");
     } finally {
       setIsLoading(false);
     }
@@ -100,22 +117,35 @@ const WalletConnect = ({ onWalletConnected }) => {
 
   return (
     <>
+      {/* --- MODIFIED: The main component render logic --- */}
       {!connected ? (
-        <button onClick={handleConnectClick} className="w-full py-3 rounded-xl font-medium transition bg-cyan-600 text-white hover:bg-cyan-700">
+        // STATE 1: Default "Connect Wallet" button
+        <button 
+          onClick={handleConnectClick}
+          className="w-full py-3 rounded-xl font-medium transition bg-cyan-600 text-white hover:bg-cyan-700"
+        >
           Connect Wallet
         </button>
       ) : (
-        <div className="flex items-center justify-between w-full bg-[#111112] rounded-xl p-3 border border-[#2a2a35]">
+        // STATE 2: New "Connected" UI with address and disconnect button
+        <div className="flex items-center justify-between w-full bg-[#111112] rounded-xl p-2 border border-[#2a2a35]">
           <div className="flex items-center">
-            <img src={wallet?.adapter.icon} alt={wallet?.adapter.name} className="w-6 h-6 rounded-full mr-3" />
-            <span className="text-white font-mono text-sm">{formatAddress(account?.address)}</span>
+            <img src={wallet?.adapter.icon} alt={wallet?.adapter.name} className="w-7 h-7 rounded-full mr-2" />
+            <span className="text-white font-mono text-sm">
+              {formatAddress(account?.address)}
+            </span>
           </div>
-          <button onClick={handleDisconnect} className="text-gray-400 hover:text-white transition" title="Disconnect">
+          <button 
+            onClick={handleDisconnect}
+            className="text-gray-400 hover:text-red-500 transition p-2 rounded-lg"
+            title="Disconnect"
+          >
             <LogOut size={18} />
           </button>
         </div>
       )}
 
+      {/* --- ALL MODALS BELOW ARE UNCHANGED --- */}
       {showLoginPromptModal && !isAuthenticated && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
           <div className="bg-[#1c1c24] rounded-2xl p-8 border border-[#2a2a35] shadow-lg w-full max-w-sm text-center">
@@ -143,7 +173,6 @@ const WalletConnect = ({ onWalletConnected }) => {
               {isLoading ? <div className="flex justify-center items-center h-24"><Loader2 className="animate-spin text-cyan-500" /></div> : (<>
                   {linkedWallets.map((linkedWallet) => (
                     <button key={linkedWallet.address} onClick={() => handleWalletSelect(linkedWallet.walletName)} className="flex items-center w-full p-3 hover:bg-[#2a2a35] rounded-lg transition">
-                      {/* --- THIS IS THE FIX --- */}
                       <img src={wallets.find(w => w?.adapter?.name === linkedWallet.walletName)?.adapter.icon} alt={linkedWallet.walletName} className="w-8 h-8 rounded-full mr-4" />
                       <div className="text-left">
                         <div className="text-white font-medium">{linkedWallet.walletName}</div>
