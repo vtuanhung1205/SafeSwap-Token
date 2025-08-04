@@ -47,7 +47,7 @@ api.interceptors.response.use(
   }
 );
 
-// API endpoints
+// API endpoints - Updated for real live tokens
 export const authAPI = {
   googleAuth: (googleData) => 
     api.post('/auth/google', googleData),
@@ -99,18 +99,75 @@ export const swapAPI = {
     api.get('/swap/stats'),
 };
 
+// Updated price API for real live tokens from CoinGecko
 export const priceAPI = {
+  // Get all token prices (legacy endpoint)
   getAllPrices: () => 
     api.get('/price/all'),
   
+  // Get specific token price by symbol (legacy endpoint)
   getTokenPrice: (symbol) => 
     api.get(`/price/token/${symbol}`),
   
+  // Get exchange rate between tokens (legacy endpoint)
   getExchangeRate: (fromToken, toToken) => 
     api.get(`/price/exchange-rate?from=${fromToken}&to=${toToken}`),
   
+  // Analyze token (legacy endpoint)
   analyzeToken: (tokenAddress) => 
     api.post('/price/analyze', { tokenAddress }),
+  
+  // New CoinGecko-based endpoints
+  getAllTokens: () => 
+    api.get('/tokens/all'),
+  
+  getTokensByPlatform: (platform = 'aptos') => 
+    api.get(`/tokens/platform/${platform}`),
+  
+  getTokenInfo: (tokenId) => 
+    api.get(`/tokens/${tokenId}`),
+  
+  getTokenPriceById: (tokenId, currency = 'usd') => 
+    api.get(`/tokens/${tokenId}/price?currency=${currency}`),
+  
+  getMultipleTokenPrices: (tokenIds, currency = 'usd') => 
+    api.post('/tokens/prices', { tokenIds, currency }),
+  
+  searchTokens: (query) => 
+    api.get(`/tokens/search?query=${query}`),
+  
+  getTrendingTokens: () => 
+    api.get('/tokens/trending'),
+};
+
+// New token API for CoinGecko integration
+export const tokenAPI = {
+  getAllTokens: () => 
+    api.get('/tokens/all'),
+  
+  getTokensByPlatform: (platform = 'aptos') => 
+    api.get(`/tokens/platform/${platform}`),
+  
+  getTokenInfo: (tokenId) => 
+    api.get(`/tokens/${tokenId}`),
+  
+  getTokenPrice: (tokenId, currency = 'usd') => 
+    api.get(`/tokens/${tokenId}/price?currency=${currency}`),
+  
+  getMultipleTokenPrices: (tokenIds, currency = 'usd') => 
+    api.post('/tokens/prices', { tokenIds, currency }),
+  
+  searchTokens: (query) => 
+    api.get(`/tokens/search?query=${query}`),
+  
+  getTrendingTokens: () => 
+    api.get('/tokens/trending'),
+  
+  healthCheck: () => 
+    api.get('/tokens/health'),
+  
+  clearCache: () => 
+    api.post('/tokens/clear-cache'),
 };
 
 export const handleApiError = (error) => {
