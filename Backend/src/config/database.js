@@ -3,6 +3,10 @@ const logger = require('../utils/logger');
 
 const connectDB = async () => {
   try {
+    console.log('Database connection - Environment:', process.env.NODE_ENV);
+    console.log('Database connection - MONGODB_URI:', process.env.MONGODB_URI ? 'SET' : 'NOT SET');
+    console.log('Database connection - MONGODB_URI_PROD:', process.env.MONGODB_URI_PROD ? 'SET' : 'NOT SET');
+    
     const mongoURI = process.env.NODE_ENV === 'production' 
       ? process.env.MONGODB_URI_PROD 
       : process.env.MONGODB_URI;

@@ -114,33 +114,50 @@ const PORT = process.env.PORT || 3001;
 // Start server
 const startServer = async () => {
   try {
+    console.log('Starting server...');
+    console.log('Environment variables:', {
+      NODE_ENV: process.env.NODE_ENV,
+      PORT: process.env.PORT,
+      MONGODB_URI: process.env.MONGODB_URI ? 'SET' : 'NOT SET',
+      MONGODB_URI_PROD: process.env.MONGODB_URI_PROD ? 'SET' : 'NOT SET',
+      JWT_SECRET: process.env.JWT_SECRET ? 'SET' : 'NOT SET'
+    });
+    
     // Connect to database
+    console.log('Connecting to database...');
     await connectDB();
     logger.info('Database connected successfully');
     
     // Initialize Aptos service
     try {
+      console.log('Initializing Aptos service...');
       await aptosService.initialize();
       logger.info('Aptos service initialized');
     } catch (aptosError) {
+      console.log('Aptos service initialization failed:', aptosError.message);
       logger.warn('Aptos service initialization failed:', aptosError.message);
       // Continue without Aptos service
     }
     
     // Start transaction monitoring
     try {
+      console.log('Starting transaction monitoring...');
       await transactionService.startMonitoring(io);
       logger.info('Transaction monitoring started');
     } catch (monitoringError) {
+      console.log('Transaction monitoring failed:', monitoringError.message);
       logger.warn('Transaction monitoring failed:', monitoringError.message);
       // Continue without monitoring
     }
     
+    console.log(`Starting server on port ${PORT}...`);
     server.listen(PORT, () => {
       logger.info(`Server running on port ${PORT}`);
       logger.info(`Environment: ${process.env.NODE_ENV}`);
+      console.log('Server started successfully!');
     });
   } catch (error) {
+    console.error('Failed to start server:', error);
     logger.error('Failed to start server:', error);
     process.exit(1);
   }
@@ -154,6 +171,19 @@ process.on('SIGTERM', () => {
   server.close(() => {
     logger.info('Process terminated');
   });
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  logger.error('Uncaught Exception:', error);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1);
 });
 
 module.exports = { app, server, io }; 
