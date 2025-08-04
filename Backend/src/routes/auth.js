@@ -91,6 +91,7 @@ router.post('/google', async (req, res) => {
 
     res.json({
       success: true,
+      message: 'Google authentication successful',
       data: {
         user: {
           id: user._id,

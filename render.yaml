@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: safeswap-backend
+    name: safeswap-backend-service
     runtime: node
     plan: free
     rootDir: Backend
@@ -13,6 +13,8 @@ services:
       - key: PORT
         value: 10000
       - key: MONGODB_URI
+        value: mongodb+srv://safeswap_user:safeswap@safeswap.6pk7wds.mongodb.net/safeswap?retryWrites=true&w=majority&appName=SafeSwap
+      - key: MONGODB_URI_PROD
         value: mongodb+srv://safeswap_user:safeswap@safeswap.6pk7wds.mongodb.net/safeswap?retryWrites=true&w=majority&appName=SafeSwap
       - key: APTOS_NETWORK
         value: mainnet
