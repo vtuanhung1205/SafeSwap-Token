@@ -101,6 +101,14 @@ export const walletAPI = {
   getSupportedWallets: () => 
     api.get('/wallet/supported'),
   
+  // Get current user's wallet info
+  getInfo: () => 
+    api.get('/wallet/info'),
+  
+  // Get user's transactions
+  getTransactions: (params = {}) => 
+    api.get('/transactions', { params }),
+  
   // Generate new wallet
   generateWallet: () => 
     api.post('/wallet/generate'),

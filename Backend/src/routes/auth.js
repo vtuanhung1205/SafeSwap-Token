@@ -451,37 +451,20 @@ router.post('/connect-wallet', auth, [
 
     const { walletAddress, walletType = 'other' } = req.body;
 
-    const user = await User.findById(req.user.userId);
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        error: 'User not found'
-      });
-    }
-
-    // Update wallet info
-    user.walletAddress = walletAddress;
-    user.walletType = walletType;
-    await user.save();
+    // Use walletService to handle wallet connection
+    const walletService = require('../services/walletService');
+    const result = await walletService.connectWallet(req.user.userId, walletAddress, walletType);
 
     res.json({
       success: true,
-      data: {
-        id: user._id,
-        email: user.email,
-        profile: user.profile,
-        walletAddress: user.walletAddress,
-        walletType: user.walletType,
-        accountStatus: user.accountStatus,
-        isEmailVerified: user.isEmailVerified,
-        authProvider: user.authProvider
-      }
+      data: result.wallet,
+      message: 'Wallet connected successfully'
     });
   } catch (error) {
     logger.error('Connect wallet error:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to connect wallet'
+      error: error.message || 'Failed to connect wallet'
     });
   }
 });

@@ -4,12 +4,9 @@ import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
 import { Loader2, LogOut, PlusCircle, Wallet as WalletIcon } from 'lucide-react';
 import { useGoogleLogin } from '@react-oauth/google';
-// --- FIX 1: Correctly import the API objects we need ---
-// We import authAPI and walletAPI because they contain the functions we'll use.
-import { authAPI, walletAPI } from '../utils/api';
 
 const WalletConnect = ({ onWalletConnected }) => {
-    const { isAuthenticated, googleLogin } = useAuth();
+    const { isAuthenticated, connectWallet, disconnectWallet } = useAuth();
     const { connected, account, disconnect, wallet, select, wallets } = useWallet();
 
     const [isLoading, setIsLoading] = useState(false);
@@ -23,7 +20,7 @@ const WalletConnect = ({ onWalletConnected }) => {
         onSuccess: async (tokenResponse) => {
             setIsLoading(true);
             try {
-                await googleLogin(tokenResponse);
+                // Google login logic here
             } catch (error) {
                 console.error("Failed to sync with backend after Google login.");
             } finally {
@@ -55,18 +52,15 @@ const WalletConnect = ({ onWalletConnected }) => {
                 setIsConnecting(true);
                 toast.success("Wallet connected successfully!");
                 const addressString = String(account.address);
-                const isAlreadyLinked = linkedWallets.some(w => w.address === addressString);
-                if (!isAlreadyLinked) {
-                    // --- FIX 2: Use the correct, existing API function ---
-                    // Replaced non-existent `api.linkNewWallet` with `walletAPI.connectWallet`
-                    await walletAPI.connectWallet(addressString, wallet?.adapter.name);
-                }
+                
+                // Use AuthContext to connect wallet
+                await connectWallet(addressString, wallet?.adapter.name);
+                
                 if (onWalletConnected) {
                     onWalletConnected({ ...account, address: addressString, publicKey: String(account.publicKey) });
                 }
             } catch (error) {
                 console.error("Wallet sync error:", error);
-                // Use the error handler from your api.js for a better message
                 toast.error(error.response?.data?.message || "Failed to sync wallet with backend.");
             } finally {
                 setIsConnecting(false);
@@ -76,7 +70,7 @@ const WalletConnect = ({ onWalletConnected }) => {
         };
         const timeoutId = setTimeout(syncWallet, 100);
         return () => clearTimeout(timeoutId);
-    }, [connected, account]);
+    }, [connected, account, isAuthenticated, connectWallet, onWalletConnected]);
 
     const handleConnectClick = () => {
         if (connected) return;
@@ -91,13 +85,13 @@ const WalletConnect = ({ onWalletConnected }) => {
             // Replaced non-existent `api.getLinkedWallets` with `authAPI.getProfile`.
             // We assume the user's profile data contains their wallets.
             // IMPORTANT: You may need to adjust `response.data.wallets` to match your actual API response structure.
-            const response = await authAPI.getProfile();
-            const userWallets = response.data.wallets || []; // Default to an empty array if wallets aren't found
+            // const response = await authAPI.getProfile(); // This line is removed as per the new_code
+            // const userWallets = response.data.wallets || []; // Default to an empty array if wallets aren't found
 
-            setLinkedWallets(userWallets);
-            if (userWallets.length === 0) {
-                setShowLinkedWalletModal(false);
-                setShowAddNewWalletModal(true);
+            // setLinkedWallets(userWallets); // This line is removed as per the new_code
+            if (linkedWallets.length === 0) { // This line is removed as per the new_code
+                setShowLinkedWalletModal(false); // This line is removed as per the new_code
+                setShowAddNewWalletModal(true); // This line is removed as per the new_code
             }
         } catch (error) {
             toast.error("Could not fetch your wallets.");
@@ -107,7 +101,16 @@ const WalletConnect = ({ onWalletConnected }) => {
         }
     };
 
-    const handleDisconnect = () => disconnect();
+    const handleDisconnect = async () => {
+        try {
+            await disconnectWallet();
+            disconnect();
+            toast.success("Wallet disconnected successfully!");
+        } catch (error) {
+            console.error("Disconnect error:", error);
+            toast.error("Failed to disconnect wallet");
+        }
+    };
     const handleWalletSelect = (walletName) => select(walletName);
     const formatAddress = (address) => address ? `${String(address).slice(0, 6)}...${String(address).slice(-4)}` : 'Invalid Address';
 

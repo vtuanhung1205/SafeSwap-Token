@@ -237,6 +237,49 @@ class WalletService {
     }));
   }
 
+  // Connect wallet to user account
+  async connectWallet(userId, walletAddress, walletType) {
+    try {
+      const User = require('../models/User');
+      
+      // Validate wallet address
+      if (!this.validateWalletAddress(walletAddress)) {
+        throw new Error('Invalid wallet address');
+      }
+      
+      // Check if wallet is already connected to another user
+      const existingUser = await User.findOne({ walletAddress: walletAddress.toLowerCase() });
+      if (existingUser && existingUser._id.toString() !== userId) {
+        throw new Error('Wallet is already connected to another account');
+      }
+      
+      // Update user's wallet info
+      const user = await User.findById(userId);
+      if (!user) {
+        throw new Error('User not found');
+      }
+      
+      user.walletAddress = walletAddress.toLowerCase();
+      user.walletType = walletType || 'other';
+      await user.save();
+      
+      // Get wallet info from blockchain
+      const walletInfo = await this.getWalletInfo(walletAddress);
+      
+      return {
+        success: true,
+        wallet: {
+          address: user.walletAddress,
+          type: user.walletType,
+          ...walletInfo
+        }
+      };
+    } catch (error) {
+      logger.error('Error connecting wallet:', error);
+      throw error;
+    }
+  }
+
   // Get wallet display name
   getWalletDisplayName(walletName) {
     const displayNames = {

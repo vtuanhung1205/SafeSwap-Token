@@ -5,6 +5,7 @@ const router = express.Router();
 const walletService = require('../services/walletService');
 const { auth, optionalAuth } = require('../middleware/auth');
 const logger = require('../utils/logger');
+const User = require('../models/User'); // Added missing import for User model
 
 // Get supported wallets
 router.get('/supported', optionalAuth, async (req, res) => {
@@ -71,6 +72,48 @@ router.post('/import', auth, [
     res.status(500).json({
       success: false,
       error: 'Failed to import wallet'
+    });
+  }
+});
+
+// Get wallet info for current user
+router.get('/info', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+    
+    if (!user.walletAddress) {
+      return res.json({
+        success: true,
+        data: {
+          wallet: null,
+          message: 'No wallet connected'
+        }
+      });
+    }
+    
+    const walletInfo = await walletService.getWalletInfo(user.walletAddress);
+    
+    res.json({
+      success: true,
+      data: {
+        wallet: {
+          address: user.walletAddress,
+          type: user.walletType,
+          ...walletInfo
+        }
+      }
+    });
+  } catch (error) {
+    logger.error('Error getting current user wallet info:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get wallet info'
     });
   }
 });
