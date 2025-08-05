@@ -1,7 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Award, Target, Rocket, Lightbulb } from "lucide-react";
+import {
+  Award,
+  Target,
+  Rocket,
+  Lightbulb,
+  Github,
+  Facebook,
+} from "lucide-react";
 
-// Local image imports from your original code
 import avt1 from "../../../public/avt1.jpg";
 import avt2 from "../../../public/avt2.jpg";
 import avt3 from "../../../public/avt3.jpg";
@@ -145,30 +151,40 @@ const OurStory = () => {
               name="Võ Tuấn Hùng"
               role="Team Leader & Idea Creator"
               glowColor="cyan"
+              github="https://github.com/vtuanhung1205"
+              facebook="https://www.facebook.com/tuane1205/"
             />
             <TeamMember
               imgSrc={avt4}
               name="Nguyễn Tăng Minh Thông"
               role="Backend Developer"
               glowColor="pink"
+              github="https://github.com/thongntms171742"
+              facebook="https://www.facebook.com/nguyentangminhthong"
             />
             <TeamMember
               imgSrc={avt1}
               name="Võ Đức Duy"
               role="UX/UI & Frontend Developer"
               glowColor="cyan"
+              github="https://github.com/JION2004"
+              facebook="https://www.facebook.com/vo.uc.duy.898055"
             />
             <TeamMember
               imgSrc={avt5}
               name="Trần Quốc Huy"
               role="Machine Learning Engineer"
               glowColor="pink"
+              github="https://github.com/quwyimn"
+              facebook="https://www.facebook.com/tran.quoc.huy.198847"
             />
             <TeamMember
               imgSrc={avt2}
               name="Nguyễn Văn Linh"
               role="Business Analyst"
               glowColor="cyan"
+              github="https://github.com/mazino189"
+              facebook="https://www.facebook.com/nguyen.van.linh.449754"
             />
           </div>
         </div>
@@ -233,28 +249,54 @@ const TimelineItem = ({ icon: Icon, side, title, titleColor, children }) => {
   );
 };
 
-const TeamMember = ({ imgSrc, name, role, glowColor }) => {
+const TeamMember = ({ imgSrc, name, role, glowColor, github, facebook }) => {
   const glowClasses =
     glowColor === "cyan"
       ? "from-cyan-500/60 to-transparent"
       : "from-pink-500/60 to-transparent";
 
   return (
-    <div className="relative group">  
+    <div className="relative group">
       {/* Glow Effect */}
       <div
         className={`absolute -inset-0.5 bg-gradient-to-r ${glowClasses} rounded-3xl blur-lg opacity-0 group-hover:opacity-75 transition duration-300`}
       ></div>
 
       {/* Card Content */}
-      <div className="relative bg-[#18181c] border border-[#23232a] rounded-2xl p-6 w-64 text-center transform group-hover:scale-105 transition-transform duration-300">
-        <img
-          src={imgSrc}
-          alt={`Team Member ${name}`}
-          className="w-32 h-32 rounded-full mx-auto mb-4 border-4 border-gray-800"
-        />
-        <h3 className="text-xl font-bold text-white">{name}</h3>
-        <p className="text-gray-400">{role}</p>
+      <div className="relative bg-[#18181c] border border-[#23232a] rounded-2xl p-6 w-64 text-center transform group-hover:scale-105 transition-transform duration-300 flex flex-col h-full">
+        <div className="flex-grow">
+          <img
+            src={imgSrc}
+            alt={`Team Member ${name}`}
+            className="w-32 h-32 rounded-full mx-auto mb-4 border-4 border-gray-800"
+          />
+          <h3 className="text-xl font-bold text-white">{name}</h3>
+          <p className="text-gray-400">{role}</p>
+        </div>
+
+        {/* --- ADDED SOCIAL ICONS HERE --- */}
+        <div className="mt-4 pt-4 border-t border-gray-800 flex justify-center items-center space-x-4">
+          {/* Remember to replace '#' with the actual links to the profiles */}
+          <a
+            href={github}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-gray-500 hover:text-cyan-400 transition-colors duration-200"
+            aria-label={`${name}'s Github Profile`}
+          >
+            <Github size={22} />
+          </a>
+          <a
+            href={facebook}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-gray-500 hover:text-cyan-400 transition-colors duration-200"
+            aria-label={`${name}'s Facebook Profile`}
+          >
+            <Facebook size={22} />
+          </a>
+        </div>
+        {/* --- END OF ADDED ICONS --- */}
       </div>
     </div>
   );

@@ -380,5 +380,5 @@ var Client = class extends CommonClient {
 };
 
 export { Client, CommonClient, DefaultDataPack, WebSocket };
-//# sourceMappingURL=out.js.map
+//# sourceMappingURL=index.browser.mjs.map
 //# sourceMappingURL=index.browser.mjs.map
