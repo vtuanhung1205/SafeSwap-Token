@@ -86,8 +86,13 @@ const WalletConnect = ({ onWalletConnected }) => {
             const availableWallets = wallets.filter(w => w.readyState === 'Installed' || w.readyState === 'Loadable');
             if (availableWallets.length > 0) {
                 const selectedWallet = availableWallets[0];
-                await select(selectedWallet.name);
-                toast.success(`Connecting to ${selectedWallet.name}...`);
+                if (selectedWallet && typeof selectedWallet.connect === 'function') {
+                    await selectedWallet.connect();
+                    toast.success(`Connecting to ${selectedWallet.name}...`);
+                } else {
+                    toast.error("Selected wallet does not support direct connect method.");
+                    console.error('selectedWallet.connect is not a function:', selectedWallet);
+                }
             } else {
                 toast.error("No wallets available. Please install Martian or Rise wallet.");
             }
@@ -168,13 +173,14 @@ const WalletConnect = ({ onWalletConnected }) => {
             }
 
             const selectedWallet = availableWallets[0];
-            if (typeof select !== 'function') {
-                toast.error("Wallet select function is not available.");
-                console.error('select is not a function:', select);
+            if (selectedWallet && typeof selectedWallet.connect === 'function') {
+                await selectedWallet.connect();
+                toast.success(`Connecting to ${selectedWallet.name}...`);
+            } else {
+                toast.error("Selected wallet does not support direct connect method.");
+                console.error('selectedWallet.connect is not a function:', selectedWallet);
                 return;
             }
-            await select(selectedWallet.name);
-            toast.success(`Connecting to ${selectedWallet.name}...`);
             
             // Simple connection without complex balance fetching
             setTimeout(() => {
