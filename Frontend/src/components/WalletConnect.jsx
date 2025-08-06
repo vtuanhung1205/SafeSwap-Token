@@ -168,6 +168,11 @@ const WalletConnect = ({ onWalletConnected }) => {
             }
 
             const selectedWallet = availableWallets[0];
+            if (typeof select !== 'function') {
+                toast.error("Wallet select function is not available.");
+                console.error('select is not a function:', select);
+                return;
+            }
             await select(selectedWallet.name);
             toast.success(`Connecting to ${selectedWallet.name}...`);
             

@@ -869,39 +869,4 @@ router.get('/wallet-info/:address', async (req, res) => {
   }
 });
 
-// @route   GET /api/auth/profile
-// @desc    Get user profile (requires authentication)
-// @access  Private
-router.get('/profile', auth, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.userId);
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        error: 'User not found'
-      });
-    }
-
-    res.json({
-      success: true,
-      data: {
-        id: user._id,
-        email: user.email,
-        profile: user.profile,
-        walletAddress: user.walletAddress,
-        walletType: user.walletType,
-        accountStatus: user.accountStatus,
-        isEmailVerified: user.isEmailVerified,
-        authProvider: user.authProvider
-      }
-    });
-  } catch (error) {
-    logger.error('Get profile error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to get user profile'
-    });
-  }
-});
-
 module.exports = router; 
