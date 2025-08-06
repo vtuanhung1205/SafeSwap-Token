@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { userAPI, walletAPI, handleApiError } from '../../utils/api';
+import { userAPI, handleApiError } from '../../utils/api';
 import toast from 'react-hot-toast';
 import { useWallet } from '@aptos-labs/wallet-adapter-react';
+import { AptosClient } from 'aptos';
 import { Wallet, ArrowUpDown, RefreshCw, AlertTriangle, CheckCircle, Loader2 } from 'lucide-react';
 import WalletConnect from '../WalletConnect';
 import TransactionHistory from '../TransactionHistory';
@@ -67,7 +68,7 @@ const formatTokenBalance = (balance, symbol) => {
 
 const Dashboard = () => {
   const { user, isAuthenticated } = useAuth();
-  const { connected } = useWallet();
+  const { connected, account } = useWallet();
   const [swapHistory, setSwapHistory] = useState([]);
   const [stats, setStats] = useState({ totalSwaps: 0, totalVolume: 0, successRate: 0, avgAmount: 0 });
   const [tokenBalances, setTokenBalances] = useState({});
@@ -155,13 +156,31 @@ const Dashboard = () => {
   };
 
   const fetchWalletBalances = async () => {
+    if (!connected || !account) return;
     try {
       setLoadingBalances(true);
-      const response = await walletAPI.getInfo();
-      
-      if (response.data?.success && response.data.data?.wallet?.tokenBalances) {
-        setTokenBalances(response.data.data.wallet.tokenBalances);
+      const client = new AptosClient("https://fullnode.mainnet.aptoslabs.com/v1");
+      // Fetch APT balance
+      let aptBalance = 0;
+      try {
+        const resource = await client.getAccountResource({
+          address: account.address,
+          resourceType: "0x1::coin::CoinStore<0x1::aptos_coin::AptosCoin>",
+        });
+        aptBalance = Number(resource.data.coin.value) / 1e8;
+      } catch (e) {
+        aptBalance = 0;
       }
+      // Fetch token balances (nâng cao: có thể fetch thêm các resource khác nếu muốn)
+      setTokenBalances({
+        APT: {
+          symbol: "APT",
+          name: "Aptos",
+          balance: aptBalance,
+          icon: "https://s2.coinmarketcap.com/static/img/coins/200x200/21794.png",
+          decimals: 8
+        }
+      });
     } catch (err) {
       console.error('Error fetching wallet balances:', err);
     } finally {

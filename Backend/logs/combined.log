@@ -61,3 +61,22 @@
 {"level":"info","message":"Transaction monitoring started","service":"safeswap-backend","timestamp":"2025-08-06 12:46:56"}
 {"level":"info","message":"Server running on port 3001","service":"safeswap-backend","timestamp":"2025-08-06 12:46:56"}
 {"level":"info","message":"Environment: development","service":"safeswap-backend","timestamp":"2025-08-06 12:46:56"}
+{"level":"info","message":"MongoDB Connected: ac-nefotyl-shard-00-00.6pk7wds.mongodb.net","service":"safeswap-backend","timestamp":"2025-08-06 16:21:56"}
+{"level":"info","message":"Database connected successfully","service":"safeswap-backend","timestamp":"2025-08-06 16:21:56"}
+{"level":"info","message":"Connected to Aptos mainnet: Ledger version 3185056863","service":"safeswap-backend","timestamp":"2025-08-06 16:21:57"}
+{"level":"info","message":"Chain ID: 1","service":"safeswap-backend","timestamp":"2025-08-06 16:21:57"}
+{"level":"info","message":"MongoDB Connected: ac-nefotyl-shard-00-02.6pk7wds.mongodb.net","service":"safeswap-backend","timestamp":"2025-08-06 16:22:46"}
+{"level":"info","message":"Database connected successfully","service":"safeswap-backend","timestamp":"2025-08-06 16:22:46"}
+{"level":"info","message":"Connected to Aptos mainnet: Ledger version 3185059936","service":"safeswap-backend","timestamp":"2025-08-06 16:22:47"}
+{"level":"info","message":"Chain ID: 1","service":"safeswap-backend","timestamp":"2025-08-06 16:22:47"}
+{"level":"info","message":"MongoDB Connected: ac-nefotyl-shard-00-00.6pk7wds.mongodb.net","service":"safeswap-backend","timestamp":"2025-08-06 16:23:41"}
+{"level":"info","message":"Database connected successfully","service":"safeswap-backend","timestamp":"2025-08-06 16:23:41"}
+{"level":"info","message":"Connected to Aptos mainnet: Ledger version 3185063779","service":"safeswap-backend","timestamp":"2025-08-06 16:23:41"}
+{"level":"info","message":"Chain ID: 1","service":"safeswap-backend","timestamp":"2025-08-06 16:23:41"}
+{"level":"info","message":"Aptos service initialized","service":"safeswap-backend","timestamp":"2025-08-06 16:23:41"}
+{"level":"info","message":"Starting transaction monitoring...","service":"safeswap-backend","timestamp":"2025-08-06 16:23:41"}
+{"level":"info","message":"Transaction monitoring started","service":"safeswap-backend","timestamp":"2025-08-06 16:23:41"}
+{"level":"info","message":"Transaction monitoring started","service":"safeswap-backend","timestamp":"2025-08-06 16:23:41"}
+{"level":"info","message":"Server running on port 3001","service":"safeswap-backend","timestamp":"2025-08-06 16:23:41"}
+{"level":"info","message":"Environment: development","service":"safeswap-backend","timestamp":"2025-08-06 16:23:41"}
+{"level":"warn","message":"MongoDB disconnected","service":"safeswap-backend","timestamp":"2025-08-06 16:23:49"}

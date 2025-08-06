@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { Copy, ArrowDownCircle, ArrowUpCircle, Shield } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
-import { walletAPI, handleApiError } from "../../utils/api";
+import { AptosClient } from "aptos";
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
 import toast from "react-hot-toast";
+
+const APTOS_NODE_URL = "https://fullnode.mainnet.aptoslabs.com/v1";
 
 const Wallet = () => {
   const { user } = useAuth();
   const { connected, account } = useWallet();
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
-  const [walletInfo, setWalletInfo] = useState(null);
+  const [balance, setBalance] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [error, setError] = useState(null);
 
@@ -26,22 +28,29 @@ const Wallet = () => {
     try {
       setLoading(true);
       setError(null);
-      
-      const [walletInfoResponse, transactionsResponse] = await Promise.all([
-        walletAPI.getInfo(),
-        walletAPI.getTransactions(),
-      ]);
-
-      if (walletInfoResponse.data.success) {
-        setWalletInfo(walletInfoResponse.data.data.wallet);
+      const client = new AptosClient(APTOS_NODE_URL);
+      // Fetch balance
+      let balanceValue = 0;
+      try {
+        const resource = await client.getAccountResource({
+          address: account.address,
+          resourceType: "0x1::coin::CoinStore<0x1::aptos_coin::AptosCoin>",
+        });
+        balanceValue = Number(resource.data.coin.value) / 1e8;
+      } catch (e) {
+        balanceValue = 0;
       }
-      
-      if (transactionsResponse.data.success) {
-        setTransactions(transactionsResponse.data.data.transactions || []);
+      setBalance(balanceValue);
+      // Fetch transactions
+      let txns = [];
+      try {
+        txns = await client.getAccountTransactions({ address: account.address });
+      } catch (e) {
+        txns = [];
       }
+      setTransactions(txns);
     } catch (err) {
-      console.error("Error fetching wallet data:", err);
-      setError(handleApiError(err));
+      setError("Failed to load wallet data");
       toast.error("Failed to load wallet data");
     } finally {
       setLoading(false);
@@ -91,122 +100,44 @@ const Wallet = () => {
   const formattedAddress = walletAddress ? 
     `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}` : 
     "Unknown";
-  
-  const balance = walletInfo?.balance || 0;
 
   return (
     <div className="min-h-screen from-[#18181c] to-[#23232a] text-white px-4 py-12 md:px-12 lg:px-48">
       {/* Hero Card */}
       <div className="max-w-3xl mx-auto mb-10">
-        <div className="relative bg-gradient-to-br from-cyan-900/60 to-pink-900/40 backdrop-blur-xl rounded-3xl shadow-2xl p-8 flex flex-col md:flex-row items-center justify-between gap-6 border border-cyan-800/30">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-cyan-600 flex items-center justify-center shadow-lg border-4 border-cyan-400/30">
-              <Shield size={36} className="text-white" />
-            </div>
-            <div>
-              <div className="text-gray-300 text-sm mb-1 flex items-center gap-2">
-                <span>Wallet Address:</span>
-                <span className="font-mono text-cyan-200">{formattedAddress}</span>
-                <button
-                  onClick={handleCopy}
-                  className="ml-1 p-1 rounded hover:bg-cyan-800/30 transition"
-                  title="Copy address"
-                >
-                  <Copy size={16} className="text-cyan-400" />
-                </button>
-                {copied && (
-                  <span className="ml-2 text-green-400 text-xs">Copied!</span>
-                )}
-              </div>
-              <div className="text-3xl md:text-4xl font-bold text-white">
-                {balance.toLocaleString()}{" "}
-                <span className="text-cyan-400">APT</span>
-              </div>
-              <div className="text-gray-400 text-xs mt-1">
-                Available Balance
-              </div>
-            </div>
+        <div className="bg-[#1c1c24] rounded-2xl p-8 border border-[#2a2a35] shadow-lg flex flex-col md:flex-row items-center md:items-start md:space-x-8">
+          <div className="flex-shrink-0 w-20 h-20 rounded-full bg-cyan-600/20 flex items-center justify-center mb-6 md:mb-0">
+            <Shield size={36} className="text-cyan-400" />
           </div>
-          <div className="flex flex-col md:flex-row gap-3">
-            <button className="bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-2 rounded-xl font-semibold shadow transition">
-              Deposit
-            </button>
-            <button className="bg-pink-600 hover:bg-pink-700 text-white px-6 py-2 rounded-xl font-semibold shadow transition">
-              Withdraw
-            </button>
+          <div className="flex-1">
+            <div className="flex items-center space-x-2 mb-2">
+              <span className="text-lg font-bold text-white">Aptos Wallet</span>
+              <button onClick={handleCopy} className="ml-2 text-cyan-400 hover:text-cyan-300" title="Copy Address">
+                <Copy size={16} />
+              </button>
+              {copied && <span className="text-xs text-green-400 ml-1">Copied!</span>}
+            </div>
+            <div className="text-gray-400 text-sm mb-2">{formattedAddress}</div>
+            <div className="text-2xl font-bold text-white mb-2">{balance !== null ? `${balance} APT` : 'Loading...'}</div>
           </div>
         </div>
       </div>
-
       {/* Transaction History */}
-      <div className="max-w-3xl mx-auto bg-[#18181c] rounded-2xl shadow-lg p-8 mb-10">
-        <h2 className="text-2xl font-bold mb-6 text-cyan-400 text-center">
-          Transaction History
-        </h2>
-        <div className="overflow-x-auto">
-          {transactions.length === 0 ? (
-            <div className="text-center py-10 text-gray-400">
-              No transaction history available
-            </div>
-          ) : (
-            <table className="min-w-full text-left text-gray-300">
-              <thead>
-                <tr className="border-b border-[#23232a]">
-                  <th className="py-2 px-3">Type</th>
-                  <th className="py-2 px-3">Amount</th>
-                  <th className="py-2 px-3">Date</th>
-                  <th className="py-2 px-3">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {transactions.map((tx) => (
-                  <tr
-                    key={tx.id || tx.hash}
-                    className="hover:bg-[#23232a]/60 transition rounded-lg"
-                  >
-                    <td className="py-2 px-3 flex items-center gap-2">
-                      {tx.type === "Deposit" ? (
-                        <ArrowDownCircle className="text-green-400" size={18} />
-                      ) : (
-                        <ArrowUpCircle className="text-pink-400" size={18} />
-                      )}
-                      <span
-                        className={
-                          tx.type === "Deposit"
-                            ? "text-green-400 font-semibold"
-                            : "text-pink-400 font-semibold"
-                        }
-                      >
-                        {tx.type}
-                      </span>
-                    </td>
-                    <td className="py-2 px-3">
-                      {tx.type === "Deposit" ? "+" : "-"}
-                      {tx.amount} {tx.currency || "APT"}
-                    </td>
-                    <td className="py-2 px-3">{new Date(tx.timestamp || tx.date).toLocaleDateString()}</td>
-                    <td className="py-2 px-3">
-                      <span className="bg-cyan-900/40 text-cyan-300 px-3 py-1 rounded-full text-xs font-semibold">
-                        {tx.status || "Completed"}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-      </div>
-
-      {/* Security Notice */}
-      <div className="max-w-3xl mx-auto mb-10">
-        <div className="flex items-center gap-3 bg-yellow-900/40 text-yellow-300 p-4 rounded-lg text-sm shadow">
-          <Shield size={18} className="text-yellow-300" />
-          <span>
-            <strong>Security Notice:</strong> Never share your wallet private
-            key or recovery phrase with anyone.
-          </span>
-        </div>
+      <div className="max-w-3xl mx-auto">
+        <h2 className="text-xl font-bold text-white mb-4">Transaction History</h2>
+        {transactions.length === 0 ? (
+          <div className="text-gray-400">No transactions found.</div>
+        ) : (
+          <ul className="divide-y divide-gray-800">
+            {transactions.map((txn) => (
+              <li key={txn.hash} className="py-4 flex flex-col md:flex-row md:items-center md:space-x-4">
+                <span className="font-mono text-xs text-cyan-400">{txn.hash.slice(0, 10)}...{txn.hash.slice(-6)}</span>
+                <span className="text-gray-400 text-xs md:ml-2">{txn.type}</span>
+                <span className="text-gray-400 text-xs md:ml-2">{new Date(Number(txn.timestamp) / 1000).toLocaleString()}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );

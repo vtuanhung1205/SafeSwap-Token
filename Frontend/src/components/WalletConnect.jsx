@@ -176,7 +176,7 @@ const WalletConnect = ({ onWalletConnected }) => {
                 if (connected && account) {
                     setWalletBalance('0.0000 (Demo Mode)');
                     toast.success('Connected! Demo mode enabled');
-                    setShowLoginPromptModal(true);
+        setShowLoginPromptModal(true);
                 }
             }, 1000);
             
