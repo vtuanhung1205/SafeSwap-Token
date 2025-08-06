@@ -6,6 +6,7 @@ import { authAPI } from '../utils/api';
 import { Loader2, LogOut, PlusCircle, Wallet as WalletIcon } from 'lucide-react';
 import { useGoogleLogin } from '@react-oauth/google';
 import DemoBadge from './DemoBadge';
+import { APTOS_NODE_URL, validateAptosConfig } from '../config/aptos';
 
 const WalletConnect = ({ onWalletConnected }) => {
     const { isAuthenticated, googleLogin, connectWallet, disconnectWallet } = useAuth();
@@ -108,8 +109,11 @@ const WalletConnect = ({ onWalletConnected }) => {
             if (!connected || !account) return;
             
             try {
+                // Validate config trước khi sử dụng
+                validateAptosConfig();
+                
                 // Use AptosClient to fetch balance (as per the guide)
-                const client = new (await import('aptos')).AptosClient('https://fullnode.mainnet.aptoslabs.com/v1');
+                const client = new (await import('aptos')).AptosClient(APTOS_NODE_URL);
                 
                 const resource = await client.getAccountResource({
                     address: account.address,

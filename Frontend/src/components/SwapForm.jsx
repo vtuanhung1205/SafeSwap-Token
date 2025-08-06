@@ -15,6 +15,8 @@ import { useWallet } from "@aptos-labs/wallet-adapter-react";
 import WalletConnect from "./WalletConnect";
 import { AptosClient } from "aptos";
 import axios from "axios";
+import { SDK } from "@pontem/liquidswap-sdk";
+import { APTOS_NODE_URL, validateAptosConfig } from "../config/aptos";
 
 // --- Custom Hooks and tokens array (Unchanged) ---
 const useDebounce = (value, delay) => {
@@ -120,8 +122,10 @@ const SwapForm = () => {
     if (!connected || !account) return;
     setIsLoadingBalances(true);
     try {
-      const { AptosClient } = await import('aptos');
-      const client = new AptosClient('https://fullnode.mainnet.aptoslabs.com/v1');
+      // Validate config trước khi sử dụng
+      validateAptosConfig();
+      
+      const client = new AptosClient(APTOS_NODE_URL);
       // Fetch APT balance
       let aptBalance = 0;
       try {
@@ -215,115 +219,70 @@ const SwapForm = () => {
   };
 
   const handleSwap = async () => {
-    if (!connected || !account) {
-      toast.error('Please connect your wallet first');
+    if (!connected || !account || !fromToken || !toToken || !amount) {
+      toast.error("Please connect wallet and fill all fields");
       return;
     }
 
-    setLoading(true);
-    setError(null);
-
     try {
-      // 1. Validate input
-      if (!fromToken || !toToken || !amount || parseFloat(amount) <= 0) {
-        throw new Error('Please enter valid swap details');
-      }
-
-      // Check if demo mode (no real balance)
-      const isDemoMode = walletBalance === '0.0000 (Demo Mode)' || walletBalance === 0;
+      setIsLoading(true);
       
-      if (isDemoMode) {
-        // Demo mode - simulate swap without real transaction
-        const fromAmount = parseFloat(amount);
-        const toAmount = fromAmount * 0.95; // Simulate 5% slippage
-        
-        toast.success(`Demo Swap: ${fromAmount} ${fromToken.symbol} → ${toAmount.toFixed(6)} ${toToken.symbol}`);
-        
-        // Save demo transaction
-        await userAPI.saveSwapHistory({
-          transactionHash: `demo_${Date.now()}`,
-          walletAddress: account.address,
-          fromToken: {
-            address: fromToken.address,
-            symbol: fromToken.symbol,
-            amount: fromAmount,
-            price: 1.0
-          },
-          toToken: {
-            address: toToken.address,
-            symbol: toToken.symbol,
-            amount: toAmount,
-            price: 1.0
-          },
-          swapProvider: 'demo',
-          gasUsed: 0,
-          gasPrice: 0,
-          totalCost: 0,
-          status: 'demo_success'
-        });
-        
-        setAmount('');
-        setFromToken(null);
-        setToToken(null);
-        return;
-      }
-
-      // Real swap mode
-      const fromPrice = await getTokenPrice(fromToken);
-      const toPrice = await getTokenPrice(toToken);
+      // Validate config trước khi sử dụng
+      validateAptosConfig();
       
-      if (!fromPrice || !toPrice) {
-        throw new Error('Unable to get current prices');
-      }
-
-      const fromAmount = parseFloat(amount);
-      const toAmount = (fromAmount * fromPrice) / toPrice;
-      
-      const payload = createSwapTransactionPayload({
-        fromToken: fromToken.address,
-        toToken: toToken.address,
-        fromAmount: fromAmount * Math.pow(10, fromToken.decimals),
-        toAmount: toAmount * Math.pow(10, toToken.decimals),
-        slippage: slippage / 100
+      // Initialize Liquidswap SDK với config đúng
+      const sdk = new SDK({ 
+        nodeUrl: APTOS_NODE_URL
       });
 
+      // Convert amount to proper format (APT has 8 decimals)
+      const fromAmount = parseFloat(amount) * Math.pow(10, 8);
+
+      // Calculate swap rates
+      const rates = await sdk.Swap.calculateRates({
+        fromToken: '0x1::aptos_coin::AptosCoin',
+        toToken: '0xf22bede237a07e121b56d91a491eb7bcdfd1f5907926a9e58338f964a01b17fa::asset::USDT',
+        amount: fromAmount,
+        curveType: 'uncorrelated',
+        interactiveToken: 'from',
+        version: 0,
+      });
+
+      // Create swap transaction payload
+      const payload = await sdk.Swap.createSwapTransactionPayload({
+        fromToken: '0x1::aptos_coin::AptosCoin',
+        toToken: '0xf22bede237a07e121b56d91a491eb7bcdfd1f5907926a9e58338f964a01b17fa::asset::USDT',
+        fromAmount: fromAmount,
+        toAmount: Number(rates),
+        interactiveToken: 'from',
+        slippage: 0.005, // 0.5% slippage
+        stableSwapType: 'high',
+        curveType: 'uncorrelated',
+        version: 0,
+      });
+
+      // Sign and submit transaction
       const response = await signAndSubmitTransaction(payload);
       
-      const client = new AptosClient('https://fullnode.mainnet.aptoslabs.com/v1');
+      // Wait for transaction với config đúng
+      const client = new AptosClient(APTOS_NODE_URL);
       await client.waitForTransaction({ transactionHash: response.hash });
 
-      await userAPI.saveSwapHistory({
-        transactionHash: response.hash,
-        walletAddress: account.address,
-        fromToken: {
-          address: fromToken.address,
-          symbol: fromToken.symbol,
-          amount: fromAmount,
-          price: fromPrice
-        },
-        toToken: {
-          address: toToken.address,
-          symbol: toToken.symbol,
-          amount: toAmount,
-          price: toPrice
-        },
-        swapProvider: 'liquidswap',
-        gasUsed: response.gas_used,
-        gasPrice: response.gas_unit_price,
-        totalCost: (response.gas_used * response.gas_unit_price) / Math.pow(10, 8),
-        status: 'success'
-      });
+      toast.success(`Swap successful! Hash: ${response.hash}`);
       
-      setAmount('');
-      setFromToken(null);
-      setToToken(null);
-
+      // Reset form
+      setAmount("");
+      setToAmount("");
+      setQuote(null);
+      
+      // Refresh balances
+      fetchWalletBalances();
+      
     } catch (error) {
-      console.error('Swap failed:', error);
-      setError(error.message || 'Swap failed. Please try again.');
-      toast.error(error.message || 'Swap failed');
+      console.error('Error swapping tokens:', error);
+      toast.error('Swap failed: ' + (error.message || 'Unknown error'));
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 

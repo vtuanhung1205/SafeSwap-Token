@@ -26,6 +26,7 @@
     "@aptos-labs/wallet-adapter-core": "^7.1.1",
     "@aptos-labs/wallet-adapter-react": "^3.0.6",
     "@martianwallet/aptos-wallet-adapter": "^0.0.5",
+    "@pontem/liquidswap-sdk": "^0.7.3",
     "@react-oauth/google": "^0.12.2",
     "@rise-wallet/wallet-adapter": "^0.1.2",
     "aptos": "^1.21.0",
