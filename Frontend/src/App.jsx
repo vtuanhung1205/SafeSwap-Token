@@ -60,9 +60,7 @@ function App() {
   const [showChatbot, setShowChatbot] = useState(false);
 
   return (
-    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
-      <AuthProvider>
-        <div className="min-h-screen flex flex-col background-animated">
+    <div className="min-h-screen flex flex-col background-animated">
           <Navbar />
 
           <main className="flex-1 relative z-10">
@@ -110,9 +108,7 @@ function App() {
           {/* Demo Badge */}
           <DemoBadge />
         </div>
-      </AuthProvider>
-    </GoogleOAuthProvider>
-  );
+    );
 }
 
 // --- Page Components (Wrappers) ---
