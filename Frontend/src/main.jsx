@@ -10,9 +10,7 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 // --- Aptos Wallet Imports ---
 import { AptosWalletAdapterProvider } from "@aptos-labs/wallet-adapter-react";
 import { MartianWallet } from "@martianwallet/aptos-wallet-adapter";
-import { PontemWalletAdapter } from "@pontem/aptos-wallet-adapter";
 import { RiseWallet } from "@rise-wallet/wallet-adapter";
-import { FewchaWallet } from "fewcha-plugin-wallet-adapter";
 
 // Configure React Router future flags
 import { 
@@ -34,9 +32,7 @@ UNSAFE_RouteContext.displayName = "Route";
 
 const wallets = [
   new MartianWallet(),
-  new PontemWalletAdapter(),
   new RiseWallet(),
-  new FewchaWallet(),
 ];
 
 ReactDOM.createRoot(document.getElementById("root")).render(

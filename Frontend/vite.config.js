@@ -17,11 +17,8 @@ export default defineConfig({
           ui: ['lucide-react', 'react-icons'],
           wallet: [
             '@aptos-labs/wallet-adapter-react',
-            '@aptos-labs/wallet-adapter-core',
             '@martianwallet/aptos-wallet-adapter',
-            '@pontem/aptos-wallet-adapter',
-            '@rise-wallet/wallet-adapter',
-            'fewcha-plugin-wallet-adapter'
+            '@rise-wallet/wallet-adapter'
           ],
           utils: ['axios', 'socket.io-client', 'clsx', 'nprogress']
         }

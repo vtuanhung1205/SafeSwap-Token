@@ -151,18 +151,6 @@ const WalletConnect = ({ onWalletConnected }) => {
                     </button>
                 </div>
             )}
-                </button>
-            ) : (
-                <div className="flex items-center justify-between w-full bg-[#111112] rounded-xl p-2 border border-[#2a2a35]">
-                    <div className="flex items-center">
-                        <img src={wallet?.adapter.icon} alt={wallet?.adapter.name} className="w-7 h-7 rounded-full mr-2" />
-                        <span className="text-white font-mono text-sm">{formatAddress(account?.address)}</span>
-                    </div>
-                    <button onClick={handleDisconnect} className="text-gray-400 hover:text-red-500 transition p-2 rounded-lg" title="Disconnect">
-                        <LogOut size={18} />
-                    </button>
-                </div>
-            )}
 
             {/* Modal 1: Login Prompt */}
             {showLoginPromptModal && !isAuthenticated && (
