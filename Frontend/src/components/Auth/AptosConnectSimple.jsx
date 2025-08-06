@@ -1,42 +1,47 @@
 import React, { useState } from 'react';
-import { Wallet, ExternalLink, Loader2, CheckCircle } from 'lucide-react';
+import { Wallet, ExternalLink, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const AptosConnectSimple = ({ onSuccess, onClose }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  // Handle Aptos Connect redirect
+  // Handle Aptos Connect redirect with proper URL structure
   const handleAptosConnectRedirect = () => {
     setIsLoading(true);
+    setError(null);
     
     try {
-      // Create Aptos Connect URL
-      const currentUrl = encodeURIComponent(window.location.href);
-      const appName = 'SafeSwap';
-      const appIcon = 'https://your-app-icon.com/icon.png'; // Replace with your app icon
+      // Create proper callback URL
+      const callbackUrl = new URL(window.location.href);
+      callbackUrl.searchParams.set('aptos_connect', 'true');
+      callbackUrl.searchParams.set('timestamp', Date.now().toString());
       
-      // Create the request object
+      // Create the request object with proper structure
       const request = {
         connect: {
-          url: currentUrl,
-          name: appName,
-          icon: appIcon
+          url: callbackUrl.toString(),
+          name: 'SafeSwap',
+          icon: 'https://your-app-icon.com/icon.png',
+          description: 'Connect your Aptos wallet to SafeSwap'
         }
       };
       
-      // Encode the request
+      // Encode the request properly
       const encodedRequest = btoa(JSON.stringify(request));
       
-      // Create the full URL
-      const aptosConnectUrl = `https://aptosconnect.app/prompt/?request=${encodedRequest}`;
+      // Create the full URL with proper encoding
+      const aptosConnectUrl = `https://aptosconnect.app/prompt/?request=${encodeURIComponent(encodedRequest)}`;
       
       console.log('Redirecting to Aptos Connect:', aptosConnectUrl);
+      console.log('Request object:', request);
       
       // Redirect to Aptos Connect
       window.location.href = aptosConnectUrl;
       
     } catch (error) {
       console.error('Failed to create Aptos Connect URL:', error);
+      setError('Failed to create connection URL. Please try again.');
       toast.error('Failed to connect. Please try again.');
       setIsLoading(false);
     }
@@ -45,11 +50,15 @@ const AptosConnectSimple = ({ onSuccess, onClose }) => {
   // Handle direct wallet connection
   const handleDirectWalletConnection = async () => {
     setIsLoading(true);
+    setError(null);
     
     try {
       // Check if wallet extension is available
       if (typeof window !== 'undefined' && window.aptos) {
+        console.log('Wallet extension detected, attempting connection...');
+        
         const result = await window.aptos.connect();
+        console.log('Wallet connection result:', result);
         
         const walletData = {
           type: 'aptos-connect',
@@ -65,11 +74,13 @@ const AptosConnectSimple = ({ onSuccess, onClose }) => {
           onSuccess(walletData);
         }
       } else {
+        console.log('Wallet extension not available, redirecting to Aptos Connect...');
         // Fallback to Aptos Connect redirect
         handleAptosConnectRedirect();
       }
     } catch (error) {
       console.error('Direct wallet connection error:', error);
+      setError('Wallet connection failed. Please try again.');
       toast.error('Wallet connection failed. Please try again.');
     } finally {
       setIsLoading(false);
@@ -94,6 +105,46 @@ const AptosConnectSimple = ({ onSuccess, onClose }) => {
     }
   };
 
+  // Handle callback from Aptos Connect
+  React.useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const aptosConnect = urlParams.get('aptos_connect');
+    
+    if (aptosConnect === 'true') {
+      console.log('Aptos Connect callback detected');
+      
+      // Parse wallet data from URL parameters
+      const walletAddress = urlParams.get('wallet');
+      const publicKey = urlParams.get('publicKey');
+      const authKey = urlParams.get('authKey');
+      const provider = urlParams.get('provider');
+      
+      if (walletAddress) {
+        const walletData = {
+          type: 'aptos-connect',
+          address: walletAddress,
+          publicKey: publicKey,
+          authKey: authKey,
+          provider: provider || 'aptos-connect'
+        };
+        
+        console.log('Wallet data from callback:', walletData);
+        toast.success('Wallet connected successfully!');
+        
+        if (onSuccess) {
+          onSuccess(walletData);
+        }
+        
+        // Clean up URL
+        const cleanUrl = window.location.href.split('?')[0];
+        window.history.replaceState({}, document.title, cleanUrl);
+      } else {
+        console.log('No wallet data in callback');
+        setError('No wallet data received from Aptos Connect');
+      }
+    }
+  }, [onSuccess]);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -108,6 +159,16 @@ const AptosConnectSimple = ({ onSuccess, onClose }) => {
           Securely connect your Aptos wallet
         </p>
       </div>
+
+      {/* Error Display */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex items-center space-x-2">
+            <AlertCircle className="w-5 h-5 text-red-600" />
+            <span className="text-sm text-red-700">{error}</span>
+          </div>
+        </div>
+      )}
 
       {/* Status */}
       <div className="flex items-center justify-center space-x-2">
