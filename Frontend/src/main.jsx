@@ -9,7 +9,6 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 
 // --- Aptos Wallet Imports ---
 import { AptosWalletAdapterProvider } from "@aptos-labs/wallet-adapter-react";
-import { Network } from "@aptos-labs/wallet-adapter-core";
 import { MartianWallet } from "@martianwallet/aptos-wallet-adapter";
 import { RiseWallet } from "@rise-wallet/wallet-adapter";
 
@@ -40,7 +39,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
       <AptosWalletAdapterProvider
-        dappConfig={{ network: Network.MAINNET }}
+        dappConfig={{ network: "mainnet" }}
         optInWallets={['Martian', 'Rise']}
         autoConnect={false}
         onError={(error) => {
