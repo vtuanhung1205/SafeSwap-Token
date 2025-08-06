@@ -164,15 +164,18 @@ const WalletConnect = ({ onWalletConnected }) => {
     const handleConnectClick = async () => {
         if (connected) return;
         
-        // Nếu chưa xác thực, hiện modal xác thực trước
+        // Nếu chưa đăng nhập, hiện modal login trước
         if (!isAuthenticated) {
             setShowLoginPromptModal(true);
             return;
         }
         
-        // Nếu đã xác thực, hiện modal chọn ví Aptos
+        // Nếu đã đăng nhập, hiện modal chọn ví Aptos ngay
         setShowAddNewWalletModal(true);
     };
+
+    // Xóa useEffect tự động mở modal chọn ví sau khi login
+    // Vì login và connect wallet là độc lập, không cần tự động mở
 
     const handleWalletSelect = async (walletName) => {
         try {
