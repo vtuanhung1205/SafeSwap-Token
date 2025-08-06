@@ -15,8 +15,8 @@ const AptosSDKLogin = ({ onSuccess, onClose }) => {
   useEffect(() => {
     const initializeSDK = async () => {
       try {
-        // Initialize client for mainnet
-        const aptosClient = new AptosClient("https://fullnode.mainnet.aptoslabs.com");
+        // Initialize client for mainnet with QuickNode
+        const aptosClient = new AptosClient("https://responsive-weathered-hill.aptos-mainnet.quiknode.pro/b363dcabb59e76d6355f22f77644f3a924bce229");
         setClient(aptosClient);
         setIsInitialized(true);
         

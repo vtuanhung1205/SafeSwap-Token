@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Wallet, Loader2, Shield, ExternalLink } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { createAptosConnectUrl, APTOS_CONNECT_UTILS } from '../../config/aptos';
 
 const AptosConnectLogin = ({ onSuccess, onClose }) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -10,19 +11,8 @@ const AptosConnectLogin = ({ onSuccess, onClose }) => {
   const handleAptosConnect = () => {
     setIsConnecting(true);
     
-    // Create Aptos Connect URL
-    const baseUrl = 'https://aptosconnect.app/prompt/';
-    const request = {
-      type: 'connect',
-      chainId: '1', // Mainnet
-      dappName: 'SafeSwap',
-      dappUrl: window.location.origin,
-      callbackUrl: `${window.location.origin}/aptos-connect-callback`
-    };
-    
-    // Encode request
-    const encodedRequest = btoa(JSON.stringify(request));
-    const connectUrl = `${baseUrl}?request=${encodedRequest}`;
+    // Create Aptos Connect URL using config
+    const connectUrl = createAptosConnectUrl();
     
     // Redirect to Aptos Connect
     window.location.href = connectUrl;
