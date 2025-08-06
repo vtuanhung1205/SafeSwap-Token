@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useWallet } from '@aptos-labs/wallet-adapter-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
+import { authAPI } from '../utils/api';
 import { Loader2, LogOut, PlusCircle, Wallet as WalletIcon } from 'lucide-react';
 import { useGoogleLogin } from '@react-oauth/google';
 
 const WalletConnect = ({ onWalletConnected }) => {
-    const { isAuthenticated, connectWallet, disconnectWallet } = useAuth();
+    const { isAuthenticated, googleLogin, connectWallet, disconnectWallet } = useAuth();
     const { connected, account, disconnect, wallet, select, wallets } = useWallet();
 
     const [isLoading, setIsLoading] = useState(false);
@@ -20,9 +21,26 @@ const WalletConnect = ({ onWalletConnected }) => {
         onSuccess: async (tokenResponse) => {
             setIsLoading(true);
             try {
-                // Google login logic here
+                // Get user info from Google
+                const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                    headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+                });
+                const userInfo = await userInfoResponse.json();
+                
+                // Login with Google data
+                await googleLogin({
+                    access_token: tokenResponse.access_token,
+                    user: userInfo
+                });
+                
+                toast.success('Successfully logged in with Google!');
+                setShowLoginPromptModal(false);
+                
+                // After successful login, show wallet options
+                fetchAndShowLinkedWallets();
             } catch (error) {
-                console.error("Failed to sync with backend after Google login.");
+                console.error("Failed to sync with backend after Google login:", error);
+                toast.error("Google login failed. Please try again.");
             } finally {
                 setIsLoading(false);
             }
@@ -38,6 +56,105 @@ const WalletConnect = ({ onWalletConnected }) => {
         startGoogleLogin();
     };
 
+    const handleAppleLoginClick = () => {
+        // Apple Sign-In implementation
+        toast.info("Apple Sign-In coming soon!");
+        setIsLoading(false);
+    };
+
+    // Handle wallet login - Login with Aptos wallet and get wallet ID
+    const handleWalletLogin = async (walletAddress, walletType = 'other') => {
+        setIsLoading(true);
+        try {
+            // Create a simple message for signature (you can customize this)
+            const message = `Login to SafeSwap with wallet ${walletAddress} at ${new Date().toISOString()}`;
+            
+            // For now, we'll use a placeholder signature
+            // In a real implementation, you would get the signature from the wallet
+            const signature = `placeholder_signature_${Date.now()}`;
+            
+            // Call wallet login API
+            const response = await authAPI.walletLogin({
+                walletAddress,
+                signature,
+                message,
+                walletType
+            });
+            
+            if (response.data.success) {
+                // Store the token and user data
+                localStorage.setItem('authToken', response.data.data.token);
+                localStorage.setItem('user', JSON.stringify(response.data.data.user));
+                
+                toast.success('Wallet login successful!');
+                setShowLoginPromptModal(false);
+                
+                // Trigger wallet connection
+                if (onWalletConnected) {
+                    onWalletConnected({
+                        address: walletAddress,
+                        walletType: walletType,
+                        ...response.data.data.wallet
+                    });
+                }
+                
+                return response.data.data;
+            } else {
+                throw new Error(response.data.error || 'Wallet login failed');
+            }
+        } catch (error) {
+            console.error('Wallet login error:', error);
+            toast.error(error.response?.data?.error || 'Wallet login failed. Please try again.');
+            throw error;
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Handle wallet verification
+    const handleWalletVerification = async (walletAddress) => {
+        setIsLoading(true);
+        try {
+            const message = `Verify wallet ${walletAddress} at ${new Date().toISOString()}`;
+            const signature = `placeholder_signature_${Date.now()}`;
+            
+            const response = await authAPI.verifyWallet({
+                walletAddress,
+                signature,
+                message
+            });
+            
+            if (response.data.success) {
+                toast.success('Wallet verification successful!');
+                return response.data.data;
+            } else {
+                throw new Error(response.data.error || 'Wallet verification failed');
+            }
+        } catch (error) {
+            console.error('Wallet verification error:', error);
+            toast.error(error.response?.data?.error || 'Wallet verification failed.');
+            throw error;
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Get wallet information
+    const getWalletInfo = async (address) => {
+        try {
+            const response = await authAPI.getWalletInfo(address);
+            if (response.data.success) {
+                return response.data.data;
+            } else {
+                throw new Error(response.data.error || 'Failed to get wallet info');
+            }
+        } catch (error) {
+            console.error('Get wallet info error:', error);
+            toast.error(error.response?.data?.error || 'Failed to get wallet information.');
+            throw error;
+        }
+    };
+
     useEffect(() => {
         if (isAuthenticated && showLoginPromptModal) {
             setShowLoginPromptModal(false);
@@ -50,14 +167,20 @@ const WalletConnect = ({ onWalletConnected }) => {
             if (!isAuthenticated || !connected || !account || isConnecting) return;
             try {
                 setIsConnecting(true);
-                toast.success("Wallet connected successfully!");
                 const addressString = String(account.address);
+                const walletType = wallet?.adapter.name || 'other';
                 
-                // Use AuthContext to connect wallet
-                await connectWallet(addressString, wallet?.adapter.name);
+                // User is authenticated, connect wallet
+                await connectWallet(addressString, walletType);
+                toast.success("Wallet connected successfully!");
                 
                 if (onWalletConnected) {
-                    onWalletConnected({ ...account, address: addressString, publicKey: String(account.publicKey) });
+                    onWalletConnected({ 
+                        ...account, 
+                        address: addressString, 
+                        publicKey: String(account.publicKey),
+                        walletType: walletType
+                    });
                 }
             } catch (error) {
                 console.error("Wallet sync error:", error);
@@ -74,25 +197,23 @@ const WalletConnect = ({ onWalletConnected }) => {
 
     const handleConnectClick = () => {
         if (connected) return;
-        setShowLoginPromptModal(true);
+        
+        // Only allow wallet connection if authenticated
+        if (!isAuthenticated) {
+            setShowLoginPromptModal(true);
+        } else {
+            fetchAndShowLinkedWallets();
+        }
     };
 
     const fetchAndShowLinkedWallets = async () => {
         setIsLoading(true);
         setShowLinkedWalletModal(true);
         try {
-            // --- FIX 3: Use an existing endpoint to get user data ---
-            // Replaced non-existent `api.getLinkedWallets` with `authAPI.getProfile`.
-            // We assume the user's profile data contains their wallets.
-            // IMPORTANT: You may need to adjust `response.data.wallets` to match your actual API response structure.
-            // const response = await authAPI.getProfile(); // This line is removed as per the new_code
-            // const userWallets = response.data.wallets || []; // Default to an empty array if wallets aren't found
-
-            // setLinkedWallets(userWallets); // This line is removed as per the new_code
-            if (linkedWallets.length === 0) { // This line is removed as per the new_code
-                setShowLinkedWalletModal(false); // This line is removed as per the new_code
-                setShowAddNewWalletModal(true); // This line is removed as per the new_code
-            }
+            // For now, show available wallets
+            setLinkedWallets([]);
+            setShowLinkedWalletModal(false);
+            setShowAddNewWalletModal(true);
         } catch (error) {
             toast.error("Could not fetch your wallets.");
             setShowLinkedWalletModal(false);
@@ -160,11 +281,50 @@ const WalletConnect = ({ onWalletConnected }) => {
                         <div className="mx-auto bg-cyan-500/10 w-16 h-16 rounded-full flex items-center justify-center mb-6">
                             <WalletIcon className="w-8 h-8 text-cyan-400" />
                         </div>
-                        <h3 className="text-xl font-bold text-white mb-2">Login to Continue</h3>
-                        <p className="text-gray-400 mb-8">Sign in with Google to securely manage and link your wallets.</p>
-                        <button onClick={handleGoogleLoginClick} disabled={isLoading} className="w-full flex items-center justify-center space-x-3 py-3 rounded-xl font-medium transition bg-white text-black hover:bg-gray-200 disabled:bg-gray-300">
-                            {isLoading ? <Loader2 className="animate-spin" /> : (<> <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google" className="w-6 h-6" /> <span>Sign in with Google</span> </>)}
+                        <h3 className="text-xl font-bold text-white mb-2">Sign In to Connect Wallet</h3>
+                        <p className="text-gray-400 mb-8">Sign in with your account to securely connect your Aptos wallets.</p>
+                        
+                        {/* Google Sign-In */}
+                        <button 
+                            onClick={handleGoogleLoginClick} 
+                            disabled={isLoading} 
+                            className="w-full flex items-center justify-center space-x-3 py-3 px-4 rounded-xl font-medium transition bg-white text-black hover:bg-gray-200 disabled:bg-gray-300 mb-3"
+                        >
+                            {isLoading ? (
+                                <Loader2 className="animate-spin w-6 h-6" />
+                            ) : (
+                                <>
+                                    <img 
+                                        src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" 
+                                        alt="Google" 
+                                        className="w-6 h-6" 
+                                    />
+                                    <span>Continue with Google</span>
+                                </>
+                            )}
                         </button>
+                        
+                        {/* Apple Sign-In */}
+                        <button 
+                            onClick={handleAppleLoginClick} 
+                            disabled={isLoading} 
+                            className="w-full flex items-center justify-center space-x-3 py-3 px-4 rounded-xl font-medium transition bg-black text-white hover:bg-gray-800 disabled:bg-gray-600 border border-gray-600"
+                        >
+                            {isLoading ? (
+                                <Loader2 className="animate-spin w-6 h-6" />
+                            ) : (
+                                <>
+                                    <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                                    </svg>
+                                    <span>Continue with Apple</span>
+                                </>
+                            )}
+                        </button>
+                        
+                        <div className="mt-6 text-xs text-gray-500">
+                            By continuing, you agree to our Terms of Service and Privacy Policy
+                        </div>
                     </div>
                 </div>
             )}

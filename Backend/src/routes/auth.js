@@ -618,4 +618,247 @@ router.post('/forgot-password', [
   }
 });
 
+// @route   POST /api/auth/wallet-login
+// @desc    Login with Aptos wallet and get wallet ID
+// @access  Public
+router.post('/wallet-login', [
+  body('walletAddress').notEmpty(),
+  body('signature').notEmpty(),
+  body('message').notEmpty(),
+  body('walletType').optional().isIn(['petra', 'martian', 'pontem', 'fewcha', 'nightly', 'other'])
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Validation failed',
+        details: errors.array()
+      });
+    }
+
+    const { walletAddress, signature, message, walletType = 'other' } = req.body;
+
+    // Validate wallet address
+    const walletService = require('../services/walletService');
+    if (!walletService.validateWalletAddress(walletAddress)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid wallet address'
+      });
+    }
+
+    // Verify signature (you can implement signature verification here)
+    // For now, we'll assume the signature is valid if provided
+    if (!signature || !message) {
+      return res.status(400).json({
+        success: false,
+        error: 'Signature and message are required'
+      });
+    }
+
+    // Check if wallet exists on blockchain
+    const walletConnection = await walletService.checkWalletConnection(walletAddress);
+    if (!walletConnection.connected) {
+      return res.status(400).json({
+        success: false,
+        error: walletConnection.error || 'Wallet not found on Aptos network'
+      });
+    }
+
+    // Find or create user based on wallet address
+    let user = await User.findOne({ walletAddress: walletAddress.toLowerCase() });
+    
+    if (!user) {
+      // Create new user with wallet
+      user = new User({
+        email: `${walletAddress.toLowerCase()}@wallet.local`, // Temporary email
+        profile: {
+          firstName: 'Wallet',
+          lastName: 'User',
+          displayName: `Wallet ${walletAddress.slice(0, 8)}...${walletAddress.slice(-6)}`
+        },
+        authProvider: 'wallet',
+        walletAddress: walletAddress.toLowerCase(),
+        walletType: walletType,
+        accountStatus: 'active',
+        isEmailVerified: false
+      });
+      
+      await user.save();
+      logger.info(`New wallet user registered: ${walletAddress}`);
+    } else {
+      // Update existing user's wallet info
+      user.walletType = walletType;
+      user.lastLogin = new Date();
+      await user.save();
+      logger.info(`Existing wallet user logged in: ${walletAddress}`);
+    }
+
+    // Get wallet info from blockchain
+    const walletInfo = await walletService.getWalletInfo(walletAddress);
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN }
+    );
+
+    // Update user stats
+    await user.updateStats('login');
+
+    res.json({
+      success: true,
+      message: 'Wallet login successful',
+      data: {
+        user: {
+          id: user._id,
+          email: user.email,
+          profile: user.profile,
+          walletAddress: user.walletAddress,
+          walletType: user.walletType,
+          accountStatus: user.accountStatus,
+          isEmailVerified: user.isEmailVerified,
+          authProvider: user.authProvider
+        },
+        wallet: {
+          address: walletAddress,
+          type: walletType,
+          balance: walletInfo.balance,
+          tokens: walletInfo.totalTokens,
+          sequenceNumber: walletInfo.sequenceNumber,
+          hasResources: walletInfo.hasResources
+        },
+        token
+      }
+    });
+  } catch (error) {
+    logger.error('Wallet login error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Wallet login failed'
+    });
+  }
+});
+
+// @route   POST /api/auth/verify-wallet
+// @desc    Verify wallet ownership with signature
+// @access  Public
+router.post('/verify-wallet', [
+  body('walletAddress').notEmpty(),
+  body('signature').notEmpty(),
+  body('message').notEmpty()
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Validation failed',
+        details: errors.array()
+      });
+    }
+
+    const { walletAddress, signature, message } = req.body;
+
+    // Validate wallet address
+    const walletService = require('../services/walletService');
+    if (!walletService.validateWalletAddress(walletAddress)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid wallet address'
+      });
+    }
+
+    // TODO: Implement signature verification
+    // For now, we'll return success if signature is provided
+    if (!signature || !message) {
+      return res.status(400).json({
+        success: false,
+        error: 'Signature and message are required'
+      });
+    }
+
+    // Check if wallet exists on blockchain
+    const walletConnection = await walletService.checkWalletConnection(walletAddress);
+    if (!walletConnection.connected) {
+      return res.status(400).json({
+        success: false,
+        error: walletConnection.error || 'Wallet not found on Aptos network'
+      });
+    }
+
+    // Get wallet info
+    const walletInfo = await walletService.getWalletInfo(walletAddress);
+
+    res.json({
+      success: true,
+      message: 'Wallet verification successful',
+      data: {
+        address: walletAddress,
+        balance: walletInfo.balance,
+        tokens: walletInfo.totalTokens,
+        sequenceNumber: walletInfo.sequenceNumber,
+        hasResources: walletInfo.hasResources,
+        verified: true
+      }
+    });
+  } catch (error) {
+    logger.error('Wallet verification error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Wallet verification failed'
+    });
+  }
+});
+
+// @route   GET /api/auth/wallet-info/:address
+// @desc    Get wallet information by address
+// @access  Public
+router.get('/wallet-info/:address', async (req, res) => {
+  try {
+    const { address } = req.params;
+
+    // Validate wallet address
+    const walletService = require('../services/walletService');
+    if (!walletService.validateWalletAddress(address)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid wallet address'
+      });
+    }
+
+    // Check if wallet exists on blockchain
+    const walletConnection = await walletService.checkWalletConnection(address);
+    if (!walletConnection.connected) {
+      return res.status(404).json({
+        success: false,
+        error: walletConnection.error || 'Wallet not found on Aptos network'
+      });
+    }
+
+    // Get wallet info
+    const walletInfo = await walletService.getWalletInfo(address);
+
+    res.json({
+      success: true,
+      data: {
+        address: address,
+        balance: walletInfo.balance,
+        tokens: walletInfo.totalTokens,
+        sequenceNumber: walletInfo.sequenceNumber,
+        hasResources: walletInfo.hasResources,
+        accountInfo: walletInfo.accountInfo
+      }
+    });
+  } catch (error) {
+    logger.error('Get wallet info error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get wallet information'
+    });
+  }
+});
+
 module.exports = router; 

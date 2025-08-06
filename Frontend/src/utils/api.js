@@ -62,6 +62,18 @@ export const authAPI = {
   login: (credentials) => 
     api.post('/auth/login', credentials),
   
+  // Wallet login - Login with Aptos wallet and get wallet ID
+  walletLogin: (walletData) => 
+    api.post('/auth/wallet-login', walletData),
+  
+  // Verify wallet ownership
+  verifyWallet: (walletData) => 
+    api.post('/auth/verify-wallet', walletData),
+  
+  // Get wallet information by address
+  getWalletInfo: (address) => 
+    api.get(`/auth/wallet-info/${address}`),
+  
   // Get user profile
   getProfile: () => 
     api.get('/auth/profile'),
