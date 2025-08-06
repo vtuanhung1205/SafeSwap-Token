@@ -32,7 +32,10 @@ const WalletConnect = ({ onWalletConnected }) => {
                 // Create SafeSwap account with Google data
                 await googleLogin({
                     access_token: tokenResponse.access_token,
-                    user: userInfo
+                    user: userInfo,
+                    googleId: userInfo.sub,
+                    email: userInfo.email,
+                    name: userInfo.name
                 });
                 
                 // Link wallet to SafeSwap account
@@ -160,51 +163,56 @@ const WalletConnect = ({ onWalletConnected }) => {
             const availableWallets = wallets.filter(w => w.readyState === 'Installed' || w.readyState === 'Loadable');
             
             if (availableWallets.length === 0) {
-                toast.error("No wallets available. Please install Petra or Martian wallet.");
+                toast.error("No wallets available. Please install Martian or Rise wallet.");
                 return;
             }
 
-            // Find Petra wallet first (as per guide)
-            const petraWallet = availableWallets.find(w => w.name === 'Petra');
-            const selectedWallet = petraWallet || availableWallets[0];
+            // Try to connect to the first available wallet
+            const selectedWallet = availableWallets[0];
             
-            await select(selectedWallet.name);
-            toast.success(`Connecting to ${selectedWallet.name} on Aptos mainnet...`);
-            
-            // Wait for connection and fetch balance (as per guide)
-            setTimeout(async () => {
-                if (connected && account) {
-                    try {
-                        // Follow guide: Use AptosClient to fetch balance
-                        const client = new (await import('aptos')).AptosClient('https://fullnode.mainnet.aptoslabs.com/v1');
-                        
+            try {
+                await select(selectedWallet.name);
+                toast.success(`Connecting to ${selectedWallet.name} on Aptos mainnet...`);
+                
+                // Wait for connection and fetch balance (as per guide)
+                setTimeout(async () => {
+                    if (connected && account) {
                         try {
-                            const resource = await client.getAccountResource({
-                                address: account.address,
-                                resourceType: '0x1::coin::CoinStore<0x1::aptos_coin::AptosCoin>',
-                            });
+                            // Follow guide: Use AptosClient to fetch balance
+                            const client = new (await import('aptos')).AptosClient('https://fullnode.mainnet.aptoslabs.com/v1');
                             
-                            const balanceInApt = Number(resource.data.coin.value) / 100000000;
-                            setWalletBalance(balanceInApt.toFixed(4));
+                            try {
+                                const resource = await client.getAccountResource({
+                                    address: account.address,
+                                    resourceType: '0x1::coin::CoinStore<0x1::aptos_coin::AptosCoin>',
+                                });
+                                
+                                const balanceInApt = Number(resource.data.coin.value) / 100000000;
+                                setWalletBalance(balanceInApt.toFixed(4));
+                                
+                                toast.success(`Connected! Balance: ${balanceInApt.toFixed(4)} APT`);
+                            } catch (error) {
+                                // If no balance, show demo mode
+                                console.log('No APT balance, enabling demo mode');
+                                setWalletBalance('0.0000 (Demo Mode)');
+                                toast.success('Connected! Demo mode enabled');
+                            }
                             
-                            toast.success(`Connected! Balance: ${balanceInApt.toFixed(4)} APT`);
+                            // After wallet connection, show auth modal for SafeSwap account
+                            setShowLoginPromptModal(true);
+                            
                         } catch (error) {
-                            // If no balance, show demo mode
-                            console.log('No APT balance, enabling demo mode');
-                            setWalletBalance('0.0000 (Demo Mode)');
-                            toast.success('Connected! Demo mode enabled');
+                            console.error("Error fetching balance:", error);
+                            toast.error("Connected but failed to fetch balance");
+                            setShowLoginPromptModal(true);
                         }
-                        
-                        // After wallet connection, show auth modal for SafeSwap account
-                        setShowLoginPromptModal(true);
-                        
-                    } catch (error) {
-                        console.error("Error fetching balance:", error);
-                        toast.error("Connected but failed to fetch balance");
-                        setShowLoginPromptModal(true);
                     }
-                }
-            }, 2000);
+                }, 2000);
+                
+            } catch (error) {
+                console.error("Wallet selection error:", error);
+                toast.error("Failed to connect wallet");
+            }
             
         } catch (error) {
             console.error("Wallet connection error:", error);

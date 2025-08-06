@@ -31,21 +31,29 @@ const verifyGoogleToken = async (token) => {
 };
 
 // @route   POST /api/auth/google
-// @desc    Google OAuth login/register
+// @desc    Google OAuth login/register (no wallet required)
 // @access  Public
 router.post('/google', async (req, res) => {
   try {
-    const { idToken, accessToken } = req.body;
+    const { access_token, user, idToken, accessToken, googleId, email, name } = req.body;
 
-    if (!idToken) {
+    // Support both old and new format
+    const googleUser = user || {
+      email: email,
+      given_name: name?.split(' ')[0] || '',
+      family_name: name?.split(' ').slice(1).join(' ') || '',
+      name: name,
+      sub: googleId,
+      picture: '',
+      email_verified: true
+    };
+
+    if (!googleUser.email) {
       return res.status(400).json({
         success: false,
-        error: 'Google ID token is required'
+        error: 'Google user email is required'
       });
     }
-
-    // Verify Google token
-    const googleUser = await verifyGoogleToken(idToken);
     
     // Check if user exists
     let user = await User.findOne({ email: googleUser.email });
@@ -857,6 +865,41 @@ router.get('/wallet-info/:address', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to get wallet information'
+    });
+  }
+});
+
+// @route   GET /api/auth/profile
+// @desc    Get user profile (requires authentication)
+// @access  Private
+router.get('/profile', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        id: user._id,
+        email: user.email,
+        profile: user.profile,
+        walletAddress: user.walletAddress,
+        walletType: user.walletType,
+        accountStatus: user.accountStatus,
+        isEmailVerified: user.isEmailVerified,
+        authProvider: user.authProvider
+      }
+    });
+  } catch (error) {
+    logger.error('Get profile error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get user profile'
     });
   }
 });
