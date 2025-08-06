@@ -17,12 +17,12 @@ const Wallet = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (connected && account) {
+    if (isAuthenticated) {
       fetchWalletData();
     } else {
       setLoading(false);
     }
-  }, [connected, account]);
+  }, [isAuthenticated]);
 
   const fetchWalletData = async () => {
     try {
@@ -74,7 +74,7 @@ const Wallet = () => {
     );
   }
 
-  if (!connected || !account) {
+  if (!isAuthenticated) {
     return (
       <div className="min-h-screen from-[#18181c] to-[#23232a] text-white px-4 py-12 md:px-12 lg:px-48">
         <div className="max-w-3xl mx-auto text-center">

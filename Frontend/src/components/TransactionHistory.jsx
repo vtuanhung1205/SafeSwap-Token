@@ -9,13 +9,13 @@ const TransactionHistory = () => {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        if (connected && account) {
+        if (isAuthenticated) {
             fetchTransactions();
         }
-    }, [connected, account]);
+    }, [isAuthenticated]);
 
     const fetchTransactions = async () => {
-        if (!connected || !account) return;
+        if (!isAuthenticated) return;
         
         setLoading(true);
         setError(null);
@@ -60,7 +60,7 @@ const TransactionHistory = () => {
         return success ? 'text-green-400' : 'text-red-400';
     };
 
-    if (!connected) {
+    if (!isAuthenticated) {
         return (
             <div className="bg-[#1c1c24] rounded-xl p-6 border border-[#2a2a35]">
                 <h2 className="text-xl font-bold text-white mb-4">Transaction History</h2>

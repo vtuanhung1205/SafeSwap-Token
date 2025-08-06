@@ -34,6 +34,7 @@ import Settings from "./components/pages/Settings";
 import Pricing from "./components/pages/Pricing";
 import Payment from "./components/pages/Payment";
 import DemoPage from "./components/DemoPage";
+import AptosConnectCallback from "./components/pages/AptosConnectCallback";
 
 // --- Custom Hook to Track Mouse Position ---
 const useMousePosition = () => {
@@ -86,6 +87,7 @@ function App() {
               <Route path="/pricing" element={<Pricing />} />
               <Route path="/payment" element={<Payment />} />
               <Route path="/demo" element={<DemoPage />} />
+              <Route path="/aptos-connect-callback" element={<AptosConnectCallback />} />
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </main>

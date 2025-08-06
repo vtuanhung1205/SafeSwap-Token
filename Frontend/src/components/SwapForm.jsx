@@ -111,15 +111,15 @@ const SwapForm = () => {
   }, [debouncedAmount, fromToken, toToken]);
 
   useEffect(() => {
-    if (connected) {
+    if (isAuthenticated) {
       fetchWalletBalances();
     } else {
       setTokenBalances({});
     }
-  }, [connected]);
+  }, [isAuthenticated]);
 
   const fetchWalletBalances = async () => {
-    if (!connected || !account) return;
+    if (!isAuthenticated) return;
     setIsLoadingBalances(true);
     try {
       // Validate config trước khi sử dụng
@@ -219,7 +219,7 @@ const SwapForm = () => {
   };
 
   const handleSwap = async () => {
-    if (!connected || !account || !fromToken || !toToken || !amount) {
+    if (!isAuthenticated || !fromToken || !toToken || !amount) {
       toast.error("Please connect wallet and fill all fields");
       return;
     }
@@ -359,7 +359,7 @@ const SwapForm = () => {
             <div className="mb-4">
               <div className="flex justify-between items-center mb-2">
                 <label className="text-sm text-gray-400">From</label>
-                {connected && tokenBalances[fromToken.symbol] && (
+                {isAuthenticated && tokenBalances[fromToken.symbol] && (
                   <div className="text-xs text-gray-400 flex items-center">
                     <Wallet size={12} className="mr-1" />
                     <span>Balance: {formatBalance(getTokenBalance(fromToken.symbol))}</span>
@@ -377,7 +377,7 @@ const SwapForm = () => {
                 </button>
                 <input type="number" className="flex-1 bg-transparent border-none text-right text-white text-lg focus:outline-none" placeholder="0.0" value={amount} onChange={(e) => setAmount(e.target.value)} />
               </div>
-              {connected && tokenBalances[fromToken.symbol] && (
+              {isAuthenticated && tokenBalances[fromToken.symbol] && (
                 <div className="flex justify-end mt-1">
                   <button className="text-xs text-cyan-500 hover:text-cyan-400" onClick={() => { const balance = getTokenBalance(fromToken.symbol); if (balance) setAmount(balance.toString()); }}>Max</button>
                 </div>
@@ -395,7 +395,7 @@ const SwapForm = () => {
             <div className="mb-4 mt-2">
               <div className="flex justify-between items-center mb-2">
                 <label className="text-sm text-gray-400">To</label>
-                {connected && tokenBalances[toToken.symbol] && (
+                {isAuthenticated && tokenBalances[toToken.symbol] && (
                   <div className="text-xs text-gray-400 flex items-center">
                     <Wallet size={12} className="mr-1" />
                     <span>Balance: {formatBalance(getTokenBalance(toToken.symbol))}</span>
@@ -443,7 +443,7 @@ const SwapForm = () => {
             )}
 
             {/* Connect Wallet / Swap Button */}
-            {!connected ? <WalletConnect /> : (
+            {!isAuthenticated ? <WalletConnect /> : (
               <button className={`w-full py-3 rounded-xl font-medium transition ${isLoadingQuote || isSwapping || !quote ? "bg-cyan-600/50 text-cyan-300 cursor-not-allowed" : "bg-cyan-600 text-white hover:bg-cyan-700"}`} disabled={isLoadingQuote || isSwapping || !quote} onClick={handleSwap}>
                 {loading ? <div className="flex items-center justify-center space-x-2"><Loader2 size={18} className="animate-spin" /><span>Swapping...</span></div> : isLoadingQuote ? <div className="flex items-center justify-center space-x-2"><Loader2 size={18} className="animate-spin" /><span>Getting Quote...</span></div> : !quote ? "Enter Amount" : "Swap Tokens"}
               </button>
@@ -480,7 +480,7 @@ const SwapForm = () => {
                     </div>
                     <div className="flex flex-col items-end">
                       <CoinGeckoPriceDisplay isLoading={isPriceLoading} priceData={tokenPrices?.[token.coingeckoId]} />
-                      {connected && tokenBalances[token.symbol] && (
+                      {isAuthenticated && tokenBalances[token.symbol] && (
                         <div className="text-xs text-gray-400 mt-1">{formatBalance(getTokenBalance(token.symbol))}</div>
                       )}
                     </div>

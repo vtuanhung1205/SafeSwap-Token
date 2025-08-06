@@ -112,7 +112,7 @@ const Dashboard = () => {
     } else {
       setLoading(false);
     }
-  }, [isAuthenticated, connected]);
+  }, [isAuthenticated]);
 
   const fetchDashboardData = async () => {
     try {
@@ -142,8 +142,8 @@ const Dashboard = () => {
         toast.error('Failed to load swap statistics');
       }
 
-      // Fetch wallet balances if connected
-      if (connected) {
+      // Fetch wallet balances if authenticated
+      if (isAuthenticated) {
         fetchWalletBalances();
       }
     } catch (err) {
@@ -156,7 +156,7 @@ const Dashboard = () => {
   };
 
   const fetchWalletBalances = async () => {
-    if (!connected || !account) return;
+    if (!isAuthenticated) return;
     try {
       setLoadingBalances(true);
       const client = new AptosClient("https://fullnode.mainnet.aptoslabs.com/v1");
@@ -351,7 +351,7 @@ const Dashboard = () => {
               </button>
             </div>
 
-            {!connected ? (
+            {!isAuthenticated ? (
               <div className="text-center py-16">
                 <div className="inline-block p-4 rounded-full bg-cyan-500/10 mb-4">
                   <Wallet size={40} className="text-cyan-400" />

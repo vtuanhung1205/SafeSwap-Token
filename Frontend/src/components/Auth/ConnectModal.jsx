@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { X, Wallet, Mail, Lock } from 'lucide-react';
 import { useGoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../../contexts/AuthContext';
-import AptosSDKModal from './AptosSDKModal';
+import AptosConnectModal from './AptosConnectModal';
 
 const ConnectModal = ({ isOpen, onClose, onSuccess }) => {
-  const [showAptosSDK, setShowAptosSDK] = useState(false);
+  const [showAptosConnect, setShowAptosConnect] = useState(false);
   const { googleLogin } = useAuth();
 
   const googleLoginHook = useGoogleLogin({
@@ -41,9 +41,9 @@ const ConnectModal = ({ isOpen, onClose, onSuccess }) => {
     googleLoginHook();
   };
 
-  const handleAptosSDKSuccess = (walletData) => {
+  const handleAptosConnectSuccess = (walletData) => {
     if (onSuccess) {
-      onSuccess({ type: 'aptos-sdk', data: walletData });
+      onSuccess({ type: 'aptos-connect', data: walletData });
     }
     onClose();
   };
@@ -83,14 +83,14 @@ const ConnectModal = ({ isOpen, onClose, onSuccess }) => {
                   Recommended
                 </div>
                 <button
-                  onClick={() => setShowAptosSDK(true)}
+                  onClick={() => setShowAptosConnect(true)}
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-3"
                 >
                   <Wallet className="w-5 h-5" />
                   <span>Connect Aptos Wallet</span>
                 </button>
                 <p className="text-xs text-gray-500 mt-1 text-center">
-                  Create, import, or connect wallet directly
+                  Connect with Aptos Connect for secure wallet connection
                 </p>
               </div>
 
@@ -142,11 +142,11 @@ const ConnectModal = ({ isOpen, onClose, onSuccess }) => {
         </div>
       </div>
 
-      {/* Aptos SDK Modal */}
-      <AptosSDKModal
-        isOpen={showAptosSDK}
-        onClose={() => setShowAptosSDK(false)}
-        onSuccess={handleAptosSDKSuccess}
+      {/* Aptos Connect Modal */}
+      <AptosConnectModal
+        isOpen={showAptosConnect}
+        onClose={() => setShowAptosConnect(false)}
+        onSuccess={handleAptosConnectSuccess}
       />
     </>
   );
