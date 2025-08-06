@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { X, LogIn } from 'lucide-react';
+import { X, LogIn, Wallet } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import { useGoogleLogin } from '@react-oauth/google';
+import AptosWalletModal from './AptosWalletModal';
 
 const LoginModal = ({ isOpen, onClose }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showAptosWallet, setShowAptosWallet] = useState(false);
   const { googleLogin } = useAuth();
 
   const googleLoginHook = useGoogleLogin({
@@ -50,6 +52,12 @@ const LoginModal = ({ isOpen, onClose }) => {
     googleLoginHook();
   };
 
+  const handleAptosWalletSuccess = (walletData) => {
+    console.log('Aptos wallet connected:', walletData);
+    toast.success(`Connected to wallet: ${walletData.address}`);
+    // You can add additional logic here to handle wallet connection
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -72,8 +80,9 @@ const LoginModal = ({ isOpen, onClose }) => {
           <p className="text-gray-400">Sign in with your Google account</p>
         </div>
 
-        {/* Google Login Button */}
+        {/* Login Options */}
         <div className="space-y-4">
+          {/* Google Login Button */}
           <button
             onClick={handleGoogleLogin}
             disabled={isSubmitting}
@@ -109,6 +118,25 @@ const LoginModal = ({ isOpen, onClose }) => {
             )}
           </button>
 
+          {/* Divider */}
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-600"></div>
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-[#18181c] px-2 text-gray-400">Or</span>
+            </div>
+          </div>
+
+          {/* Aptos Wallet Login Button */}
+          <button
+            onClick={() => setShowAptosWallet(true)}
+            className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl py-3 px-4 font-semibold flex items-center justify-center gap-3 hover:from-purple-700 hover:to-blue-700 transition-all"
+          >
+            <Wallet size={20} />
+            Connect Aptos Wallet
+          </button>
+
           {/* Google OAuth Note */}
           <div className="text-center">
             <p className="text-xs text-gray-500">
@@ -131,6 +159,13 @@ const LoginModal = ({ isOpen, onClose }) => {
           </p>
         </div>
       </div>
+
+      {/* Aptos Wallet Modal */}
+      <AptosWalletModal
+        isOpen={showAptosWallet}
+        onClose={() => setShowAptosWallet(false)}
+        onSuccess={handleAptosWalletSuccess}
+      />
     </div>
   );
 };
