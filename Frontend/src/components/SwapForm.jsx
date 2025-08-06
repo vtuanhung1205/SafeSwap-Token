@@ -201,7 +201,46 @@ const SwapForm = () => {
         throw new Error('Please enter valid swap details');
       }
 
-      // 2. Get current prices from GeckoTerminal
+      // Check if demo mode (no real balance)
+      const isDemoMode = walletBalance === '0.0000 (Demo Mode)' || walletBalance === 0;
+      
+      if (isDemoMode) {
+        // Demo mode - simulate swap without real transaction
+        const fromAmount = parseFloat(amount);
+        const toAmount = fromAmount * 0.95; // Simulate 5% slippage
+        
+        toast.success(`Demo Swap: ${fromAmount} ${fromToken.symbol} → ${toAmount.toFixed(6)} ${toToken.symbol}`);
+        
+        // Save demo transaction
+        await userAPI.saveSwapHistory({
+          transactionHash: `demo_${Date.now()}`,
+          walletAddress: account.address,
+          fromToken: {
+            address: fromToken.address,
+            symbol: fromToken.symbol,
+            amount: fromAmount,
+            price: 1.0
+          },
+          toToken: {
+            address: toToken.address,
+            symbol: toToken.symbol,
+            amount: toAmount,
+            price: 1.0
+          },
+          swapProvider: 'demo',
+          gasUsed: 0,
+          gasPrice: 0,
+          totalCost: 0,
+          status: 'demo_success'
+        });
+        
+        setAmount('');
+        setFromToken(null);
+        setToToken(null);
+        return;
+      }
+
+      // Real swap mode
       const fromPrice = await getTokenPrice(fromToken);
       const toPrice = await getTokenPrice(toToken);
       
@@ -209,11 +248,9 @@ const SwapForm = () => {
         throw new Error('Unable to get current prices');
       }
 
-      // 3. Calculate swap details
       const fromAmount = parseFloat(amount);
       const toAmount = (fromAmount * fromPrice) / toPrice;
       
-      // 4. Create transaction payload (Frontend tạo)
       const payload = createSwapTransactionPayload({
         fromToken: fromToken.address,
         toToken: toToken.address,
@@ -222,14 +259,11 @@ const SwapForm = () => {
         slippage: slippage / 100
       });
 
-      // 5. User signs transaction
       const response = await signAndSubmitTransaction(payload);
       
-      // 6. Wait for confirmation
       const client = new AptosClient('https://fullnode.mainnet.aptoslabs.com/v1');
       await client.waitForTransaction({ transactionHash: response.hash });
 
-      // 7. Success - chỉ lưu history vào Backend
       await userAPI.saveSwapHistory({
         transactionHash: response.hash,
         walletAddress: account.address,
@@ -252,7 +286,6 @@ const SwapForm = () => {
         status: 'success'
       });
       
-      // 8. Reset form
       setAmount('');
       setFromToken(null);
       setToToken(null);

@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { authAPI } from '../utils/api';
 import { Loader2, LogOut, PlusCircle, Wallet as WalletIcon } from 'lucide-react';
 import { useGoogleLogin } from '@react-oauth/google';
+import DemoBadge from './DemoBadge';
 
 const WalletConnect = ({ onWalletConnected }) => {
     const { isAuthenticated, googleLogin, connectWallet, disconnectWallet } = useAuth();
@@ -28,17 +29,24 @@ const WalletConnect = ({ onWalletConnected }) => {
                 });
                 const userInfo = await userInfoResponse.json();
                 
-                // Login with Google data
+                // Create SafeSwap account with Google data
                 await googleLogin({
                     access_token: tokenResponse.access_token,
                     user: userInfo
                 });
                 
-                toast.success('Successfully authenticated!');
-                setShowLoginPromptModal(false);
+                // Link wallet to SafeSwap account
+                if (connected && account) {
+                    try {
+                        await connectWallet(account.address, wallet?.adapter?.name || 'other');
+                        toast.success('SafeSwap account created! Wallet linked successfully.');
+                    } catch (error) {
+                        console.error('Failed to link wallet to SafeSwap account:', error);
+                        toast.error('Account created but failed to link wallet');
+                    }
+                }
                 
-                // After successful authentication, proceed with wallet connection
-                handleWalletConnection();
+                setShowLoginPromptModal(false);
             } catch (error) {
                 console.error("Failed to authenticate:", error);
                 toast.error("Authentication failed. Please try again.");
@@ -144,11 +152,64 @@ const WalletConnect = ({ onWalletConnected }) => {
         return () => clearTimeout(timeoutId);
     }, [connected, account, connectWallet, onWalletConnected, walletBalance]);
 
-    const handleConnectClick = () => {
+    const handleConnectClick = async () => {
         if (connected) return;
         
-        // Always show authentication prompt when trying to connect wallet
-        setShowLoginPromptModal(true);
+        // Follow Aptos Guide: Connect wallet directly
+        try {
+            const availableWallets = wallets.filter(w => w.readyState === 'Installed' || w.readyState === 'Loadable');
+            
+            if (availableWallets.length === 0) {
+                toast.error("No wallets available. Please install Petra or Martian wallet.");
+                return;
+            }
+
+            // Find Petra wallet first (as per guide)
+            const petraWallet = availableWallets.find(w => w.name === 'Petra');
+            const selectedWallet = petraWallet || availableWallets[0];
+            
+            await select(selectedWallet.name);
+            toast.success(`Connecting to ${selectedWallet.name} on Aptos mainnet...`);
+            
+            // Wait for connection and fetch balance (as per guide)
+            setTimeout(async () => {
+                if (connected && account) {
+                    try {
+                        // Follow guide: Use AptosClient to fetch balance
+                        const client = new (await import('aptos')).AptosClient('https://fullnode.mainnet.aptoslabs.com/v1');
+                        
+                        try {
+                            const resource = await client.getAccountResource({
+                                address: account.address,
+                                resourceType: '0x1::coin::CoinStore<0x1::aptos_coin::AptosCoin>',
+                            });
+                            
+                            const balanceInApt = Number(resource.data.coin.value) / 100000000;
+                            setWalletBalance(balanceInApt.toFixed(4));
+                            
+                            toast.success(`Connected! Balance: ${balanceInApt.toFixed(4)} APT`);
+                        } catch (error) {
+                            // If no balance, show demo mode
+                            console.log('No APT balance, enabling demo mode');
+                            setWalletBalance('0.0000 (Demo Mode)');
+                            toast.success('Connected! Demo mode enabled');
+                        }
+                        
+                        // After wallet connection, show auth modal for SafeSwap account
+                        setShowLoginPromptModal(true);
+                        
+                    } catch (error) {
+                        console.error("Error fetching balance:", error);
+                        toast.error("Connected but failed to fetch balance");
+                        setShowLoginPromptModal(true);
+                    }
+                }
+            }, 2000);
+            
+        } catch (error) {
+            console.error("Wallet connection error:", error);
+            toast.error("Failed to connect wallet");
+        }
     };
 
     const fetchAndShowLinkedWallets = async () => {
@@ -204,9 +265,12 @@ const WalletConnect = ({ onWalletConnected }) => {
                     <div className="flex items-center">
                         <img src={wallet?.adapter?.icon || '/default-wallet-icon.png'} alt={wallet?.adapter?.name || 'Wallet'} className="w-6 h-6 rounded-full mr-3" />
                         <div className="text-left">
-                            <span className="text-white font-mono text-sm">
-                                {formatAddress(account?.address)}
-                            </span>
+                            <div className="flex items-center space-x-2">
+                                <span className="text-white font-mono text-sm">
+                                    {formatAddress(account?.address)}
+                                </span>
+                                <DemoBadge isDemoMode={walletBalance === '0.0000 (Demo Mode)'} />
+                            </div>
                             {walletBalance !== null && (
                                 <div className="text-gray-400 text-xs">
                                     {typeof walletBalance === 'number' ? `${walletBalance.toFixed(4)} APT` : walletBalance}
@@ -233,8 +297,15 @@ const WalletConnect = ({ onWalletConnected }) => {
                         <div className="mx-auto bg-cyan-500/10 w-16 h-16 rounded-full flex items-center justify-center mb-6">
                             <WalletIcon className="w-8 h-8 text-cyan-400" />
                         </div>
-                        <h3 className="text-xl font-bold text-white mb-2">Authenticate to Connect Wallet</h3>
-                        <p className="text-gray-400 mb-8">Please sign in to securely connect your Aptos wallet.</p>
+                        <h3 className="text-xl font-bold text-white mb-2">
+                            {connected && account ? 'Wallet Connected! Create SafeSwap Account' : 'Connect to Aptos Mainnet'}
+                        </h3>
+                        <p className="text-gray-400 mb-8">
+                            {connected && account 
+                                ? `✅ Wallet: ${wallet?.adapter?.name || 'Unknown'} (${formatAddress(account.address)}) - ${walletBalance ? `${walletBalance} APT` : 'Loading balance...'}`
+                                : 'Please connect your Aptos wallet to mainnet first, then create your SafeSwap account.'
+                            }
+                        </p>
                         
                         {/* Google Sign-In */}
                         <button 

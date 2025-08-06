@@ -18,22 +18,24 @@ const TokenList = () => {
             setLoading(true);
             setError(null);
             
-            // Fetch Aptos tokens from GeckoTerminal API
-            const response = await axios.get('https://api.geckoterminal.com/api/v2/networks/aptos/trending');
+            // Follow Aptos Guide: Use Panora Exchange API
+            const response = await axios.get('https://api.panora.exchange/tokens');
             
-            // Transform data to match our format
-            const transformedTokens = response.data.data.map(token => ({
-                id: token.id,
-                name: token.attributes.name,
-                symbol: token.attributes.symbol,
-                address: token.attributes.address,
-                logoUrl: token.attributes.image_url,
-                price: token.attributes.price_usd,
-                priceChange24h: token.attributes.price_change_24h,
-                marketCap: token.attributes.market_cap_usd,
-                volume24h: token.attributes.volume_24h_usd,
-                decimals: 8, // Default for most Aptos tokens
-                tags: token.attributes.tags || []
+            // Transform data according to guide format
+            const transformedTokens = response.data.map(token => ({
+                id: token.tokenAddress || token.faAddress,
+                name: token.name || 'Unknown',
+                symbol: token.symbol || 'UNKNOWN',
+                address: token.tokenAddress || token.faAddress || '',
+                logoUrl: token.logoUrl || '',
+                decimals: token.decimals || 8,
+                panoraTags: token.panoraTags || [],
+                // Add price info if available
+                price: 0, // Will be fetched separately if needed
+                priceChange24h: 0,
+                marketCap: 0,
+                volume24h: 0,
+                tags: token.panoraTags || [] // Map panoraTags to tags for compatibility
             }));
             
             setTokens(transformedTokens);
@@ -95,7 +97,7 @@ const TokenList = () => {
     if (loading) {
         return (
             <div className="bg-[#1c1c24] rounded-xl p-6 border border-[#2a2a35]">
-                <h2 className="text-xl font-bold text-white mb-4">Aptos Token List (GeckoTerminal)</h2>
+                <h2 className="text-xl font-bold text-white mb-4">Aptos Token List (Panora Exchange)</h2>
                 <div className="flex justify-center items-center py-8">
                     <Loader2 className="animate-spin text-cyan-500" size={32} />
                 </div>
@@ -106,7 +108,7 @@ const TokenList = () => {
     if (error) {
         return (
             <div className="bg-[#1c1c24] rounded-xl p-6 border border-[#2a2a35]">
-                <h2 className="text-xl font-bold text-white mb-4">Aptos Token List (GeckoTerminal)</h2>
+                <h2 className="text-xl font-bold text-white mb-4">Aptos Token List (Panora Exchange)</h2>
                 <div className="text-red-400 text-center py-8">
                     {error}
                 </div>
