@@ -9,7 +9,7 @@ import DemoBadge from './DemoBadge';
 
 const WalletConnect = ({ onWalletConnected }) => {
     const { isAuthenticated, googleLogin, connectWallet, disconnectWallet } = useAuth();
-    const { connected, account, disconnect, wallet, select, wallets, signAndSubmitTransaction } = useWallet();
+    const { connected, account, disconnect, wallet, connect, wallets, signAndSubmitTransaction } = useWallet();
 
     const [isLoading, setIsLoading] = useState(false);
     const [isConnecting, setIsConnecting] = useState(false);
@@ -225,7 +225,7 @@ const WalletConnect = ({ onWalletConnected }) => {
         }
     };
 
-    const handleWalletSelect = (walletName) => select(walletName);
+    const handleWalletSelect = (walletName) => connect(walletName);
     const formatAddress = (address) => address ? `${String(address).slice(0, 6)}...${String(address).slice(-4)}` : 'Invalid Address';
 
   return (

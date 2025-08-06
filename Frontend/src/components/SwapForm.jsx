@@ -117,15 +117,33 @@ const SwapForm = () => {
   }, [connected]);
 
   const fetchWalletBalances = async () => {
-    if (!connected) return;
+    if (!connected || !account) return;
     setIsLoadingBalances(true);
     try {
-      const response = await walletAPI.getInfo();
-      if (response.data?.success && response.data.data?.wallet?.tokenBalances) {
-        setTokenBalances(response.data.data.wallet.tokenBalances);
+      const { AptosClient } = await import('aptos');
+      const client = new AptosClient('https://fullnode.mainnet.aptoslabs.com/v1');
+      // Fetch APT balance
+      let aptBalance = 0;
+      try {
+        const resource = await client.getAccountResource({
+          address: account.address,
+          resourceType: '0x1::coin::CoinStore<0x1::aptos_coin::AptosCoin>',
+        });
+        aptBalance = Number(resource.data.coin.value) / 1e8;
+      } catch (e) {
+        aptBalance = 0;
       }
+      setTokenBalances({
+        APT: {
+          symbol: 'APT',
+          name: 'Aptos',
+          balance: aptBalance,
+          icon: 'https://s2.coinmarketcap.com/static/img/coins/200x200/21794.png',
+          decimals: 8
+        }
+      });
     } catch (error) {
-      console.error("Failed to fetch wallet balances:", error);
+      console.error('Failed to fetch wallet balances:', error);
     } finally {
       setIsLoadingBalances(false);
     }
