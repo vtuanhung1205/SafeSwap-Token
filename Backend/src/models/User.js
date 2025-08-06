@@ -274,7 +274,117 @@ const userSchema = new mongoose.Schema({
       type: Date,
       default: Date.now
     }
-  }]
+  }],
+
+  // User Data Management (Not on Blockchain)
+  favoriteTokens: [{
+    address: {
+      type: String,
+      required: true
+    },
+    symbol: {
+      type: String,
+      required: true
+    },
+    name: {
+      type: String,
+      required: true
+    },
+    addedAt: {
+      type: Date,
+      default: Date.now
+    },
+    notes: {
+      type: String,
+      default: ''
+    },
+    alertPrice: {
+      type: Number,
+      default: null
+    },
+    isActive: {
+      type: Boolean,
+      default: true
+    }
+  }],
+
+  // Activity Log
+  activityLog: [{
+    action: {
+      type: String,
+      required: true
+    },
+    metadata: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {}
+    },
+    timestamp: {
+      type: Date,
+      default: Date.now
+    },
+    ipAddress: String,
+    userAgent: String
+  }],
+
+  // Swap History (User's personal swap records)
+  swapHistory: [{
+    transactionHash: {
+      type: String,
+      required: true
+    },
+    walletAddress: {
+      type: String,
+      required: true
+    },
+    fromToken: {
+      address: String,
+      symbol: String,
+      amount: Number,
+      price: Number
+    },
+    toToken: {
+      address: String,
+      symbol: String,
+      amount: Number,
+      price: Number
+    },
+    swapProvider: String,
+    gasUsed: Number,
+    gasPrice: Number,
+    totalCost: Number,
+    timestamp: {
+      type: Date,
+      default: Date.now
+    },
+    status: {
+      type: String,
+      enum: ['pending', 'success', 'failed'],
+      default: 'pending'
+    }
+  }],
+
+  // Trading Preferences
+  tradingPreferences: {
+    defaultSlippage: {
+      type: Number,
+      default: 0.5, // 0.5%
+      min: 0.1,
+      max: 10
+    },
+    autoApprove: {
+      type: Boolean,
+      default: false
+    },
+    preferredSwapProvider: {
+      type: String,
+      enum: ['liquidswap', 'pancakeswap', 'any'],
+      default: 'any'
+    },
+    gasOptimization: {
+      type: Boolean,
+      default: true
+    }
+  }
 }, {
   timestamps: true
 });

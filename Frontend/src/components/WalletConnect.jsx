@@ -8,7 +8,7 @@ import { useGoogleLogin } from '@react-oauth/google';
 
 const WalletConnect = ({ onWalletConnected }) => {
     const { isAuthenticated, googleLogin, connectWallet, disconnectWallet } = useAuth();
-    const { connected, account, disconnect, wallet, select, wallets } = useWallet();
+    const { connected, account, disconnect, wallet, select, wallets, signAndSubmitTransaction } = useWallet();
 
     const [isLoading, setIsLoading] = useState(false);
     const [isConnecting, setIsConnecting] = useState(false);
@@ -16,6 +16,7 @@ const WalletConnect = ({ onWalletConnected }) => {
     const [showLinkedWalletModal, setShowLinkedWalletModal] = useState(false);
     const [showAddNewWalletModal, setShowAddNewWalletModal] = useState(false);
     const [linkedWallets, setLinkedWallets] = useState([]);
+    const [walletBalance, setWalletBalance] = useState(null);
 
     const startGoogleLogin = useGoogleLogin({
         onSuccess: async (tokenResponse) => {
@@ -33,20 +34,20 @@ const WalletConnect = ({ onWalletConnected }) => {
                     user: userInfo
                 });
                 
-                toast.success('Successfully logged in with Google!');
+                toast.success('Successfully authenticated!');
                 setShowLoginPromptModal(false);
                 
-                // After successful login, show wallet options
-                fetchAndShowLinkedWallets();
+                // After successful authentication, proceed with wallet connection
+                handleWalletConnection();
             } catch (error) {
-                console.error("Failed to sync with backend after Google login:", error);
-                toast.error("Google login failed. Please try again.");
+                console.error("Failed to authenticate:", error);
+                toast.error("Authentication failed. Please try again.");
             } finally {
                 setIsLoading(false);
             }
         },
         onError: () => {
-            toast.error("Google login failed. Please try again.");
+            toast.error("Authentication failed. Please try again.");
             setIsLoading(false);
         },
     });
@@ -62,115 +63,62 @@ const WalletConnect = ({ onWalletConnected }) => {
         setIsLoading(false);
     };
 
-    // Handle wallet login - Login with Aptos wallet and get wallet ID
-    const handleWalletLogin = async (walletAddress, walletType = 'other') => {
-        setIsLoading(true);
+    // Handle wallet connection after authentication
+    const handleWalletConnection = async () => {
+        if (!isAuthenticated) {
+            toast.error("Please authenticate first");
+            return;
+        }
+
         try {
-            // Create a simple message for signature (you can customize this)
-            const message = `Login to SafeSwap with wallet ${walletAddress} at ${new Date().toISOString()}`;
-            
-            // For now, we'll use a placeholder signature
-            // In a real implementation, you would get the signature from the wallet
-            const signature = `placeholder_signature_${Date.now()}`;
-            
-            // Call wallet login API
-            const response = await authAPI.walletLogin({
-                walletAddress,
-                signature,
-                message,
-                walletType
-            });
-            
-            if (response.data.success) {
-                // Store the token and user data
-                localStorage.setItem('authToken', response.data.data.token);
-                localStorage.setItem('user', JSON.stringify(response.data.data.user));
-                
-                toast.success('Wallet login successful!');
-                setShowLoginPromptModal(false);
-                
-                // Trigger wallet connection
-                if (onWalletConnected) {
-                    onWalletConnected({
-                        address: walletAddress,
-                        walletType: walletType,
-                        ...response.data.data.wallet
-                    });
-                }
-                
-                return response.data.data;
+            // Find Petra wallet
+            const petraWallet = wallets.find((w) => w.name === 'Petra');
+            if (petraWallet) {
+                await select(petraWallet.name);
+                toast.success("Wallet connection initiated!");
             } else {
-                throw new Error(response.data.error || 'Wallet login failed');
+                toast.error("Petra wallet not found. Please install Petra wallet.");
             }
         } catch (error) {
-            console.error('Wallet login error:', error);
-            toast.error(error.response?.data?.error || 'Wallet login failed. Please try again.');
-            throw error;
-        } finally {
-            setIsLoading(false);
+            console.error("Wallet connection error:", error);
+            toast.error("Failed to connect wallet");
         }
     };
 
-    // Handle wallet verification
-    const handleWalletVerification = async (walletAddress) => {
-        setIsLoading(true);
-        try {
-            const message = `Verify wallet ${walletAddress} at ${new Date().toISOString()}`;
-            const signature = `placeholder_signature_${Date.now()}`;
-            
-            const response = await authAPI.verifyWallet({
-                walletAddress,
-                signature,
-                message
-            });
-            
-            if (response.data.success) {
-                toast.success('Wallet verification successful!');
-                return response.data.data;
-            } else {
-                throw new Error(response.data.error || 'Wallet verification failed');
-            }
-        } catch (error) {
-            console.error('Wallet verification error:', error);
-            toast.error(error.response?.data?.error || 'Wallet verification failed.');
-            throw error;
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    // Get wallet information
-    const getWalletInfo = async (address) => {
-        try {
-            const response = await authAPI.getWalletInfo(address);
-            if (response.data.success) {
-                return response.data.data;
-            } else {
-                throw new Error(response.data.error || 'Failed to get wallet info');
-            }
-        } catch (error) {
-            console.error('Get wallet info error:', error);
-            toast.error(error.response?.data?.error || 'Failed to get wallet information.');
-            throw error;
-        }
-    };
-
+    // Fetch wallet balance when connected
     useEffect(() => {
-        if (isAuthenticated && showLoginPromptModal) {
-            setShowLoginPromptModal(false);
-            fetchAndShowLinkedWallets();
-        }
-    }, [isAuthenticated, showLoginPromptModal]);
+        const fetchWalletBalance = async () => {
+            if (!connected || !account) return;
+            
+            try {
+                // Use AptosClient to fetch balance (as per the guide)
+                const client = new (await import('aptos')).AptosClient('https://fullnode.mainnet.aptoslabs.com/v1');
+                
+                const resource = await client.getAccountResource({
+                    address: account.address,
+                    resourceType: '0x1::coin::CoinStore<0x1::aptos_coin::AptosCoin>',
+                });
+                
+                const balanceInApt = Number(resource.data.coin.value) / 100000000;
+                setWalletBalance(balanceInApt);
+            } catch (error) {
+                console.error('Error fetching balance:', error);
+                setWalletBalance('Error');
+            }
+        };
+
+        fetchWalletBalance();
+    }, [connected, account]);
 
     useEffect(() => {
         const syncWallet = async () => {
-            if (!isAuthenticated || !connected || !account || isConnecting) return;
+            if (!connected || !account || isConnecting) return;
             try {
                 setIsConnecting(true);
                 const addressString = String(account.address);
                 const walletType = wallet?.adapter.name || 'other';
                 
-                // User is authenticated, connect wallet
+                // Connect wallet to backend after authentication
                 await connectWallet(addressString, walletType);
                 toast.success("Wallet connected successfully!");
                 
@@ -179,7 +127,8 @@ const WalletConnect = ({ onWalletConnected }) => {
                         ...account, 
                         address: addressString, 
                         publicKey: String(account.publicKey),
-                        walletType: walletType
+                        walletType: walletType,
+                        balance: walletBalance
                     });
                 }
             } catch (error) {
@@ -193,17 +142,13 @@ const WalletConnect = ({ onWalletConnected }) => {
         };
         const timeoutId = setTimeout(syncWallet, 100);
         return () => clearTimeout(timeoutId);
-    }, [connected, account, isAuthenticated, connectWallet, onWalletConnected]);
+    }, [connected, account, connectWallet, onWalletConnected, walletBalance]);
 
     const handleConnectClick = () => {
         if (connected) return;
         
-        // Only allow wallet connection if authenticated
-        if (!isAuthenticated) {
-            setShowLoginPromptModal(true);
-        } else {
-            fetchAndShowLinkedWallets();
-        }
+        // Always show authentication prompt when trying to connect wallet
+        setShowLoginPromptModal(true);
     };
 
     const fetchAndShowLinkedWallets = async () => {
@@ -226,12 +171,14 @@ const WalletConnect = ({ onWalletConnected }) => {
         try {
             await disconnectWallet();
             disconnect();
+            setWalletBalance(null);
             toast.success("Wallet disconnected successfully!");
         } catch (error) {
             console.error("Disconnect error:", error);
             toast.error("Failed to disconnect wallet");
         }
     };
+
     const handleWalletSelect = (walletName) => select(walletName);
     const formatAddress = (address) => address ? `${String(address).slice(0, 6)}...${String(address).slice(-4)}` : 'Invalid Address';
 
@@ -241,26 +188,31 @@ const WalletConnect = ({ onWalletConnected }) => {
                 <button 
                     onClick={handleConnectClick}
                     className="w-full py-3 rounded-xl font-medium transition bg-cyan-600 text-white hover:bg-cyan-700 disabled:bg-cyan-600/50 disabled:text-cyan-300 disabled:cursor-not-allowed"
-                    disabled={!isAuthenticated || isConnecting}
+                    disabled={isConnecting}
                 >
                     {isConnecting ? (
                         <div className="flex items-center justify-center space-x-2">
                             <Loader2 size={18} className="animate-spin" />
                             <span>Connecting...</span>
                         </div>
-                    ) : isAuthenticated ? (
-                        "Connect Wallet"
                     ) : (
-                        "Login Required"
+                        "Connect Wallet"
                     )}
                 </button>
             ) : (
                 <div className="flex items-center justify-between w-full bg-[#111112] rounded-xl p-3 border border-[#2a2a35]">
                     <div className="flex items-center">
                         <img src={wallet?.adapter?.icon || '/default-wallet-icon.png'} alt={wallet?.adapter?.name || 'Wallet'} className="w-6 h-6 rounded-full mr-3" />
-                        <span className="text-white font-mono text-sm">
-                            {formatAddress(account?.address)}
-                        </span>
+                        <div className="text-left">
+                            <span className="text-white font-mono text-sm">
+                                {formatAddress(account?.address)}
+                            </span>
+                            {walletBalance !== null && (
+                                <div className="text-gray-400 text-xs">
+                                    {typeof walletBalance === 'number' ? `${walletBalance.toFixed(4)} APT` : walletBalance}
+                                </div>
+                            )}
+                        </div>
                     </div>
                     <button 
                         onClick={handleDisconnect}
@@ -273,16 +225,16 @@ const WalletConnect = ({ onWalletConnected }) => {
                 </div>
             )}
 
-            {/* Modal 1: Login Prompt */}
-            {showLoginPromptModal && !isAuthenticated && (
+            {/* Modal 1: Authentication Prompt */}
+            {showLoginPromptModal && (
                 <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
                     <div className="bg-[#1c1c24] rounded-2xl p-8 border border-[#2a2a35] shadow-lg w-full max-w-sm text-center">
                         <button className="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl" onClick={() => setShowLoginPromptModal(false)}>×</button>
                         <div className="mx-auto bg-cyan-500/10 w-16 h-16 rounded-full flex items-center justify-center mb-6">
                             <WalletIcon className="w-8 h-8 text-cyan-400" />
                         </div>
-                        <h3 className="text-xl font-bold text-white mb-2">Sign In to Connect Wallet</h3>
-                        <p className="text-gray-400 mb-8">Sign in with your account to securely connect your Aptos wallets.</p>
+                        <h3 className="text-xl font-bold text-white mb-2">Authenticate to Connect Wallet</h3>
+                        <p className="text-gray-400 mb-8">Please sign in to securely connect your Aptos wallet.</p>
                         
                         {/* Google Sign-In */}
                         <button 

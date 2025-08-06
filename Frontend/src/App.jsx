@@ -25,20 +25,15 @@ import NotFoundPage from "./components/NotFoundPage/NotFoundPage";
 import "./index.css";
 // Icons
 import {
-  ShieldCheck,
-  Lock,
-  Zap,
-  BarChart2,
-  Smartphone,
-  History,
-  ArrowUpDown,
-  CheckCircle,
   Bot,
 } from "lucide-react";
+// Import pages
+import Home from "./components/pages/Home";
 import Wallet from "./components/pages/Wallet";
 import Settings from "./components/pages/Settings";
 import Pricing from "./components/pages/Pricing";
 import Payment from "./components/pages/Payment";
+import DemoPage from "./components/DemoPage";
 
 // --- Custom Hook to Track Mouse Position ---
 const useMousePosition = () => {
@@ -74,7 +69,7 @@ function App() {
             <Routes>
               <Route
                 path="/"
-                element={<HomePage mousePosition={mousePosition} />}
+                element={<Home />}
               />
               <Route path="/swap" element={<SwapPage />} />
               <Route path="/dashboard" element={<DashboardPage />} />
@@ -92,6 +87,7 @@ function App() {
               <Route path="/settings" element={<Settings />} />
               <Route path="/pricing" element={<Pricing />} />
               <Route path="/payment" element={<Payment />} />
+              <Route path="/demo" element={<DemoPage />} />
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </main>
@@ -118,107 +114,6 @@ function App() {
     </GoogleOAuthProvider>
   );
 }
-
-// --- Redesigned Home Page with Spotlight Effect ---
-const HomePage = ({ mousePosition }) => {
-  return (
-    <div className="bg-transparent text-white overflow-hidden">
-      {/* Hero Section */}
-      <section className="relative min-h-[90vh] flex items-center px-6">
-        {/* Interactive Spotlight Effect */}
-        <div
-          className="pointer-events-none fixed inset-0 z-0 transition duration-300"
-          style={{
-            background: `radial-gradient(600px at ${mousePosition.x}px ${mousePosition.y}px, rgba(29, 78, 216, 0.15), transparent 80%)`,
-          }}
-        />
-
-        <div className="relative z-10 container mx-auto grid lg:grid-cols-2 gap-12 items-center">
-          <div className="text-center lg:text-left">
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-cyan-400 to-pink-400 bg-clip-text text-transparent">
-              SafeSwap
-            </h1>
-            <p className="text-xl md:text-2xl text-gray-300 mb-8 max-w-xl mx-auto lg:mx-0">
-              The smartest way to swap tokens on Aptos with real-time scam
-              detection and institutional-grade security.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <a
-                href="/swap"
-                className="px-8 py-4 bg-cyan-600 hover:bg-cyan-700 text-white font-bold rounded-2xl transition-all duration-300 transform hover:scale-105"
-              >
-                Launch App
-              </a>
-              <a
-                href="/feature"
-                className="px-8 py-4 border border-cyan-600 text-cyan-600 hover:bg-cyan-600 hover:text-white font-bold rounded-2xl transition-all duration-300"
-              >
-                Learn More
-              </a>
-            </div>
-          </div>
-
-          {/* Visual Mockup of the SwapForm */}
-          <div className="hidden lg:block bg-[#18181c]/50 backdrop-blur-sm rounded-3xl shadow-2xl p-6 border border-[#23232a] scale-90">
-            <div className="rounded-2xl bg-[#111112] p-5 mb-2">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-gray-300 text-sm">Sell</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="text-3xl font-semibold text-white/50">
-                  1,000.0
-                </div>
-                <div className="flex items-center bg-cyan-600 text-white rounded-full px-4 py-2 ml-2 font-medium text-lg">
-                  <img
-                    src="https://s2.coinmarketcap.com/static/img/coins/200x200/21794.png"
-                    alt="APT"
-                    className="w-6 h-6 mr-2"
-                  />{" "}
-                  APT
-                </div>
-              </div>
-            </div>
-            <div className="flex justify-center -my-4 z-10 relative">
-              <div className="bg-[#18181c] border border-[#23232a] rounded-full w-10 h-10 flex items-center justify-center">
-                <ArrowUpDown size={20} className="text-white" />
-              </div>
-            </div>
-            <div className="rounded-2xl bg-[#111112] p-5 mt-2">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-gray-300 text-sm">Buy</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="text-3xl font-semibold text-white/50">
-                  3,408.12
-                </div>
-                <div className="flex items-center bg-pink-500 text-white rounded-full px-4 py-2 ml-2 font-medium text-lg">
-                  <img
-                    src="https://s2.coinmarketcap.com/static/img/coins/200x200/3408.png"
-                    alt="USDC"
-                    className="w-6 h-6 mr-2"
-                  />{" "}
-                  USDC
-                </div>
-              </div>
-            </div>
-            <div className="mt-4 p-3 bg-green-900/20 border border-green-500/30 rounded-2xl flex items-center space-x-2">
-              <CheckCircle size={16} className="text-green-400" />
-              <span className="text-green-400 text-sm font-medium">
-                Token appears safe
-              </span>
-            </div>
-            <div className="w-full mt-4 py-3 rounded-2xl bg-gray-600 text-white font-bold text-lg text-center">
-              Swap
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Other sections remain the same, but will now render on top of the new background */}
-      {/* ... (Features, How It Works, CTA sections) ... */}
-    </div>
-  );
-};
 
 // --- Page Components (Wrappers) ---
 const SwapPage = () => (

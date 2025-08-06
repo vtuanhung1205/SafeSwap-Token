@@ -17,9 +17,7 @@ const transactionService = require('./services/transactionService');
 // Import routes
 const authRoutes = require('./routes/auth');
 const transactionRoutes = require('./routes/transactions');
-const tokenRoutes = require('./routes/tokens');
 const userRoutes = require('./routes/users');
-const analyticsRoutes = require('./routes/analytics');
 const walletRoutes = require('./routes/wallet');
 
 const app = express();
@@ -77,9 +75,7 @@ app.get('/api/health', (req, res) => {
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/transactions', transactionRoutes);
-app.use('/api/tokens', tokenRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/analytics', analyticsRoutes);
 app.use('/api/wallet', walletRoutes);
 
 // WebSocket connection handling

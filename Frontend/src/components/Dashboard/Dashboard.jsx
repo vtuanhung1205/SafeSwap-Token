@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { swapAPI, walletAPI, handleApiError } from '../../utils/api';
+import { userAPI, walletAPI, handleApiError } from '../../utils/api';
 import toast from 'react-hot-toast';
 import { useWallet } from '@aptos-labs/wallet-adapter-react';
 import { Wallet, ArrowUpDown, RefreshCw, AlertTriangle, CheckCircle, Loader2 } from 'lucide-react';
+import WalletConnect from '../WalletConnect';
+import TransactionHistory from '../TransactionHistory';
+import TokenList from '../TokenList';
+import FavoriteTokens from '../FavoriteTokens';
+import SwapForm from '../SwapForm';
 import './Dashboard.css';
 
 // --- Helper Components for a cleaner structure ---
@@ -69,6 +74,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [loadingBalances, setLoadingBalances] = useState(false);
   const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState('overview');
 
   // Token metadata for UI display
   const tokenMetadata = {
@@ -114,8 +120,8 @@ const Dashboard = () => {
       
       // Use Promise.all to fetch data in parallel
       const [historyResponse, statsResponse] = await Promise.all([
-        swapAPI.getHistory(),
-        swapAPI.getStats()
+        userAPI.getSwapHistory(),
+        userAPI.getUserStats()
       ]);
 
       if (historyResponse.data.success) {
@@ -238,144 +244,158 @@ const Dashboard = () => {
         </div>
       </header>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
-        <StatCard icon="🔄" title="Total Swaps" value={stats.totalSwaps} />
-        <StatCard icon="💰" title="Total Volume" value={formatCurrency(stats.totalVolume)} />
-        <StatCard icon="📊" title="Success Rate" value={`${stats.successRate?.toFixed(1) || 0}%`} />
-        <StatCard icon="📈" title="Avg. Amount" value={formatCurrency(stats.avgAmount || 0)} />
+      {/* Tab Navigation */}
+      <div className="flex flex-wrap gap-2 mb-8 border-b border-[#23232a]">
+        <button
+          onClick={() => setActiveTab('overview')}
+          className={`px-6 py-3 font-semibold rounded-t-lg transition-colors ${
+            activeTab === 'overview'
+              ? 'bg-cyan-600 text-white'
+              : 'text-gray-400 hover:text-white hover:bg-[#23232a]'
+          }`}
+        >
+          Overview
+        </button>
+        <button
+          onClick={() => setActiveTab('swap')}
+          className={`px-6 py-3 font-semibold rounded-t-lg transition-colors ${
+            activeTab === 'swap'
+              ? 'bg-cyan-600 text-white'
+              : 'text-gray-400 hover:text-white hover:bg-[#23232a]'
+          }`}
+        >
+          Swap
+        </button>
+        <button
+          onClick={() => setActiveTab('history')}
+          className={`px-6 py-3 font-semibold rounded-t-lg transition-colors ${
+            activeTab === 'history'
+              ? 'bg-cyan-600 text-white'
+              : 'text-gray-400 hover:text-white hover:bg-[#23232a]'
+          }`}
+        >
+          History
+        </button>
+        <button
+          onClick={() => setActiveTab('tokens')}
+          className={`px-6 py-3 font-semibold rounded-t-lg transition-colors ${
+            activeTab === 'tokens'
+              ? 'bg-cyan-600 text-white'
+              : 'text-gray-400 hover:text-white hover:bg-[#23232a]'
+          }`}
+        >
+          Tokens
+        </button>
+        <button
+          onClick={() => setActiveTab('favorites')}
+          className={`px-6 py-3 font-semibold rounded-t-lg transition-colors ${
+            activeTab === 'favorites'
+              ? 'bg-cyan-600 text-white'
+              : 'text-gray-400 hover:text-white hover:bg-[#23232a]'
+          }`}
+        >
+          Favorites
+        </button>
       </div>
 
-      {/* Wallet Overview Section */}
-      <div className="bg-[#18181c] border border-[#23232a] rounded-2xl mb-8">
-        <div className="flex justify-between items-center p-6 border-b border-[#23232a]">
-          <h2 className="text-2xl font-bold">Wallet Overview</h2>
-          <button 
-            className="flex items-center gap-2 px-4 py-2 bg-cyan-600/20 text-cyan-400 font-semibold rounded-lg hover:bg-cyan-600/40 transition-colors"
-            onClick={fetchWalletBalances}
-            disabled={loadingBalances}
-          >
-            {loadingBalances ? (
-              <>
-                <Loader2 size={16} className="animate-spin" />
-                <span>Refreshing...</span>
-              </>
+      {/* Tab Content */}
+      {activeTab === 'overview' && (
+        <div className="space-y-8">
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+            <StatCard icon="🔄" title="Total Swaps" value={stats.totalSwaps} />
+            <StatCard icon="💰" title="Total Volume" value={formatCurrency(stats.totalVolume)} />
+            <StatCard icon="📊" title="Success Rate" value={`${stats.successRate?.toFixed(1) || 0}%`} />
+            <StatCard icon="📈" title="Avg. Amount" value={formatCurrency(stats.avgAmount || 0)} />
+          </div>
+
+          {/* Wallet Overview Section */}
+          <div className="bg-[#18181c] border border-[#23232a] rounded-2xl">
+            <div className="flex justify-between items-center p-6 border-b border-[#23232a]">
+              <h2 className="text-2xl font-bold">Wallet Overview</h2>
+              <button 
+                className="flex items-center gap-2 px-4 py-2 bg-cyan-600/20 text-cyan-400 font-semibold rounded-lg hover:bg-cyan-600/40 transition-colors"
+                onClick={fetchWalletBalances}
+                disabled={loadingBalances}
+              >
+                {loadingBalances ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    <span>Refreshing...</span>
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw size={16} />
+                    <span>Refresh</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {!connected ? (
+              <div className="text-center py-16">
+                <div className="inline-block p-4 rounded-full bg-cyan-500/10 mb-4">
+                  <Wallet size={40} className="text-cyan-400" />
+                </div>
+                <h3 className="text-xl font-semibold">No Wallet Connected</h3>
+                <p className="text-gray-400 mb-4">Connect your wallet to view your balances</p>
+                <WalletConnect />
+              </div>
+            ) : Object.keys(tokenBalances).length === 0 ? (
+              <div className="text-center py-16">
+                <div className="inline-block p-4 rounded-full bg-yellow-500/10 mb-4">
+                  <AlertTriangle size={40} className="text-yellow-400" />
+                </div>
+                <h3 className="text-xl font-semibold">No Balances Found</h3>
+                <p className="text-gray-400 mb-4">Your wallet balances will appear here</p>
+              </div>
             ) : (
-              <>
-                <RefreshCw size={16} />
-                <span>Refresh</span>
-              </>
+              <div className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {Object.entries(tokenBalances).map(([symbol, data]) => (
+                    <TokenBalanceCard 
+                      key={symbol}
+                      symbol={symbol}
+                      name={tokenMetadata[symbol]?.name || symbol}
+                      balance={data.balance}
+                      icon={tokenMetadata[symbol]?.icon || `https://via.placeholder.com/40x40?text=${symbol}`}
+                      usdValue={data.usdValue}
+                    />
+                  ))}
+                </div>
+              </div>
             )}
-          </button>
+          </div>
         </div>
+      )}
 
-        {!connected ? (
-          <div className="text-center py-16">
-            <div className="inline-block p-4 rounded-full bg-cyan-500/10 mb-4">
-              <Wallet size={40} className="text-cyan-400" />
-            </div>
-            <h3 className="text-xl font-semibold">No Wallet Connected</h3>
-            <p className="text-gray-400 mb-4">Connect your wallet to view your balances</p>
-          </div>
-        ) : Object.keys(tokenBalances).length === 0 ? (
-          <div className="text-center py-16">
-            <div className="inline-block p-4 rounded-full bg-yellow-500/10 mb-4">
-              <AlertTriangle size={40} className="text-yellow-400" />
-            </div>
-            <h3 className="text-xl font-semibold">No Balances Found</h3>
-            <p className="text-gray-400 mb-4">Your wallet balances will appear here</p>
-          </div>
-        ) : (
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {Object.entries(tokenBalances).map(([symbol, data]) => (
-                <TokenBalanceCard 
-                  key={symbol}
-                  symbol={symbol}
-                  name={tokenMetadata[symbol]?.name || symbol}
-                  balance={data.balance}
-                  icon={tokenMetadata[symbol]?.icon || `https://cryptoicon-api.vercel.app/api/icon/${symbol.toLowerCase()}`}
-                  usdValue={data.usdValue}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Swap History Section */}
-      <div className="bg-[#18181c] border border-[#23232a] rounded-2xl">
-        <div className="flex justify-between items-center p-6 border-b border-[#23232a]">
-          <h2 className="text-2xl font-bold">Swap History</h2>
-          <button 
-            className="flex items-center gap-2 px-4 py-2 bg-cyan-600/20 text-cyan-400 font-semibold rounded-lg hover:bg-cyan-600/40 transition-colors"
-            onClick={fetchDashboardData}
-            disabled={loading}
-          >
-            {loading ? (
-              <>
-                <Loader2 size={16} className="animate-spin" />
-                <span>Refreshing...</span>
-              </>
-            ) : (
-              <>
-                <RefreshCw size={16} />
-                <span>Refresh</span>
-              </>
-            )}
-          </button>
+      {activeTab === 'swap' && (
+        <div className="bg-[#18181c] border border-[#23232a] rounded-2xl p-6">
+          <h2 className="text-2xl font-bold mb-6">Token Swap</h2>
+          <SwapForm />
         </div>
+      )}
 
-        {swapHistory.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="text-5xl mb-4">📝</div>
-            <h3 className="text-xl font-semibold">No Swap History</h3>
-            <p className="text-gray-400">Your transactions will appear here once you start swapping.</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead className="border-b border-[#23232a]">
-                <tr>
-                  <th className="p-4 text-sm font-semibold text-gray-400">Date</th>
-                  <th className="p-4 text-sm font-semibold text-gray-400">Transaction</th>
-                  <th className="p-4 text-sm font-semibold text-gray-400">Value</th>
-                  <th className="p-4 text-sm font-semibold text-gray-400">Status</th>
-                  <th className="p-4 text-sm font-semibold text-gray-400">Scam Risk</th>
-                </tr>
-              </thead>
-              <tbody>
-                {swapHistory.map((swap, index) => (
-                  <tr key={swap._id || swap.id || index} className="border-b border-[#23232a] last:border-none hover:bg-gray-800/50 transition-colors">
-                    <td className="p-4 text-gray-300">{formatDate(swap.createdAt || swap.timestamp || new Date())}</td>
-                    <td className="p-4">
-                      <div className="flex items-center">
-                        <span className="font-semibold">{swap.fromAmount} {swap.fromToken}</span>
-                        <ArrowRightIcon />
-                        <span className="font-semibold">{swap.toAmount} {swap.toToken}</span>
-                      </div>
-                    </td>
-                    <td className="p-4 font-mono">{formatCurrency(swap.usdValue || 0)}</td>
-                    <td className="p-4">
-                      <span className={`px-3 py-1 text-xs font-semibold rounded-full capitalize ${getStatusClasses(swap.status)}`}>
-                        {swap.status || 'pending'}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-24 h-2 bg-gray-700 rounded-full">
-                          <div className={`h-2 rounded-full ${getRiskColor(swap.scamRisk || 0)}`} style={{ width: `${swap.scamRisk || 0}%` }} />
-                        </div>
-                        <span className="text-sm font-semibold">{swap.scamRisk || 0}%</span>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      {activeTab === 'history' && (
+        <div className="bg-[#18181c] border border-[#23232a] rounded-2xl p-6">
+          <h2 className="text-2xl font-bold mb-6">Transaction History</h2>
+          <TransactionHistory />
+        </div>
+      )}
+
+      {activeTab === 'tokens' && (
+        <div className="bg-[#18181c] border border-[#23232a] rounded-2xl p-6">
+          <h2 className="text-2xl font-bold mb-6">Aptos Token List</h2>
+          <TokenList />
+        </div>
+      )}
+
+      {activeTab === 'favorites' && (
+        <div className="bg-[#18181c] border border-[#23232a] rounded-2xl p-6">
+          <h2 className="text-2xl font-bold mb-6">Favorite Tokens</h2>
+          <FavoriteTokens />
+        </div>
+      )}
     </div>
   );
 };

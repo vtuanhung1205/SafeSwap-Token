@@ -4,21 +4,214 @@ const router = express.Router();
 const User = require('../models/User');
 const { auth, adminAuth } = require('../middleware/auth');
 const logger = require('../utils/logger');
+const userDataService = require('../services/userDataService');
 
 // Get user statistics
 router.get('/stats', auth, async (req, res) => {
   try {
-    const stats = await User.getUserStats(req.user.id);
+    const stats = await userDataService.getUserStats(req.user.userId);
     
     res.json({
       success: true,
-      data: stats[0] || {}
+      data: stats
     });
   } catch (error) {
     logger.error('Error getting user stats:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to get user statistics'
+    });
+  }
+});
+
+// Get favorite tokens
+router.get('/favorite-tokens', auth, async (req, res) => {
+  try {
+    const favoriteTokens = await userDataService.getFavoriteTokens(req.user.userId);
+    
+    res.json({
+      success: true,
+      data: favoriteTokens
+    });
+  } catch (error) {
+    logger.error('Error getting favorite tokens:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get favorite tokens'
+    });
+  }
+});
+
+// Add favorite token
+router.post('/favorite-tokens', auth, async (req, res) => {
+  try {
+    const { address, symbol, name, notes, alertPrice } = req.body;
+    
+    if (!address || !symbol || !name) {
+      return res.status(400).json({
+        success: false,
+        error: 'Token address, symbol, and name are required'
+      });
+    }
+    
+    const favoriteTokens = await userDataService.addFavoriteToken(req.user.userId, {
+      address,
+      symbol,
+      name,
+      notes,
+      alertPrice
+    });
+    
+    res.json({
+      success: true,
+      data: favoriteTokens
+    });
+  } catch (error) {
+    logger.error('Error adding favorite token:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to add favorite token'
+    });
+  }
+});
+
+// Remove favorite token
+router.delete('/favorite-tokens/:address', auth, async (req, res) => {
+  try {
+    const { address } = req.params;
+    const favoriteTokens = await userDataService.removeFavoriteToken(req.user.userId, address);
+    
+    res.json({
+      success: true,
+      data: favoriteTokens
+    });
+  } catch (error) {
+    logger.error('Error removing favorite token:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to remove favorite token'
+    });
+  }
+});
+
+// Set price alert
+router.post('/price-alerts/:address', auth, async (req, res) => {
+  try {
+    const { address } = req.params;
+    const { alertPrice } = req.body;
+    
+    if (!alertPrice || isNaN(alertPrice)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Valid alert price is required'
+      });
+    }
+    
+    const favoriteToken = await userDataService.setPriceAlert(req.user.userId, address, parseFloat(alertPrice));
+    
+    res.json({
+      success: true,
+      data: favoriteToken
+    });
+  } catch (error) {
+    logger.error('Error setting price alert:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to set price alert'
+    });
+  }
+});
+
+// Remove price alert
+router.delete('/price-alerts/:address', auth, async (req, res) => {
+  try {
+    const { address } = req.params;
+    const favoriteToken = await userDataService.removePriceAlert(req.user.userId, address);
+    
+    res.json({
+      success: true,
+      data: favoriteToken
+    });
+  } catch (error) {
+    logger.error('Error removing price alert:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to remove price alert'
+    });
+  }
+});
+
+// Get user activity
+router.get('/activity', auth, async (req, res) => {
+  try {
+    const { limit = 50 } = req.query;
+    const activity = await userDataService.getUserActivity(req.user.userId, parseInt(limit));
+    
+    res.json({
+      success: true,
+      data: activity
+    });
+  } catch (error) {
+    logger.error('Error getting user activity:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get user activity'
+    });
+  }
+});
+
+// Get swap history
+router.get('/swap-history', auth, async (req, res) => {
+  try {
+    const { limit = 20 } = req.query;
+    const swapHistory = await userDataService.getSwapHistory(req.user.userId, parseInt(limit));
+    
+    res.json({
+      success: true,
+      data: swapHistory
+    });
+  } catch (error) {
+    logger.error('Error getting swap history:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get swap history'
+    });
+  }
+});
+
+// Get user preferences
+router.get('/preferences', auth, async (req, res) => {
+  try {
+    const preferences = await userDataService.getUserPreferences(req.user.userId);
+    
+    res.json({
+      success: true,
+      data: preferences
+    });
+  } catch (error) {
+    logger.error('Error getting user preferences:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get user preferences'
+    });
+  }
+});
+
+// Update user preferences
+router.put('/preferences', auth, async (req, res) => {
+  try {
+    const { preferences } = req.body;
+    const updatedPreferences = await userDataService.updateUserPreferences(req.user.userId, preferences);
+    
+    res.json({
+      success: true,
+      data: updatedPreferences
+    });
+  } catch (error) {
+    logger.error('Error updating user preferences:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update user preferences'
     });
   }
 });
@@ -57,49 +250,6 @@ router.get('/dashboard', auth, async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to get dashboard data'
-    });
-  }
-});
-
-// Update user preferences
-router.put('/preferences', auth, async (req, res) => {
-  try {
-    const { preferences } = req.body;
-    const user = await User.findById(req.user.id);
-    
-    if (preferences) {
-      user.preferences = { ...user.preferences, ...preferences };
-      await user.save();
-    }
-    
-    res.json({
-      success: true,
-      message: 'Preferences updated successfully',
-      data: user.preferences
-    });
-  } catch (error) {
-    logger.error('Error updating user preferences:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to update preferences'
-    });
-  }
-});
-
-// Get user risk profile
-router.get('/risk-profile', auth, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id).select('riskProfile');
-    
-    res.json({
-      success: true,
-      data: user.riskProfile
-    });
-  } catch (error) {
-    logger.error('Error getting risk profile:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to get risk profile'
     });
   }
 });

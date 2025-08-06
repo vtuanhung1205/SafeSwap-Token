@@ -254,95 +254,45 @@ export const userAPI = {
   getUserStats: () => 
     api.get('/users/stats'),
   
-  // Get user dashboard
-  getDashboard: () => 
-    api.get('/users/dashboard'),
+  // Get favorite tokens
+  getFavoriteTokens: () => 
+    api.get('/users/favorite-tokens'),
+  
+  // Add favorite token
+  addFavoriteToken: (tokenData) => 
+    api.post('/users/favorite-tokens', tokenData),
+  
+  // Remove favorite token
+  removeFavoriteToken: (address) => 
+    api.delete(`/users/favorite-tokens/${address}`),
+  
+  // Set price alert
+  setPriceAlert: (address, alertPrice) => 
+    api.post(`/users/price-alerts/${address}`, { alertPrice }),
+  
+  // Remove price alert
+  removePriceAlert: (address) => 
+    api.delete(`/users/price-alerts/${address}`),
+  
+  // Get user activity
+  getUserActivity: (limit = 50) => 
+    api.get('/users/activity', { params: { limit } }),
+  
+  // Get swap history
+  getSwapHistory: (limit = 20) => 
+    api.get('/users/swap-history', { params: { limit } }),
+  
+  // Get user preferences
+  getUserPreferences: () => 
+    api.get('/users/preferences'),
   
   // Update user preferences
-  updatePreferences: (preferences) => 
+  updateUserPreferences: (preferences) => 
     api.put('/users/preferences', { preferences }),
   
-  // Get user risk profile
-  getRiskProfile: () => 
-    api.get('/users/risk-profile'),
-  
-  // Update user risk profile
-  updateRiskProfile: (level, factors) => 
-    api.put('/users/risk-profile', { level, factors }),
-  
-  // Get user limits
-  getUserLimits: () => 
-    api.get('/users/limits'),
-  
-  // Update user limits
-  updateUserLimits: (daily, monthly, single) => 
-    api.put('/users/limits', { daily, monthly, single }),
-  
-  // Get user sessions
-  getUserSessions: () => 
-    api.get('/users/sessions'),
-  
-  // Revoke session
-  revokeSession: (token) => 
-    api.delete(`/users/sessions/${token}`),
-  
-  // Get user API keys
-  getAPIKeys: () => 
-    api.get('/users/api-keys'),
-  
-  // Create API key
-  createAPIKey: (name, permissions) => 
-    api.post('/users/api-keys', { name, permissions }),
-  
-  // Delete API key
-  deleteAPIKey: (key) => 
-    api.delete(`/users/api-keys/${key}`),
-  
-  // Get user support tickets
-  getSupportTickets: () => 
-    api.get('/users/support-tickets'),
-  
-  // Create support ticket
-  createSupportTicket: (subject, priority) => 
-    api.post('/users/support-tickets', { subject, priority }),
-};
-
-// Analytics API
-export const analyticsAPI = {
-  // Get analytics overview
-  getOverview: (timeRange = '30d') => 
-    api.get('/analytics/overview', { params: { timeRange } }),
-  
-  // Get transaction trends
-  getTrends: (period = 'daily', days = 30) => 
-    api.get('/analytics/trends', { params: { period, days } }),
-  
-  // Get risk analysis
-  getRiskAnalysis: () => 
-    api.get('/analytics/risk-analysis'),
-  
-  // Get network statistics
-  getNetworkStats: () => 
-    api.get('/analytics/network-stats'),
-  
-  // Get platform statistics (admin only)
-  getPlatformStats: () => 
-    api.get('/analytics/platform-stats'),
-};
-
-// Swap API (for future implementation)
-export const swapAPI = {
-  getQuote: (fromToken, toToken, amount) => 
-    api.post('/swap/quote', { fromToken, toToken, amount }),
-  
-  executeSwap: (swapData) => 
-    api.post('/swap/execute', swapData),
-  
-  getHistory: (limit = 20) => 
-    api.get(`/swap/history?limit=${limit}`),
-  
-  getStats: () => 
-    api.get('/swap/stats'),
+  // Save swap history after successful transaction
+  saveSwapHistory: (swapData) => 
+    api.post('/transactions/save-history', swapData),
 };
 
 // Health check API

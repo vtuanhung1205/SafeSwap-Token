@@ -6,6 +6,8 @@ const transactionService = require('../services/transactionService');
 const aptosService = require('../services/aptosService');
 const { auth } = require('../middleware/auth');
 const logger = require('../utils/logger');
+const AptosClient = require('@aptos-labs/aptos-js');
+const userDataService = require('../services/userDataService');
 
 // Get user transactions
 router.get('/', auth, async (req, res) => {
@@ -360,6 +362,55 @@ router.delete('/monitor/:address', auth, async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to remove address from monitoring'
+    });
+  }
+});
+
+// Save swap history (Frontend đã submit transaction lên blockchain)
+router.post('/save-history', auth, async (req, res) => {
+  try {
+    const { transactionHash, walletAddress, fromToken, toToken, swapProvider, gasUsed, gasPrice, totalCost } = req.body;
+    
+    if (!transactionHash || !walletAddress || !fromToken || !toToken) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields'
+      });
+    }
+
+    // Verify transaction exists on blockchain
+    const aptosClient = new AptosClient(process.env.APTOS_NODE_URL);
+    const transaction = await aptosClient.getTransactionByHash(transactionHash);
+    
+    if (!transaction) {
+      return res.status(400).json({
+        success: false,
+        error: 'Transaction not found on blockchain'
+      });
+    }
+
+    // Save to database
+    const swapHistory = await userDataService.saveSwapHistory(req.user.userId, {
+      transactionHash,
+      walletAddress,
+      fromToken,
+      toToken,
+      swapProvider: swapProvider || 'liquidswap',
+      gasUsed: gasUsed || 0,
+      gasPrice: gasPrice || 0,
+      totalCost: totalCost || 0,
+      status: 'success'
+    });
+
+    res.json({
+      success: true,
+      data: swapHistory
+    });
+  } catch (error) {
+    logger.error('Error saving swap history:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to save swap history'
     });
   }
 });

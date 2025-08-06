@@ -9,10 +9,12 @@ import {
   TrendingDown,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
-import { swapAPI, walletAPI, handleApiError } from "../utils/api";
+import { userAPI, walletAPI, handleApiError } from "../utils/api";
 import toast from "react-hot-toast";
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
 import WalletConnect from "./WalletConnect";
+import { AptosClient } from "aptos";
+import axios from "axios";
 
 // --- Custom Hooks and tokens array (Unchanged) ---
 const useDebounce = (value, delay) => {
@@ -55,12 +57,12 @@ const tokens = [
 
 const SwapForm = () => {
   const { user, isAuthenticated } = useAuth();
-  const { connected: isWalletConnected } = useWallet();
+  const { connected, account, signAndSubmitTransaction } = useWallet();
 
   const [fromToken, setFromToken] = useState(tokens[0]);
   const [toToken, setToToken] = useState(tokens[1]);
-  const [fromAmount, setFromAmount] = useState("");
-  const debouncedFromAmount = useDebounce(fromAmount, 500);
+  const [amount, setAmount] = useState("");
+  const debouncedAmount = useDebounce(amount, 500);
   const [toAmount, setToAmount] = useState("");
   const [quote, setQuote] = useState(null);
   const [isLoadingQuote, setIsLoadingQuote] = useState(false);
@@ -71,6 +73,9 @@ const SwapForm = () => {
   const [isLoadingBalances, setIsLoadingBalances] = useState(false);
   const [tokenPrices, setTokenPrices] = useState(null);
   const [isPriceLoading, setIsPriceLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [slippage, setSlippage] = useState(0.5); // Default slippage
 
   const [formRef, isFormInView] = useInView({ threshold: 0.1, triggerOnce: true });
   const animationClasses = isFormInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10";
@@ -95,24 +100,24 @@ const SwapForm = () => {
   }, []);
 
   useEffect(() => {
-    if (debouncedFromAmount && parseFloat(debouncedFromAmount) > 0 && fromToken && toToken) {
+    if (debouncedAmount && parseFloat(debouncedAmount) > 0 && fromToken && toToken) {
       getSwapQuote();
     } else {
       setToAmount("");
       setQuote(null);
     }
-  }, [debouncedFromAmount, fromToken, toToken]);
+  }, [debouncedAmount, fromToken, toToken]);
 
   useEffect(() => {
-    if (isWalletConnected) {
+    if (connected) {
       fetchWalletBalances();
     } else {
       setTokenBalances({});
     }
-  }, [isWalletConnected]);
+  }, [connected]);
 
   const fetchWalletBalances = async () => {
-    if (!isWalletConnected) return;
+    if (!connected) return;
     setIsLoadingBalances(true);
     try {
       const response = await walletAPI.getInfo();
@@ -127,22 +132,33 @@ const SwapForm = () => {
   };
 
   const getSwapQuote = async () => {
-    if (!debouncedFromAmount || !fromToken || !toToken) return;
+    if (!debouncedAmount || !fromToken || !toToken) return;
     setIsLoadingQuote(true);
     try {
-      const response = await swapAPI.getQuote(fromToken.symbol, toToken.symbol, debouncedFromAmount);
-      if (response.data.success) {
-        const quoteData = response.data.data.quote;
-        setQuote(quoteData);
-        setToAmount(quoteData.toAmount.toFixed(6));
-        analyzeToken(toToken.symbol);
+      // Calculate quote locally using current prices
+      const fromAmount = parseFloat(debouncedAmount);
+      const fromPrice = await getTokenPrice(fromToken);
+      const toPrice = await getTokenPrice(toToken);
+      
+      if (!fromPrice || !toPrice) {
+        throw new Error('Unable to get current prices');
       }
+      
+      const toAmount = (fromAmount * fromPrice) / toPrice;
+      const quoteData = {
+        fromAmount,
+        toAmount,
+        fromPrice,
+        toPrice,
+        rate: toPrice / fromPrice,
+        quoteId: Date.now().toString()
+      };
+      
+      setQuote(quoteData);
+      setToAmount(toAmount.toFixed(6));
     } catch (error) {
-      console.error("Quote error:", error);
-      toast.error(handleApiError(error));
-      // --- IMPROVEMENT: Also clear quote and toAmount on error ---
-      setToAmount("");
-      setQuote(null);
+      console.error('Error getting quote:', error);
+      toast.error('Failed to get quote');
     } finally {
       setIsLoadingQuote(false);
     }
@@ -171,32 +187,106 @@ const SwapForm = () => {
   };
 
   const handleSwap = async () => {
-    if (!isAuthenticated) return toast.error("Please sign in to swap tokens");
-    if (!isWalletConnected) return toast.error("Please connect your wallet to swap tokens");
-    if (!quote) return toast.error("Please get a quote first");
-    
-    if (scamAnalysis?.isScam && scamAnalysis.riskScore > 80) {
-      if (!confirm(`Warning: This token has a high scam risk (${scamAnalysis.riskScore}%). Do you want to continue?`)) {
-        return;
-      }
+    if (!connected || !account) {
+      toast.error('Please connect your wallet first');
+      return;
     }
-    setIsSwapping(true);
+
+    setLoading(true);
+    setError(null);
+
     try {
-      const response = await swapAPI.executeSwap(fromToken.symbol, toToken.symbol, quote.fromAmount, quote.toAmount, quote.quoteId);
-      if (response.data.success) {
-        const transaction = response.data.data.transaction;
-        toast.success(`Swap initiated! Transaction: ${transaction.hash.slice(0, 10)}...`);
-        setFromAmount("");
-        setToAmount("");
-        setQuote(null);
-        setScamAnalysis(null);
-        setTimeout(fetchWalletBalances, 2000);
+      // 1. Validate input
+      if (!fromToken || !toToken || !amount || parseFloat(amount) <= 0) {
+        throw new Error('Please enter valid swap details');
       }
+
+      // 2. Get current prices from GeckoTerminal
+      const fromPrice = await getTokenPrice(fromToken);
+      const toPrice = await getTokenPrice(toToken);
+      
+      if (!fromPrice || !toPrice) {
+        throw new Error('Unable to get current prices');
+      }
+
+      // 3. Calculate swap details
+      const fromAmount = parseFloat(amount);
+      const toAmount = (fromAmount * fromPrice) / toPrice;
+      
+      // 4. Create transaction payload (Frontend tạo)
+      const payload = createSwapTransactionPayload({
+        fromToken: fromToken.address,
+        toToken: toToken.address,
+        fromAmount: fromAmount * Math.pow(10, fromToken.decimals),
+        toAmount: toAmount * Math.pow(10, toToken.decimals),
+        slippage: slippage / 100
+      });
+
+      // 5. User signs transaction
+      const response = await signAndSubmitTransaction(payload);
+      
+      // 6. Wait for confirmation
+      const client = new AptosClient('https://fullnode.mainnet.aptoslabs.com/v1');
+      await client.waitForTransaction({ transactionHash: response.hash });
+
+      // 7. Success - chỉ lưu history vào Backend
+      await userAPI.saveSwapHistory({
+        transactionHash: response.hash,
+        walletAddress: account.address,
+        fromToken: {
+          address: fromToken.address,
+          symbol: fromToken.symbol,
+          amount: fromAmount,
+          price: fromPrice
+        },
+        toToken: {
+          address: toToken.address,
+          symbol: toToken.symbol,
+          amount: toAmount,
+          price: toPrice
+        },
+        swapProvider: 'liquidswap',
+        gasUsed: response.gas_used,
+        gasPrice: response.gas_unit_price,
+        totalCost: (response.gas_used * response.gas_unit_price) / Math.pow(10, 8),
+        status: 'success'
+      });
+      
+      // 8. Reset form
+      setAmount('');
+      setFromToken(null);
+      setToToken(null);
+
     } catch (error) {
-      console.error("Swap error:", error);
-      toast.error(handleApiError(error));
+      console.error('Swap failed:', error);
+      setError(error.message || 'Swap failed. Please try again.');
+      toast.error(error.message || 'Swap failed');
     } finally {
-      setIsSwapping(false);
+      setLoading(false);
+    }
+  };
+
+  // Helper function to create swap transaction payload
+  const createSwapTransactionPayload = (swapData) => {
+    return {
+      function: '0x1::coin::transfer',
+      type_arguments: [swapData.fromToken, swapData.toToken],
+      arguments: [
+        swapData.fromAmount.toString(),
+        swapData.toAmount.toString(),
+        swapData.slippage.toString()
+      ]
+    };
+  };
+
+  // Helper function to get token price from GeckoTerminal
+  const getTokenPrice = async (token) => {
+    try {
+      const response = await axios.get(`https://api.geckoterminal.com/api/v2/networks/aptos/tokens/${token.address}`);
+      return response.data.data.attributes.price_usd;
+    } catch (error) {
+      console.error('Error fetching token price:', error);
+      return null;
     }
   };
 
@@ -204,7 +294,7 @@ const SwapForm = () => {
     const temp = fromToken;
     setFromToken(toToken);
     setToToken(temp);
-    setFromAmount(toAmount);
+    setAmount(toAmount);
     setToAmount("");
     setQuote(null);
     setScamAnalysis(null);
@@ -240,7 +330,7 @@ const SwapForm = () => {
             <div className="mb-4">
               <div className="flex justify-between items-center mb-2">
                 <label className="text-sm text-gray-400">From</label>
-                {isWalletConnected && tokenBalances[fromToken.symbol] && (
+                {connected && tokenBalances[fromToken.symbol] && (
                   <div className="text-xs text-gray-400 flex items-center">
                     <Wallet size={12} className="mr-1" />
                     <span>Balance: {formatBalance(getTokenBalance(fromToken.symbol))}</span>
@@ -256,11 +346,11 @@ const SwapForm = () => {
                   <span className="text-white">{fromToken.symbol}</span>
                   <ChevronDown />
                 </button>
-                <input type="number" className="flex-1 bg-transparent border-none text-right text-white text-lg focus:outline-none" placeholder="0.0" value={fromAmount} onChange={(e) => setFromAmount(e.target.value)} />
+                <input type="number" className="flex-1 bg-transparent border-none text-right text-white text-lg focus:outline-none" placeholder="0.0" value={amount} onChange={(e) => setAmount(e.target.value)} />
               </div>
-              {isWalletConnected && tokenBalances[fromToken.symbol] && (
+              {connected && tokenBalances[fromToken.symbol] && (
                 <div className="flex justify-end mt-1">
-                  <button className="text-xs text-cyan-500 hover:text-cyan-400" onClick={() => { const balance = getTokenBalance(fromToken.symbol); if (balance) setFromAmount(balance.toString()); }}>Max</button>
+                  <button className="text-xs text-cyan-500 hover:text-cyan-400" onClick={() => { const balance = getTokenBalance(fromToken.symbol); if (balance) setAmount(balance.toString()); }}>Max</button>
                 </div>
               )}
             </div>
@@ -276,7 +366,7 @@ const SwapForm = () => {
             <div className="mb-4 mt-2">
               <div className="flex justify-between items-center mb-2">
                 <label className="text-sm text-gray-400">To</label>
-                {isWalletConnected && tokenBalances[toToken.symbol] && (
+                {connected && tokenBalances[toToken.symbol] && (
                   <div className="text-xs text-gray-400 flex items-center">
                     <Wallet size={12} className="mr-1" />
                     <span>Balance: {formatBalance(getTokenBalance(toToken.symbol))}</span>
@@ -301,7 +391,7 @@ const SwapForm = () => {
               <div className="bg-[#111112] rounded-xl p-3 mb-4 border border-[#2a2a35]">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm text-gray-400">Price</span>
-                  <span className="text-sm text-white">1 {fromToken.symbol} ≈ {quote.exchangeRate.toFixed(6)} {toToken.symbol}</span>
+                  <span className="text-sm text-white">1 {fromToken.symbol} ≈ {quote.rate.toFixed(6)} {toToken.symbol}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-400">Fee</span>
@@ -324,9 +414,9 @@ const SwapForm = () => {
             )}
 
             {/* Connect Wallet / Swap Button */}
-            {!isWalletConnected ? <WalletConnect /> : (
+            {!connected ? <WalletConnect /> : (
               <button className={`w-full py-3 rounded-xl font-medium transition ${isLoadingQuote || isSwapping || !quote ? "bg-cyan-600/50 text-cyan-300 cursor-not-allowed" : "bg-cyan-600 text-white hover:bg-cyan-700"}`} disabled={isLoadingQuote || isSwapping || !quote} onClick={handleSwap}>
-                {isSwapping ? <div className="flex items-center justify-center space-x-2"><Loader2 size={18} className="animate-spin" /><span>Swapping...</span></div> : isLoadingQuote ? <div className="flex items-center justify-center space-x-2"><Loader2 size={18} className="animate-spin" /><span>Getting Quote...</span></div> : !quote ? "Enter Amount" : "Swap Tokens"}
+                {loading ? <div className="flex items-center justify-center space-x-2"><Loader2 size={18} className="animate-spin" /><span>Swapping...</span></div> : isLoadingQuote ? <div className="flex items-center justify-center space-x-2"><Loader2 size={18} className="animate-spin" /><span>Getting Quote...</span></div> : !quote ? "Enter Amount" : "Swap Tokens"}
               </button>
             )}
           </div>
@@ -361,7 +451,7 @@ const SwapForm = () => {
                     </div>
                     <div className="flex flex-col items-end">
                       <CoinGeckoPriceDisplay isLoading={isPriceLoading} priceData={tokenPrices?.[token.coingeckoId]} />
-                      {isWalletConnected && tokenBalances[token.symbol] && (
+                      {connected && tokenBalances[token.symbol] && (
                         <div className="text-xs text-gray-400 mt-1">{formatBalance(getTokenBalance(token.symbol))}</div>
                       )}
                     </div>
