@@ -26,8 +26,13 @@ const server = http.createServer(app);
 // Socket.IO setup
 const io = socketIo(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
-    methods: ["GET", "POST"]
+    origin: [
+      process.env.FRONTEND_URL || "http://localhost:5173",
+      "https://safeswap-frontend.onrender.com",
+      "http://localhost:5173"
+    ],
+    methods: ["GET", "POST"],
+    credentials: true
   }
 });
 
@@ -43,12 +48,36 @@ const limiter = rateLimit({
 // Middleware
 app.use(helmet());
 app.use(compression());
+// CORS configuration
+const allowedOrigins = [
+  process.env.FRONTEND_URL || "http://localhost:5173",
+  "https://safeswap-frontend.onrender.com",
+  "https://safeswap-frontend.onrender.com/",
+  "http://localhost:5173",
+  "http://localhost:3000"
+];
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || "http://localhost:5173",
-  credentials: true
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log('CORS blocked origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 app.use(morgan('combined', { stream: { write: message => logger.info(message.trim()) } }));
 app.use(limiter);
+// Handle preflight requests
+app.options('*', cors());
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
@@ -127,8 +156,10 @@ const startServer = async () => {
       PORT: process.env.PORT,
       MONGODB_URI: process.env.MONGODB_URI ? 'SET' : 'NOT SET',
       MONGODB_URI_PROD: process.env.MONGODB_URI_PROD ? 'SET' : 'NOT SET',
-      JWT_SECRET: process.env.JWT_SECRET ? 'SET' : 'NOT SET'
+      JWT_SECRET: process.env.JWT_SECRET ? 'SET' : 'NOT SET',
+      FRONTEND_URL: process.env.FRONTEND_URL || 'NOT SET'
     });
+    console.log('Allowed CORS origins:', allowedOrigins);
     
     // Connect to database
     console.log('Connecting to database...');

@@ -35,10 +35,10 @@ const verifyGoogleToken = async (token) => {
 // @access  Public
 router.post('/google', async (req, res) => {
   try {
-    const { access_token, user, idToken, accessToken, googleId, email, name } = req.body;
+    const { access_token, user: googleUserData, idToken, accessToken, googleId, email, name } = req.body;
 
     // Support both old and new format
-    const googleUser = user || {
+    const googleUser = googleUserData || {
       email: email,
       given_name: name?.split(' ')[0] || '',
       family_name: name?.split(' ').slice(1).join(' ') || '',
