@@ -2,23 +2,28 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { authAPI } from '../../utils/api';
 import toast from 'react-hot-toast';
-import { Loader2, Wallet, ExternalLink, CheckCircle } from 'lucide-react';
+import { Loader2, Wallet, ExternalLink, CheckCircle, AlertCircle } from 'lucide-react';
 
 const AptosConnectAPILogin = ({ onSuccess, onClose }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const [aptosConnect, setAptosConnect] = useState(null);
+  const [error, setError] = useState(null);
   const { aptosConnectLogin } = useAuth();
 
   // Initialize Aptos Connect API
   useEffect(() => {
     const initializeAptosConnect = async () => {
       try {
+        setError(null);
+        
         // Import Aptos Connect API dynamically
         const { AptosConnect } = await import('@aptos-connect/wallet-api');
         
         // Get client ID from environment or use fallback
         const clientId = import.meta.env.VITE_APTOS_CONNECT_CLIENT_ID || 'safeswap-demo';
+        
+        console.log('Initializing Aptos Connect API with clientId:', clientId);
         
         // Initialize Aptos Connect API
         const aptosConnectInstance = new AptosConnect({
@@ -32,7 +37,8 @@ const AptosConnectAPILogin = ({ onSuccess, onClose }) => {
         console.log('Aptos Connect API initialized successfully');
       } catch (error) {
         console.error('Failed to initialize Aptos Connect API:', error);
-        toast.error('Failed to initialize Aptos Connect API');
+        setError('Failed to initialize Aptos Connect API. Please try the alternative options below.');
+        setIsInitialized(false);
       }
     };
 
@@ -42,11 +48,13 @@ const AptosConnectAPILogin = ({ onSuccess, onClose }) => {
   // Handle Aptos Connect API login
   const handleAptosConnectLogin = async () => {
     if (!isInitialized || !aptosConnect) {
-      toast.error('Aptos Connect API not initialized');
+      toast.error('Aptos Connect API not initialized. Please try alternative options.');
       return;
     }
 
     setIsLoading(true);
+    setError(null);
+    
     try {
       console.log('Starting Aptos Connect API authentication...');
       
@@ -57,6 +65,11 @@ const AptosConnectAPILogin = ({ onSuccess, onClose }) => {
       });
 
       console.log('Aptos Connect API auth result:', authResult);
+
+      // Validate auth result
+      if (!authResult || (!authResult.user && !authResult.wallet)) {
+        throw new Error('Authentication failed: No user or wallet data received');
+      }
 
       // Extract user and wallet data
       const userData = {
@@ -70,6 +83,11 @@ const AptosConnectAPILogin = ({ onSuccess, onClose }) => {
         accessToken: authResult.auth?.accessToken,
         refreshToken: authResult.auth?.refreshToken,
       };
+
+      // Validate required data
+      if (!userData.email && !userData.walletAddress) {
+        throw new Error('Authentication failed: Missing required user or wallet data');
+      }
 
       // Call backend API to register/login user
       const apiResponse = await authAPI.aptosConnectAuth(userData);
@@ -94,7 +112,9 @@ const AptosConnectAPILogin = ({ onSuccess, onClose }) => {
         // Handle new user registration
         await handleNewUserRegistration();
       } else {
-        toast.error(error.message || 'Authentication failed. Please try again.');
+        const errorMessage = error.message || 'Authentication failed. Please try again.';
+        setError(errorMessage);
+        toast.error(errorMessage);
       }
     } finally {
       setIsLoading(false);
@@ -148,6 +168,8 @@ const AptosConnectAPILogin = ({ onSuccess, onClose }) => {
   // Handle direct wallet connection (fallback)
   const handleDirectWalletConnection = async () => {
     setIsLoading(true);
+    setError(null);
+    
     try {
       // Check if wallet extension is available
       if (typeof window !== 'undefined' && window.aptos) {
@@ -189,7 +211,9 @@ const AptosConnectAPILogin = ({ onSuccess, onClose }) => {
       }
     } catch (error) {
       console.error('Direct wallet connection error:', error);
-      toast.error('Wallet connection failed. Please try again.');
+      const errorMessage = error.message || 'Wallet connection failed. Please try again.';
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -227,6 +251,16 @@ const AptosConnectAPILogin = ({ onSuccess, onClose }) => {
           Securely connect your Aptos wallet and authenticate
         </p>
       </div>
+
+      {/* Error Display */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex items-center space-x-2">
+            <AlertCircle className="w-5 h-5 text-red-600" />
+            <span className="text-sm text-red-700">{error}</span>
+          </div>
+        </div>
+      )}
 
       {/* Status */}
       <div className="flex items-center justify-center space-x-2">
@@ -269,7 +303,7 @@ const AptosConnectAPILogin = ({ onSuccess, onClose }) => {
             <div className="w-full border-t border-gray-300" />
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white text-gray-500">Or connect directly</span>
+            <span className="px-2 bg-white text-gray-500">Or try alternative methods</span>
           </div>
         </div>
 
@@ -299,10 +333,13 @@ const AptosConnectAPILogin = ({ onSuccess, onClose }) => {
         </div>
       </div>
 
-      {/* Info */}
-      <div className="text-xs text-gray-500 text-center">
+      {/* Troubleshooting Info */}
+      <div className="text-xs text-gray-500 text-center space-y-1">
         <p>By connecting, you agree to our Terms of Service and Privacy Policy</p>
-        <p className="mt-1">Your wallet data is stored securely and never shared</p>
+        <p>Your wallet data is stored securely and never shared</p>
+        <p className="mt-2 text-blue-600">
+          Having issues? Try the alternative connection methods above
+        </p>
       </div>
     </div>
   );

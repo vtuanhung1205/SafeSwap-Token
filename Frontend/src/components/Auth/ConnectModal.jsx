@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { X, Wallet, Mail, Lock } from 'lucide-react';
 import { useGoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../../contexts/AuthContext';
-import AptosConnectAPIModal from './AptosConnectAPIModal';
+import AptosConnectSimpleModal from './AptosConnectSimpleModal';
 
 const ConnectModal = ({ isOpen, onClose, onSuccess }) => {
-  const [showAptosConnect, setShowAptosConnect] = useState(false);
+  const [showAptosConnectSimple, setShowAptosConnectSimple] = useState(false);
   const { googleLogin } = useAuth();
 
   const googleLoginHook = useGoogleLogin({
@@ -41,9 +41,9 @@ const ConnectModal = ({ isOpen, onClose, onSuccess }) => {
     googleLoginHook();
   };
 
-  const handleAptosConnectSuccess = (userData) => {
+  const handleAptosConnectSuccess = (walletData) => {
     if (onSuccess) {
-      onSuccess({ type: 'aptos-connect', data: userData });
+      onSuccess({ type: 'aptos-connect', data: walletData });
     }
     onClose();
   };
@@ -83,7 +83,7 @@ const ConnectModal = ({ isOpen, onClose, onSuccess }) => {
                   Recommended
                 </div>
                 <button
-                  onClick={() => setShowAptosConnect(true)}
+                  onClick={() => setShowAptosConnectSimple(true)}
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-3"
                 >
                   <Wallet className="w-5 h-5" />
@@ -142,10 +142,10 @@ const ConnectModal = ({ isOpen, onClose, onSuccess }) => {
         </div>
       </div>
 
-      {/* Aptos Connect API Modal */}
-      <AptosConnectAPIModal
-        isOpen={showAptosConnect}
-        onClose={() => setShowAptosConnect(false)}
+      {/* Aptos Connect Simple Modal */}
+      <AptosConnectSimpleModal
+        isOpen={showAptosConnectSimple}
+        onClose={() => setShowAptosConnectSimple(false)}
         onSuccess={handleAptosConnectSuccess}
       />
     </>
