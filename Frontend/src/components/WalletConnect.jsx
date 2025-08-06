@@ -180,9 +180,25 @@ const WalletConnect = ({ onWalletConnected }) => {
         }
     }, [isAuthenticated, connected, showLoginPromptModal]);
 
+    // Xóa useEffect tự động mở modal sau khi login
+    // User sẽ tự bấm nút "Connect Aptos Wallet" khi muốn connect ví
+
     const handleWalletSelect = async (walletName) => {
         try {
             setIsConnecting(true);
+            
+            // Kiểm tra ví có được cài đặt chưa
+            const selectedWallet = wallets.find(w => w?.adapter?.name === walletName);
+            if (!selectedWallet) {
+                toast.error(`Wallet ${walletName} not found`);
+                return;
+            }
+            
+            if (selectedWallet.readyState !== 'Installed') {
+                toast.error(`Please install ${walletName} wallet first`);
+                return;
+            }
+            
             // Gọi connect để hiện popup đăng nhập vào ví Aptos
             await connect(walletName);
             toast.success(`Connecting to ${walletName}...`);
@@ -191,7 +207,7 @@ const WalletConnect = ({ onWalletConnected }) => {
             setShowAddNewWalletModal(false);
         } catch (error) {
             console.error("Wallet connection error:", error);
-            toast.error(`Failed to connect to ${walletName}`);
+            toast.error(`Failed to connect to ${walletName}: ${error.message}`);
         } finally {
             setIsConnecting(false);
         }
