@@ -239,7 +239,7 @@ const WalletConnect = ({ onWalletConnected }) => {
                 <span>Connecting...</span>
               </div>
             ) : (
-              "Connect Wallet"
+              "Connect Aptos Wallet"
             )}
           </button>
       )}
@@ -379,6 +379,14 @@ const WalletConnect = ({ onWalletConnected }) => {
                         <p className="text-gray-400 mb-8 text-center">
                             Choose your Aptos wallet to connect
                         </p>
+                        
+                        {/* Debug info */}
+                        <div className="mb-4 p-3 bg-gray-800 rounded text-xs text-gray-300">
+                            <p>Debug: Found {wallets?.length || 0} wallets</p>
+                            {wallets?.map((w, i) => (
+                                <p key={i}>- {w?.adapter?.name || 'Unknown'} ({w?.readyState || 'Unknown'})</p>
+                            ))}
+                        </div>
                         
                         <div className="max-h-80 overflow-y-auto space-y-2">
                             {wallets?.map((wallet) => (
