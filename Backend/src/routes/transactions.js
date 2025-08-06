@@ -6,7 +6,7 @@ const transactionService = require('../services/transactionService');
 const aptosService = require('../services/aptosService');
 const { auth } = require('../middleware/auth');
 const logger = require('../utils/logger');
-const AptosClient = require('@aptos-labs/aptos-js');
+const { AptosClient } = require('aptos');
 const userDataService = require('../services/userDataService');
 
 // Get user transactions
