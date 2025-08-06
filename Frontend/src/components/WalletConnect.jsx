@@ -7,7 +7,7 @@ import { useGoogleLogin } from '@react-oauth/google';
 import DemoBadge from './DemoBadge';
 import { APTOS_NODE_URL, validateAptosConfig } from '../config/aptos';
 import { useWallet } from '@aptos-labs/wallet-adapter-react';
-import AptosConnectOAuth from './Auth/AptosConnectOAuth';
+import AptosConnectModal from './Auth/AptosConnectModal';
 
 const WalletConnect = ({ onWalletConnected }) => {
     const { isAuthenticated, googleLogin, connectWallet, disconnectWallet } = useAuth();
@@ -17,6 +17,7 @@ const WalletConnect = ({ onWalletConnected }) => {
     const [isConnecting, setIsConnecting] = useState(false);
     const [showLoginPromptModal, setShowLoginPromptModal] = useState(false);
     const [showWalletModal, setShowWalletModal] = useState(false);
+    const [showAptosConnectModal, setShowAptosConnectModal] = useState(false);
     const [linkedWallets, setLinkedWallets] = useState([]);
     const [walletBalance, setWalletBalance] = useState(null);
     const [connectedWallet, setConnectedWallet] = useState(null);
@@ -64,7 +65,34 @@ const WalletConnect = ({ onWalletConnected }) => {
 
     // Hiện modal chọn ví
     const handleConnectAptosWallet = () => {
-        setShowWalletModal(true);
+        setShowAptosConnectModal(true);
+    };
+
+    // Handle Aptos Connect success
+    const handleAptosConnectSuccess = (walletData) => {
+        console.log('Aptos Connect wallet connected:', walletData);
+        
+        // Lưu thông tin ví
+        const walletInfo = {
+            address: walletData.address,
+            publicKey: walletData.publicKey,
+            walletType: walletData.provider,
+            balance: null
+        };
+        
+        setConnectedWallet(walletInfo);
+        
+        // Gọi callback
+        if (onWalletConnected) {
+            onWalletConnected(walletInfo);
+        }
+        
+        // Fetch balance
+        if (walletData.address) {
+            fetchWalletBalance(walletData.address);
+        }
+        
+        toast.success(`Connected with ${walletData.provider}: ${walletData.address}`);
     };
 
     // Connect với ví cụ thể
@@ -268,9 +296,10 @@ const WalletConnect = ({ onWalletConnected }) => {
                         </p>
                         
                         {/* Aptos Connect OAuth */}
-                        <AptosConnectOAuth 
-                            onSuccess={() => setShowLoginPromptModal(false)}
-                            onClose={() => setShowLoginPromptModal(false)}
+                        <AptosConnectModal 
+                            isOpen={showAptosConnectModal}
+                            onClose={() => setShowAptosConnectModal(false)}
+                            onSuccess={handleAptosConnectSuccess}
                         />
                         
                         <div className="mt-6 text-xs text-gray-500">
@@ -279,6 +308,13 @@ const WalletConnect = ({ onWalletConnected }) => {
                     </div>
                 </div>
             )}
+
+            {/* Aptos Connect Modal */}
+            <AptosConnectModal 
+                isOpen={showAptosConnectModal}
+                onClose={() => setShowAptosConnectModal(false)}
+                onSuccess={handleAptosConnectSuccess}
+            />
         </>
     );
 };

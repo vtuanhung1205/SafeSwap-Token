@@ -3,11 +3,11 @@ import { X, LogIn, Wallet } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import { useGoogleLogin } from '@react-oauth/google';
-import AptosWalletModal from './AptosWalletModal';
+import AptosConnectModal from './AptosConnectModal';
 
 const LoginModal = ({ isOpen, onClose }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showAptosWallet, setShowAptosWallet] = useState(false);
+  const [showAptosConnect, setShowAptosConnect] = useState(false);
   const { googleLogin } = useAuth();
 
   const googleLoginHook = useGoogleLogin({
@@ -52,9 +52,9 @@ const LoginModal = ({ isOpen, onClose }) => {
     googleLoginHook();
   };
 
-  const handleAptosWalletSuccess = (walletData) => {
-    console.log('Aptos wallet connected:', walletData);
-    toast.success(`Connected to wallet: ${walletData.address}`);
+  const handleAptosConnectSuccess = (walletData) => {
+    console.log('Aptos Connect wallet connected:', walletData);
+    toast.success(`Connected with ${walletData.provider}: ${walletData.address}`);
     // You can add additional logic here to handle wallet connection
   };
 
@@ -128,9 +128,9 @@ const LoginModal = ({ isOpen, onClose }) => {
             </div>
           </div>
 
-          {/* Aptos Wallet Login Button */}
+          {/* Aptos Connect Login Button */}
           <button
-            onClick={() => setShowAptosWallet(true)}
+            onClick={() => setShowAptosConnect(true)}
             className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl py-3 px-4 font-semibold flex items-center justify-center gap-3 hover:from-purple-700 hover:to-blue-700 transition-all"
           >
             <Wallet size={20} />
@@ -160,11 +160,11 @@ const LoginModal = ({ isOpen, onClose }) => {
         </div>
       </div>
 
-      {/* Aptos Wallet Modal */}
-      <AptosWalletModal
-        isOpen={showAptosWallet}
-        onClose={() => setShowAptosWallet(false)}
-        onSuccess={handleAptosWalletSuccess}
+      {/* Aptos Connect Modal */}
+      <AptosConnectModal
+        isOpen={showAptosConnect}
+        onClose={() => setShowAptosConnect(false)}
+        onSuccess={handleAptosConnectSuccess}
       />
     </div>
   );
