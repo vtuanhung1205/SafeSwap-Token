@@ -40,7 +40,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
       <AptosWalletAdapterProvider
         dappConfig={{ network: "mainnet" }}
-        optInWallets={['Martian', 'Rise']}
+        optInWallets={['Petra', 'Martian', 'Rise', 'Pontem', 'Nightly', 'Fewcha']}
         autoConnect={false}
         onError={(error) => {
           console.error("Wallet Adapter Error", error);

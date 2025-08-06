@@ -164,31 +164,30 @@ const WalletConnect = ({ onWalletConnected }) => {
     const handleConnectClick = async () => {
         if (connected) return;
         
-        // Nếu chưa đăng nhập, hiện modal login trước
-        if (!isAuthenticated) {
-            setShowLoginPromptModal(true);
-            return;
-        }
-        
-        // Nếu đã đăng nhập, hiện modal chọn ví Aptos ngay
-        setShowAddNewWalletModal(true);
+        // Luôn hiện popup login Google/Apple trước (như trang chủ)
+        setShowLoginPromptModal(true);
     };
 
-    // Xóa useEffect tự động mở modal chọn ví sau khi login
-    // Vì login và connect wallet là độc lập, không cần tự động mở
+    // Sau khi login thành công, tự động mở modal chọn ví Aptos
+    useEffect(() => {
+        if (isAuthenticated && !connected && !showLoginPromptModal) {
+            // Tự động mở modal chọn ví Aptos sau khi login thành công
+            setShowAddNewWalletModal(true);
+        }
+    }, [isAuthenticated, connected, showLoginPromptModal]);
 
     const handleWalletSelect = async (walletName) => {
         try {
             setIsConnecting(true);
+            // Gọi connect để hiện popup đăng nhập vào ví Aptos
             await connect(walletName);
             toast.success(`Connecting to ${walletName}...`);
             
             // Đóng modal sau khi connect
             setShowAddNewWalletModal(false);
-            setShowLinkedWalletModal(false);
         } catch (error) {
             console.error("Wallet connection error:", error);
-            toast.error("Failed to connect wallet");
+            toast.error(`Failed to connect to ${walletName}`);
         } finally {
             setIsConnecting(false);
         }
