@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { X, Wallet, Mail, Lock } from 'lucide-react';
 import { useGoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../../contexts/AuthContext';
-import AptosConnectSimpleModal from './AptosConnectSimpleModal';
+import AptosSDKModal from './AptosSDKModal';
 
 const ConnectModal = ({ isOpen, onClose, onSuccess }) => {
-  const [showAptosConnectSimple, setShowAptosConnectSimple] = useState(false);
+  const [showAptosSDK, setShowAptosSDK] = useState(false);
   const { googleLogin } = useAuth();
 
   const googleLoginHook = useGoogleLogin({
@@ -41,9 +41,9 @@ const ConnectModal = ({ isOpen, onClose, onSuccess }) => {
     googleLoginHook();
   };
 
-  const handleAptosConnectSuccess = (walletData) => {
+  const handleAptosSDKSuccess = (walletData) => {
     if (onSuccess) {
-      onSuccess({ type: 'aptos-connect', data: walletData });
+      onSuccess({ type: 'aptos-sdk', data: walletData });
     }
     onClose();
   };
@@ -77,20 +77,20 @@ const ConnectModal = ({ isOpen, onClose, onSuccess }) => {
 
             {/* Content */}
             <div className="space-y-4">
-              {/* Recommended Option - Aptos Connect */}
+              {/* Recommended Option - Aptos SDK */}
               <div className="relative">
                 <div className="absolute -top-2 -left-2 bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
                   Recommended
                 </div>
                 <button
-                  onClick={() => setShowAptosConnectSimple(true)}
+                  onClick={() => setShowAptosSDK(true)}
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-3"
                 >
                   <Wallet className="w-5 h-5" />
                   <span>Connect Aptos Wallet</span>
                 </button>
                 <p className="text-xs text-gray-500 mt-1 text-center">
-                  Connect wallet + authenticate in one step
+                  Create, import, or connect wallet directly
                 </p>
               </div>
 
@@ -142,11 +142,11 @@ const ConnectModal = ({ isOpen, onClose, onSuccess }) => {
         </div>
       </div>
 
-      {/* Aptos Connect Simple Modal */}
-      <AptosConnectSimpleModal
-        isOpen={showAptosConnectSimple}
-        onClose={() => setShowAptosConnectSimple(false)}
-        onSuccess={handleAptosConnectSuccess}
+      {/* Aptos SDK Modal */}
+      <AptosSDKModal
+        isOpen={showAptosSDK}
+        onClose={() => setShowAptosSDK(false)}
+        onSuccess={handleAptosSDKSuccess}
       />
     </>
   );
