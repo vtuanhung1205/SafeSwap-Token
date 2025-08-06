@@ -46,12 +46,12 @@ const useInView = (options) => {
 };
 
 const tokens = [
-  { symbol: "BTC", name: "Bitcoin", icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Bitcoin.svg/800px-Bitcoin.svg.png", coingeckoId: "bitcoin" },
-  { symbol: "ETH", name: "Ethereum", icon: "https://static1.tokenterminal.com//ethereum/logo.png?logo_hash=fd8f54cab23f8f4980041f4e74607cac0c7ab880", coingeckoId: "ethereum" },
-  { symbol: "SOL", name: "Solana", icon: "https://s2.coinmarketcap.com/static/img/coins/64x64/5426.png", coingeckoId: "solana" },
-  { symbol: "APT", name: "Aptos", icon: "https://s2.coinmarketcap.com/static/img/coins/200x200/21794.png", coingeckoId: "aptos" },
-  { symbol: "USDC", name: "USD Coin", icon: "https://s2.coinmarketcap.com/static/img/coins/200x200/3408.png", coingeckoId: "usd-coin" },
-  { symbol: "USDT", name: "Tether", icon: "https://public.bnbstatic.com/static/academy/uploads-original/2fd4345d8c3a46278941afd9ab7ad225.png", coingeckoId: "tether" },
+  { symbol: "APT", name: "Aptos", icon: "https://s2.coinmarketcap.com/static/img/coins/200x200/21794.png", coingeckoId: "aptos", address: "0x1::aptos_coin::AptosCoin" },
+  { symbol: "USDC", name: "USD Coin", icon: "https://s2.coinmarketcap.com/static/img/coins/200x200/3408.png", coingeckoId: "usd-coin", address: "0xf22bede237a07e121b56d91a491eb7bcdfd1f5907926a9e58338f964a01b17fa::asset::USDC" },
+  { symbol: "USDT", name: "Tether", icon: "https://public.bnbstatic.com/static/academy/uploads-original/2fd4345d8c3a46278941afd9ab7ad225.png", coingeckoId: "tether", address: "0xf22bede237a07e121b56d91a491eb7bcdfd1f5907926a9e58338f964a01b17fa::asset::USDT" },
+  { symbol: "BTC", name: "Bitcoin", icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Bitcoin.svg/800px-Bitcoin.svg.png", coingeckoId: "bitcoin", address: "0xae478ff7d83ed071dbcaf62d0c9c832d41c4b6c8c8c8c8c8c8c8c8c8c8c8c8c8::coin::BTC" },
+  { symbol: "ETH", name: "Ethereum", icon: "https://static1.tokenterminal.com//ethereum/logo.png?logo_hash=fd8f54cab23f8f4980041f4e74607cac0c7ab880", coingeckoId: "ethereum", address: "0xae478ff7d83ed071dbcaf62d0c9c832d41c4b6c8c8c8c8c8c8c8c8c8c8c8c8c8::coin::ETH" },
+  { symbol: "SOL", name: "Solana", icon: "https://s2.coinmarketcap.com/static/img/coins/64x64/5426.png", coingeckoId: "solana", address: "0xae478ff7d83ed071dbcaf62d0c9c832d41c4b6c8c8c8c8c8c8c8c8c8c8c8c8c8::coin::SOL" },
 ];
 
 
@@ -132,7 +132,17 @@ const SwapForm = () => {
   };
 
   const getSwapQuote = async () => {
-    if (!debouncedAmount || !fromToken || !toToken) return;
+    if (!debouncedAmount || !fromToken || !toToken) {
+      console.log('Missing required data for quote:', { debouncedAmount, fromToken, toToken });
+      return;
+    }
+    
+    if (!fromToken.address || !toToken.address) {
+      console.error('Token addresses are missing:', { fromToken, toToken });
+      toast.error('Please select valid tokens');
+      return;
+    }
+    
     setIsLoadingQuote(true);
     try {
       // Calculate quote locally using current prices
@@ -315,10 +325,19 @@ const SwapForm = () => {
   // Helper function to get token price from GeckoTerminal
   const getTokenPrice = async (token) => {
     try {
+      if (!token || !token.address) {
+        console.error('Token or token address is undefined:', token);
+        return null;
+      }
       const response = await axios.get(`https://api.geckoterminal.com/api/v2/networks/aptos/tokens/${token.address}`);
-      return response.data.data.attributes.price_usd;
+      if (response.data && response.data.data && response.data.data.attributes) {
+        return response.data.data.attributes.price_usd;
+      } else {
+        console.error('Invalid response format from GeckoTerminal:', response.data);
+        return null;
+      }
     } catch (error) {
-      console.error('Error fetching token price:', error);
+      console.error('Error fetching token price for', token?.address, ':', error);
       return null;
     }
   };

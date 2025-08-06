@@ -82,13 +82,14 @@ const WalletConnect = ({ onWalletConnected }) => {
         }
 
         try {
-            // Find Petra wallet
-            const petraWallet = wallets.find((w) => w.name === 'Petra');
-            if (petraWallet) {
-                await select(petraWallet.name);
-                toast.success("Wallet connection initiated!");
+            // Find available wallets (Martian or Rise)
+            const availableWallets = wallets.filter(w => w.readyState === 'Installed' || w.readyState === 'Loadable');
+            if (availableWallets.length > 0) {
+                const selectedWallet = availableWallets[0];
+                await select(selectedWallet.name);
+                toast.success(`Connecting to ${selectedWallet.name}...`);
             } else {
-                toast.error("Petra wallet not found. Please install Petra wallet.");
+                toast.error("No wallets available. Please install Martian or Rise wallet.");
             }
         } catch (error) {
             console.error("Wallet connection error:", error);
@@ -204,7 +205,7 @@ const WalletConnect = ({ onWalletConnected }) => {
                         } catch (error) {
                             console.error("Error fetching balance:", error);
                             toast.error("Connected but failed to fetch balance");
-                            setShowLoginPromptModal(true);
+        setShowLoginPromptModal(true);
                         }
                     }
                 }, 2000);
@@ -226,8 +227,8 @@ const WalletConnect = ({ onWalletConnected }) => {
         try {
             // For now, show available wallets
             setLinkedWallets([]);
-            setShowLinkedWalletModal(false);
-            setShowAddNewWalletModal(true);
+                setShowLinkedWalletModal(false);
+                setShowAddNewWalletModal(true);
         } catch (error) {
             toast.error("Could not fetch your wallets.");
             setShowLinkedWalletModal(false);
@@ -251,32 +252,32 @@ const WalletConnect = ({ onWalletConnected }) => {
     const handleWalletSelect = (walletName) => select(walletName);
     const formatAddress = (address) => address ? `${String(address).slice(0, 6)}...${String(address).slice(-4)}` : 'Invalid Address';
 
-    return (
-        <>
-            {!connected ? (
-                <button 
-                    onClick={handleConnectClick}
-                    className="w-full py-3 rounded-xl font-medium transition bg-cyan-600 text-white hover:bg-cyan-700 disabled:bg-cyan-600/50 disabled:text-cyan-300 disabled:cursor-not-allowed"
+  return (
+    <>
+      {!connected ? (
+        <button 
+          onClick={handleConnectClick}
+          className="w-full py-3 rounded-xl font-medium transition bg-cyan-600 text-white hover:bg-cyan-700 disabled:bg-cyan-600/50 disabled:text-cyan-300 disabled:cursor-not-allowed"
                     disabled={isConnecting}
-                >
-                    {isConnecting ? (
-                        <div className="flex items-center justify-center space-x-2">
-                            <Loader2 size={18} className="animate-spin" />
-                            <span>Connecting...</span>
-                        </div>
+        >
+          {isConnecting ? (
+            <div className="flex items-center justify-center space-x-2">
+              <Loader2 size={18} className="animate-spin" />
+              <span>Connecting...</span>
+            </div>
                     ) : (
-                        "Connect Wallet"
-                    )}
-                </button>
-            ) : (
-                <div className="flex items-center justify-between w-full bg-[#111112] rounded-xl p-3 border border-[#2a2a35]">
-                    <div className="flex items-center">
-                        <img src={wallet?.adapter?.icon || '/default-wallet-icon.png'} alt={wallet?.adapter?.name || 'Wallet'} className="w-6 h-6 rounded-full mr-3" />
+            "Connect Wallet"
+          )}
+        </button>
+      ) : (
+        <div className="flex items-center justify-between w-full bg-[#111112] rounded-xl p-3 border border-[#2a2a35]">
+          <div className="flex items-center">
+            <img src={wallet?.adapter?.icon || '/default-wallet-icon.png'} alt={wallet?.adapter?.name || 'Wallet'} className="w-6 h-6 rounded-full mr-3" />
                         <div className="text-left">
                             <div className="flex items-center space-x-2">
-                                <span className="text-white font-mono text-sm">
-                                    {formatAddress(account?.address)}
-                                </span>
+            <span className="text-white font-mono text-sm">
+              {formatAddress(account?.address)}
+            </span>
                                 <DemoBadge isDemoMode={walletBalance === '0.0000 (Demo Mode)'} />
                             </div>
                             {walletBalance !== null && (
@@ -285,17 +286,17 @@ const WalletConnect = ({ onWalletConnected }) => {
                                 </div>
                             )}
                         </div>
-                    </div>
-                    <button 
-                        onClick={handleDisconnect}
-                        className="text-gray-400 hover:text-white transition"
-                        title="Disconnect"
-                        disabled={isConnecting}
-                    >
-                        <LogOut size={18} />
-                    </button>
-                </div>
-            )}
+          </div>
+          <button 
+            onClick={handleDisconnect}
+            className="text-gray-400 hover:text-white transition"
+            title="Disconnect"
+            disabled={isConnecting}
+          >
+            <LogOut size={18} />
+          </button>
+        </div>
+      )}
 
             {/* Modal 1: Authentication Prompt */}
             {showLoginPromptModal && (
