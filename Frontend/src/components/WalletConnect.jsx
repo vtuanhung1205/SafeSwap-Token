@@ -164,38 +164,34 @@ const WalletConnect = ({ onWalletConnected }) => {
     const handleConnectClick = async () => {
         if (connected) return;
         
-        try {
-            const availableWallets = wallets.filter(w => w.readyState === 'Installed' || w.readyState === 'Loadable');
-            
-            if (availableWallets.length === 0) {
-                toast.error("No wallets available. Please install Martian or Rise wallet.");
-                return;
-            }
+        // Nếu chưa xác thực, hiện modal xác thực trước
+        if (!isAuthenticated) {
+            setShowLoginPromptModal(true);
+            return;
+        }
+        
+        // Nếu đã xác thực, hiện modal chọn ví Aptos
+        setShowAddNewWalletModal(true);
+    };
 
-            const selectedWallet = availableWallets[0];
-            if (selectedWallet && typeof selectedWallet.connect === 'function') {
-                await selectedWallet.connect();
-                toast.success(`Connecting to ${selectedWallet.name}...`);
-            } else {
-                toast.error("Selected wallet does not support direct connect method.");
-                console.error('selectedWallet.connect is not a function:', selectedWallet);
-                return;
-            }
+    const handleWalletSelect = async (walletName) => {
+        try {
+            setIsConnecting(true);
+            await connect(walletName);
+            toast.success(`Connecting to ${walletName}...`);
             
-            // Simple connection without complex balance fetching
-            setTimeout(() => {
-                if (connected && account) {
-                    setWalletBalance('0.0000 (Demo Mode)');
-                    toast.success('Connected! Demo mode enabled');
-        setShowLoginPromptModal(true);
-                }
-            }, 1000);
-            
+            // Đóng modal sau khi connect
+            setShowAddNewWalletModal(false);
+            setShowLinkedWalletModal(false);
         } catch (error) {
             console.error("Wallet connection error:", error);
             toast.error("Failed to connect wallet");
+        } finally {
+            setIsConnecting(false);
         }
     };
+
+    // Xóa useEffect tự động mở modal connect ví sau khi login
 
     const fetchAndShowLinkedWallets = async () => {
         setIsLoading(true);
@@ -225,53 +221,53 @@ const WalletConnect = ({ onWalletConnected }) => {
         }
     };
 
-    const handleWalletSelect = (walletName) => connect(walletName);
     const formatAddress = (address) => address ? `${String(address).slice(0, 6)}...${String(address).slice(-4)}` : 'Invalid Address';
 
   return (
     <>
-      {!connected ? (
-        <button 
-          onClick={handleConnectClick}
-          className="w-full py-3 rounded-xl font-medium transition bg-cyan-600 text-white hover:bg-cyan-700 disabled:bg-cyan-600/50 disabled:text-cyan-300 disabled:cursor-not-allowed"
+      {/* Chỉ hiện nút Connect Wallet khi đã đăng nhập và chưa connect ví */}
+      {isAuthenticated && !connected && (
+          <button onClick={handleConnectClick} className="w-full py-3 rounded-xl font-medium transition bg-cyan-600 text-white hover:bg-cyan-700 disabled:bg-cyan-600/50 disabled:text-cyan-300 disabled:cursor-not-allowed"
                     disabled={isConnecting}
-        >
-          {isConnecting ? (
-            <div className="flex items-center justify-center space-x-2">
-              <Loader2 size={18} className="animate-spin" />
-              <span>Connecting...</span>
-            </div>
-                    ) : (
-            "Connect Wallet"
-          )}
-        </button>
-      ) : (
-        <div className="flex items-center justify-between w-full bg-[#111112] rounded-xl p-3 border border-[#2a2a35]">
-          <div className="flex items-center">
-            <img src={wallet?.adapter?.icon || '/default-wallet-icon.png'} alt={wallet?.adapter?.name || 'Wallet'} className="w-6 h-6 rounded-full mr-3" />
-                        <div className="text-left">
-                            <div className="flex items-center space-x-2">
-            <span className="text-white font-mono text-sm">
-              {formatAddress(account?.address)}
-            </span>
-                                <DemoBadge isDemoMode={walletBalance === '0.0000 (Demo Mode)'} />
-                            </div>
-                            {walletBalance !== null && (
-                                <div className="text-gray-400 text-xs">
-                                    {typeof walletBalance === 'number' ? `${walletBalance.toFixed(4)} APT` : walletBalance}
-                                </div>
-                            )}
-                        </div>
-          </div>
-          <button 
-            onClick={handleDisconnect}
-            className="text-gray-400 hover:text-white transition"
-            title="Disconnect"
-            disabled={isConnecting}
           >
-            <LogOut size={18} />
+            {isConnecting ? (
+              <div className="flex items-center justify-center space-x-2">
+                <Loader2 size={18} className="animate-spin" />
+                <span>Connecting...</span>
+              </div>
+            ) : (
+              "Connect Wallet"
+            )}
           </button>
-        </div>
+      )}
+      {/* Nếu đã connect ví, hiện địa chỉ ví */}
+      {isAuthenticated && connected && account && (
+          <div className="flex items-center justify-between w-full bg-[#111112] rounded-xl p-3 border border-[#2a2a35]">
+              <div className="flex items-center">
+                  <img src={wallet?.adapter?.icon || '/default-wallet-icon.png'} alt={wallet?.adapter?.name || 'Wallet'} className="w-6 h-6 rounded-full mr-3" />
+                  <div className="text-left">
+                      <div className="flex items-center space-x-2">
+                          <span className="text-white font-mono text-sm">
+                              {formatAddress(account?.address)}
+                          </span>
+                          <DemoBadge isDemoMode={walletBalance === '0.0000 (Demo Mode)'} />
+                      </div>
+                      {walletBalance !== null && (
+                          <div className="text-gray-400 text-xs">
+                              {typeof walletBalance === 'number' ? `${walletBalance.toFixed(4)} APT` : walletBalance}
+                          </div>
+                      )}
+                  </div>
+              </div>
+              <button 
+                  onClick={handleDisconnect}
+                  className="text-gray-400 hover:text-white transition"
+                  title="Disconnect"
+                  disabled={isConnecting}
+              >
+                  <LogOut size={18} />
+              </button>
+          </div>
       )}
 
             {/* Modal 1: Authentication Prompt */}
@@ -369,21 +365,46 @@ const WalletConnect = ({ onWalletConnected }) => {
             {/* Modal 3: Add a New Wallet */}
             {showAddNewWalletModal && (
                 <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-                    <div className="bg-[#1c1c24] rounded-2xl p-6 border border-[#2a2a35] shadow-lg w-full max-w-sm">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-lg font-semibold text-white">Link a New Wallet</h3>
-                            <button className="text-gray-400 hover:text-white text-2xl" onClick={() => setShowAddNewWalletModal(false)}>×</button>
+                    <div className="bg-[#1c1c24] rounded-2xl p-8 border border-[#2a2a35] shadow-lg w-full max-w-md">
+                        <button className="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl" onClick={() => setShowAddNewWalletModal(false)}>×</button>
+                        <div className="mx-auto bg-cyan-500/10 w-16 h-16 rounded-full flex items-center justify-center mb-6">
+                            <WalletIcon className="w-8 h-8 text-cyan-400" />
                         </div>
+                        <h3 className="text-xl font-bold text-white mb-2 text-center">
+                            Connect Aptos Wallet
+                        </h3>
+                        <p className="text-gray-400 mb-8 text-center">
+                            Choose your Aptos wallet to connect
+                        </p>
+                        
                         <div className="max-h-80 overflow-y-auto space-y-2">
                             {wallets?.map((wallet) => (
                                 wallet?.adapter?.name && (
-                                    <button key={wallet.adapter.name} onClick={() => handleWalletSelect(wallet.adapter.name)} className="flex items-center w-full p-3 hover:bg-[#2a2a35] rounded-lg transition">
+                                    <button 
+                                        key={wallet.adapter.name} 
+                                        onClick={() => handleWalletSelect(wallet.adapter.name)} 
+                                        disabled={isConnecting}
+                                        className="flex items-center w-full p-4 hover:bg-[#2a2a35] rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
                                         <img src={wallet.adapter.icon} alt={wallet.adapter.name} className="w-8 h-8 rounded-full mr-4" />
-                                        <span className="text-white font-medium text-lg">{wallet.adapter.name}</span>
+                                        <div className="flex-1 text-left">
+                                            <span className="text-white font-medium text-lg">{wallet.adapter.name}</span>
+                                            <p className="text-gray-400 text-sm">{wallet.readyState === 'Installed' ? 'Installed' : 'Not Installed'}</p>
+                                        </div>
+                                        {isConnecting && <Loader2 size={20} className="animate-spin text-cyan-400" />}
                                     </button>
                                 )
                             ))}
                         </div>
+                        
+                        {wallets?.length === 0 && (
+                            <div className="text-center py-8">
+                                <p className="text-gray-400 mb-4">No wallets available</p>
+                                <p className="text-sm text-gray-500">
+                                    Please install Petra, Martian, or other Aptos wallets
+                                </p>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
