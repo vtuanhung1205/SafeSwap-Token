@@ -16,9 +16,7 @@ export default defineConfig({
           router: ['react-router-dom'],
           ui: ['lucide-react', 'react-icons'],
           wallet: [
-            '@aptos-labs/wallet-adapter-react',
-            '@martianwallet/aptos-wallet-adapter',
-            '@rise-wallet/wallet-adapter'
+            'aptos'
           ],
           utils: ['axios', 'socket.io-client', 'clsx', 'nprogress']
         }
