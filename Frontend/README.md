@@ -40,10 +40,10 @@ cp env.example .env.local
 Edit `.env.local` with your configuration:
 ```bash
 # Google OAuth
-VITE_GOOGLE_CLIENT_ID=your_google_client_id_here
+VITE_GOOGLE_CLIENT_ID=68865718442-0na32flmllvguiilt67os6p6rvgl0eqi.apps.googleusercontent.com
 
 # Backend API
-VITE_API_BASE_URL=https://your-backend-url.com/api
+VITE_API_BASE_URL=https://safeswap-backend-service.onrender.com
 
 # Aptos Configuration
 VITE_APTOS_NODE_URL=https://fullnode.mainnet.aptoslabs.com/v1
@@ -67,7 +67,7 @@ For production, you should use an API key to avoid rate limits:
 2. **Configure Environment**:
 ```bash
 # Production
-VITE_APTOS_NODE_URL=https://aptos-mainnet.quiknode.pro/YOUR_API_KEY/
+VITE_APTOS_NODE_URL=68865718442-0na32flmllvguiilt67os6p6rvgl0eqi.apps.googleusercontent.com
 ```
 
 See [APTOS_API_SETUP.md](./APTOS_API_SETUP.md) for detailed instructions.

@@ -20,10 +20,13 @@ const userSchema = new mongoose.Schema({
   // Authentication
   authProvider: {
     type: String,
-    enum: ['email', 'google'],
+    enum: ['email', 'google', 'aptos-connect'],
     default: 'email'
   },
   googleId: {
+    type: String
+  },
+  aptosConnectId: {
     type: String
   },
   

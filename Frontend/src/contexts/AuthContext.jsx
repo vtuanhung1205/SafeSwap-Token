@@ -132,6 +132,37 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const aptosConnectLogin = async (aptosConnectData) => {
+    try {
+      dispatch({ type: 'SET_LOADING', payload: true });
+      
+      console.log('Aptos Connect login attempt with data:', aptosConnectData);
+      
+      const response = await authAPI.aptosConnectAuth(aptosConnectData);
+      
+      console.log('Aptos Connect auth response:', response.data);
+      
+      if (response.data.success) {
+        const { user, token } = response.data.data;
+        localStorage.setItem('authToken', token);
+        localStorage.setItem('user', JSON.stringify(user));
+        
+        dispatch({ type: 'SET_USER', payload: user });
+        toast.success('Successfully logged in with Aptos Connect!');
+        
+        return response.data.data;
+      } else {
+        throw new Error(response.data.message || 'Aptos Connect login failed');
+      }
+    } catch (error) {
+      console.error('Aptos Connect login error:', error);
+      const errorMessage = handleApiError(error);
+      dispatch({ type: 'SET_ERROR', payload: errorMessage });
+      toast.error(errorMessage);
+      throw error;
+    }
+  };
+
   const register = async (userData) => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
@@ -296,6 +327,7 @@ export const AuthProvider = ({ children }) => {
   const value = {
     ...state,
     googleLogin,
+    aptosConnectLogin,
     register,
     login,
     logout,

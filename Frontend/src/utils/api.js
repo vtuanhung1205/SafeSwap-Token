@@ -54,6 +54,10 @@ export const authAPI = {
   googleAuth: (googleData) => 
     api.post('/auth/google', googleData),
   
+  // Aptos Connect OAuth login/register
+  aptosConnectAuth: (aptosConnectData) => 
+    api.post('/auth/aptos-connect', aptosConnectData),
+  
   // Register new user
   register: (userData) => 
     api.post('/auth/register', userData),

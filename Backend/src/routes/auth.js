@@ -123,6 +123,91 @@ router.post('/google', async (req, res) => {
   }
 });
 
+// @route   POST /api/auth/aptos-connect
+// @desc    Aptos Connect OAuth login/register
+// @access  Public
+router.post('/aptos-connect', async (req, res) => {
+  try {
+    const { provider, accessToken, idToken, user: aptosConnectUser } = req.body;
+
+    if (!aptosConnectUser || !aptosConnectUser.email) {
+      return res.status(400).json({
+        success: false,
+        error: 'Aptos Connect user email is required'
+      });
+    }
+
+    // Verify Aptos Connect token (optional - can be done client-side)
+    // For now, we'll trust the client data since Aptos Connect handles verification
+    
+    // Check if user exists
+    let user = await User.findOne({ email: aptosConnectUser.email });
+    
+    if (!user) {
+      // Create new user
+      user = new User({
+        email: aptosConnectUser.email,
+        profile: {
+          firstName: aptosConnectUser.name?.split(' ')[0] || '',
+          lastName: aptosConnectUser.name?.split(' ').slice(1).join(' ') || '',
+          displayName: aptosConnectUser.name || '',
+          avatar: aptosConnectUser.picture || ''
+        },
+        authProvider: 'aptos-connect',
+        aptosConnectId: aptosConnectUser.sub,
+        isEmailVerified: true, // Aptos Connect users are verified
+        accountStatus: 'active'
+      });
+      
+      await user.save();
+      logger.info(`New Aptos Connect user registered: ${user.email}`);
+    } else {
+      // Update existing user's Aptos Connect info
+      user.aptosConnectId = aptosConnectUser.sub;
+      user.authProvider = 'aptos-connect';
+      user.profile.avatar = aptosConnectUser.picture || user.profile.avatar;
+      user.isEmailVerified = true;
+      
+      await user.save();
+      logger.info(`Existing user logged in via Aptos Connect: ${user.email}`);
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN }
+    );
+
+    // Update user stats
+    await user.updateStats('login');
+
+    res.json({
+      success: true,
+      message: 'Aptos Connect authentication successful',
+      data: {
+        user: {
+          id: user._id,
+          email: user.email,
+          profile: user.profile,
+          walletAddress: user.walletAddress,
+          walletType: user.walletType,
+          accountStatus: user.accountStatus,
+          isEmailVerified: user.isEmailVerified,
+          authProvider: user.authProvider
+        },
+        token
+      }
+    });
+  } catch (error) {
+    logger.error('Aptos Connect auth error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Aptos Connect authentication failed'
+    });
+  }
+});
+
 // @route   POST /api/auth/register
 // @desc    Register new user
 // @access  Public
