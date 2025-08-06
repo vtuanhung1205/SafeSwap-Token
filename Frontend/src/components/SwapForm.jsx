@@ -16,7 +16,7 @@ import WalletConnect from "./WalletConnect";
 import { AptosClient } from "aptos";
 import axios from "axios";
 import { SDK } from "@pontem/liquidswap-sdk";
-import { APTOS_NODE_URL, validateAptosConfig } from "../config/aptos";
+import { APTOS_CONFIG, validateAptosConfig } from "../config/aptos";
 
 // --- Custom Hooks and tokens array (Unchanged) ---
 const useDebounce = (value, delay) => {
@@ -125,7 +125,7 @@ const SwapForm = () => {
       // Validate config trước khi sử dụng
       validateAptosConfig();
       
-      const client = new AptosClient(APTOS_NODE_URL);
+      const client = new AptosClient(APTOS_CONFIG.NODE_URL);
       // Fetch APT balance
       let aptBalance = 0;
       try {
@@ -232,7 +232,7 @@ const SwapForm = () => {
       
       // Initialize Liquidswap SDK với config đúng
       const sdk = new SDK({ 
-        nodeUrl: APTOS_NODE_URL
+        nodeUrl: APTOS_CONFIG.NODE_URL
       });
 
       // Convert amount to proper format (APT has 8 decimals)
@@ -265,7 +265,7 @@ const SwapForm = () => {
       const response = await signAndSubmitTransaction(payload);
       
       // Wait for transaction với config đúng
-      const client = new AptosClient(APTOS_NODE_URL);
+      const client = new AptosClient(APTOS_CONFIG.NODE_URL);
       await client.waitForTransaction({ transactionHash: response.hash });
 
       toast.success(`Swap successful! Hash: ${response.hash}`);

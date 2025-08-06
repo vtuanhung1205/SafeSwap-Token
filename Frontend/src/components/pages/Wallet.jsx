@@ -5,7 +5,7 @@ import { AptosClient } from "aptos";
 // Removed wallet adapter - using Aptos SDK instead
 import toast from "react-hot-toast";
 
-const APTOS_NODE_URL = "https://fullnode.mainnet.aptoslabs.com/v1";
+import { APTOS_CONFIG } from '../../config/aptos';
 
 const Wallet = () => {
   const { user } = useAuth();
@@ -28,7 +28,7 @@ const Wallet = () => {
     try {
       setLoading(true);
       setError(null);
-      const client = new AptosClient(APTOS_NODE_URL);
+      const client = new AptosClient(APTOS_CONFIG.NODE_URL);
       // Fetch balance
       let balanceValue = 0;
       try {

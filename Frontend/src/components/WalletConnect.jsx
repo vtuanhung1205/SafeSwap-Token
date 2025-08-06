@@ -5,7 +5,7 @@ import { authAPI } from '../utils/api';
 import { Loader2, LogOut, PlusCircle, Wallet as WalletIcon } from 'lucide-react';
 import { useGoogleLogin } from '@react-oauth/google';
 import DemoBadge from './DemoBadge';
-import { APTOS_NODE_URL, validateAptosConfig } from '../config/aptos';
+import { APTOS_CONFIG, validateAptosConfig } from '../config/aptos';
 // Removed wallet adapter - using Aptos SDK instead
 import ConnectModal from './Auth/ConnectModal';
 
@@ -138,7 +138,7 @@ const WalletConnect = ({ onWalletConnected }) => {
         
         try {
             validateAptosConfig();
-            const client = new (await import('aptos')).AptosClient(APTOS_NODE_URL);
+            const client = new (await import('aptos')).AptosClient(APTOS_CONFIG.NODE_URL);
             
             const resource = await client.getAccountResource({
                 address: address,
