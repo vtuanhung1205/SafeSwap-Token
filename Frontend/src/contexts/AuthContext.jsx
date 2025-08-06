@@ -79,7 +79,10 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.error('Auth check failed:', error);
-      localStorage.removeItem('authToken');
+      // Only remove token on 401 errors, not on network errors
+      if (error.response?.status === 401) {
+        localStorage.removeItem('authToken');
+      }
       dispatch({ type: 'SET_LOADING', payload: false });
     }
   };
