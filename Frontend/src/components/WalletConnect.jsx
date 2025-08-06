@@ -6,18 +6,18 @@ import { Loader2, LogOut, PlusCircle, Wallet as WalletIcon } from 'lucide-react'
 import { useGoogleLogin } from '@react-oauth/google';
 import DemoBadge from './DemoBadge';
 import { APTOS_NODE_URL, validateAptosConfig } from '../config/aptos';
-import { useWallet } from '@aptos-labs/wallet-adapter-react';
-import AptosConnectModal from './Auth/AptosConnectModal';
+// Removed wallet adapter - using Aptos SDK instead
+import ConnectModal from './Auth/ConnectModal';
 
 const WalletConnect = ({ onWalletConnected }) => {
     const { isAuthenticated, googleLogin, connectWallet, disconnectWallet } = useAuth();
-    const { connect, wallets, connected, account, disconnect } = useWallet();
+    // Removed wallet adapter hooks - using Aptos SDK instead
     
     const [isLoading, setIsLoading] = useState(false);
     const [isConnecting, setIsConnecting] = useState(false);
     const [showLoginPromptModal, setShowLoginPromptModal] = useState(false);
     const [showWalletModal, setShowWalletModal] = useState(false);
-    const [showAptosConnectModal, setShowAptosConnectModal] = useState(false);
+    const [showConnectModal, setShowConnectModal] = useState(false);
     const [linkedWallets, setLinkedWallets] = useState([]);
     const [walletBalance, setWalletBalance] = useState(null);
     const [connectedWallet, setConnectedWallet] = useState(null);
@@ -65,7 +65,7 @@ const WalletConnect = ({ onWalletConnected }) => {
 
     // Hiện modal chọn ví
     const handleConnectAptosWallet = () => {
-        setShowAptosConnectModal(true);
+        setShowConnectModal(true);
     };
 
     // Handle Aptos Connect success
@@ -295,10 +295,10 @@ const WalletConnect = ({ onWalletConnected }) => {
                             Login to save your preferences and transaction history
                         </p>
                         
-                        {/* Aptos Connect OAuth */}
-                        <AptosConnectModal 
-                            isOpen={showAptosConnectModal}
-                            onClose={() => setShowAptosConnectModal(false)}
+                        {/* Connect Modal */}
+                        <ConnectModal 
+                            isOpen={showConnectModal}
+                            onClose={() => setShowConnectModal(false)}
                             onSuccess={handleAptosConnectSuccess}
                         />
                         
@@ -309,10 +309,10 @@ const WalletConnect = ({ onWalletConnected }) => {
                 </div>
             )}
 
-            {/* Aptos Connect Modal */}
-            <AptosConnectModal 
-                isOpen={showAptosConnectModal}
-                onClose={() => setShowAptosConnectModal(false)}
+            {/* Connect Modal */}
+            <ConnectModal 
+                isOpen={showConnectModal}
+                onClose={() => setShowConnectModal(false)}
                 onSuccess={handleAptosConnectSuccess}
             />
         </>

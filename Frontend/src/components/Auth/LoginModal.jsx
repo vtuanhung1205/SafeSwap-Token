@@ -3,7 +3,7 @@ import { X, LogIn, Wallet } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import { useGoogleLogin } from '@react-oauth/google';
-import AptosConnectModal from './AptosConnectModal';
+import ConnectModal from './ConnectModal';
 
 const LoginModal = ({ isOpen, onClose }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -160,8 +160,8 @@ const LoginModal = ({ isOpen, onClose }) => {
         </div>
       </div>
 
-      {/* Aptos Connect Modal */}
-      <AptosConnectModal
+      {/* Connect Modal */}
+      <ConnectModal
         isOpen={showAptosConnect}
         onClose={() => setShowAptosConnect(false)}
         onSuccess={handleAptosConnectSuccess}

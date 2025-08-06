@@ -102,7 +102,7 @@ const DemoPage = () => {
           <h2 className="text-2xl font-bold text-white mb-4">Technical Implementation</h2>
           <div className="space-y-4 text-sm text-gray-300">
             <div>
-              <strong>Wallet Adapter:</strong> Using @aptos-labs/wallet-adapter-react for wallet connection
+              <strong>Aptos SDK:</strong> Using aptos SDK for direct wallet management and blockchain interaction
             </div>
             <div>
               <strong>AptosClient:</strong> Direct blockchain queries for balance and transactions

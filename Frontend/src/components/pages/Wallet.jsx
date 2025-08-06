@@ -2,14 +2,14 @@ import React, { useState, useEffect } from "react";
 import { Copy, ArrowDownCircle, ArrowUpCircle, Shield } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { AptosClient } from "aptos";
-import { useWallet } from "@aptos-labs/wallet-adapter-react";
+// Removed wallet adapter - using Aptos SDK instead
 import toast from "react-hot-toast";
 
 const APTOS_NODE_URL = "https://fullnode.mainnet.aptoslabs.com/v1";
 
 const Wallet = () => {
   const { user } = useAuth();
-  const { connected, account } = useWallet();
+  // Removed wallet adapter hooks - using Aptos SDK instead
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [balance, setBalance] = useState(null);

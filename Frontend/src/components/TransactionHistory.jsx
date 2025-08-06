@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useWallet } from '@aptos-labs/wallet-adapter-react';
+// Removed wallet adapter - using Aptos SDK instead
 import { Loader2, ExternalLink, Clock, Hash } from 'lucide-react';
 
 const TransactionHistory = () => {
-    const { account, connected } = useWallet();
+    // Removed wallet adapter hooks - using Aptos SDK instead
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);

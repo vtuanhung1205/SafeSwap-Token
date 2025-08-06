@@ -11,7 +11,7 @@ import {
 import { useAuth } from "../contexts/AuthContext";
 import { userAPI, walletAPI, handleApiError } from "../utils/api";
 import toast from "react-hot-toast";
-import { useWallet } from "@aptos-labs/wallet-adapter-react";
+// Removed wallet adapter - using Aptos SDK instead
 import WalletConnect from "./WalletConnect";
 import { AptosClient } from "aptos";
 import axios from "axios";
@@ -59,7 +59,7 @@ const tokens = [
 
 const SwapForm = () => {
   const { user, isAuthenticated } = useAuth();
-  const { connected, account, signAndSubmitTransaction } = useWallet();
+      // Removed wallet adapter hooks - using Aptos SDK instead
 
   const [fromToken, setFromToken] = useState(tokens[0]);
   const [toToken, setToToken] = useState(tokens[1]);

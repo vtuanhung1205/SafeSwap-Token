@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Wallet, Loader2, Shield, Key, User, Plus, Download, Upload } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { AptosClient, AptosAccount } from 'aptos';
 
 const AptosSDKLogin = ({ onSuccess, onClose }) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -14,9 +15,6 @@ const AptosSDKLogin = ({ onSuccess, onClose }) => {
   useEffect(() => {
     const initializeSDK = async () => {
       try {
-        // Import Aptos SDK dynamically
-        const { AptosClient } = await import('aptos');
-        
         // Initialize client for mainnet
         const aptosClient = new AptosClient("https://fullnode.mainnet.aptoslabs.com");
         setClient(aptosClient);
@@ -27,8 +25,14 @@ const AptosSDKLogin = ({ onSuccess, onClose }) => {
         // Check for existing wallet
         const stored = localStorage.getItem('aptos_sdk_wallet');
         if (stored) {
-          const existingWallet = JSON.parse(stored);
-          setWalletData(existingWallet);
+          try {
+            const existingWallet = JSON.parse(stored);
+            setWalletData(existingWallet);
+            console.log('Found existing wallet:', existingWallet.address);
+          } catch (error) {
+            console.error('Failed to parse stored wallet:', error);
+            localStorage.removeItem('aptos_sdk_wallet');
+          }
         }
       } catch (error) {
         console.error('Failed to initialize Aptos SDK:', error);
@@ -48,9 +52,6 @@ const AptosSDKLogin = ({ onSuccess, onClose }) => {
 
     setIsLoading(true);
     try {
-      // Import AptosAccount dynamically
-      const { AptosAccount } = await import('aptos');
-      
       // Create new account
       const account = new AptosAccount();
       
@@ -89,9 +90,6 @@ const AptosSDKLogin = ({ onSuccess, onClose }) => {
 
     setIsLoading(true);
     try {
-      // Import AptosAccount dynamically
-      const { AptosAccount } = await import('aptos');
-      
       // Parse private key
       let privateKeyObj;
       try {
@@ -143,8 +141,14 @@ const AptosSDKLogin = ({ onSuccess, onClose }) => {
       return;
     }
 
+    if (!client) {
+      toast.error('Aptos SDK not initialized');
+      return;
+    }
+
+    setIsLoading(true);
     try {
-      // Get account info
+      // Verify wallet is valid by getting account info
       const accountInfo = await client.getAccount(walletData.address);
       console.log('Account info:', accountInfo);
       
@@ -159,7 +163,13 @@ const AptosSDKLogin = ({ onSuccess, onClose }) => {
       }
     } catch (error) {
       console.error('Failed to connect wallet:', error);
-      toast.error('Failed to connect wallet. Please try again.');
+      if (error.message.includes('Account not found')) {
+        toast.error('Wallet address not found on blockchain. Please check your wallet.');
+      } else {
+        toast.error('Failed to connect wallet. Please try again.');
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 

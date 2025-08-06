@@ -7,10 +7,8 @@ import { BrowserRouter as Router } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
-// --- Aptos Wallet Imports ---
-import { AptosWalletAdapterProvider } from "@aptos-labs/wallet-adapter-react";
-import { MartianWallet } from "@martianwallet/aptos-wallet-adapter";
-import { RiseWallet } from "@rise-wallet/wallet-adapter";
+// --- Aptos SDK Imports ---
+// Removed wallet adapter - using Aptos SDK instead
 
 // Configure React Router future flags
 import { 
@@ -30,28 +28,18 @@ UNSAFE_NavigationContext.displayName = "Navigation";
 UNSAFE_LocationContext.displayName = "Location";
 UNSAFE_RouteContext.displayName = "Route";
 
-const wallets = [
-  new MartianWallet(),
-  new RiseWallet(),
-];
+// Removed wallet adapters - using Aptos SDK instead
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
-      <AptosWalletAdapterProvider
-        dappConfig={{ network: "mainnet" }}
-        optInWallets={['Petra', 'Martian', 'Rise', 'Pontem', 'Nightly', 'Fewcha']}
-        autoConnect={false}
-        onError={(error) => {
-          console.error("Wallet Adapter Error", error);
-        }}
-      >
+      {/* Removed AptosWalletAdapterProvider - using Aptos SDK instead */}
         <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <AuthProvider>
             <App />
           </AuthProvider>
         </Router>
-      </AptosWalletAdapterProvider>
+      {/* Removed AptosWalletAdapterProvider closing tag */}
     </GoogleOAuthProvider>
   </React.StrictMode>
 );

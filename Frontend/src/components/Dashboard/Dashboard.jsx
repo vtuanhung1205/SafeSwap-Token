@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { userAPI, handleApiError } from '../../utils/api';
 import toast from 'react-hot-toast';
-import { useWallet } from '@aptos-labs/wallet-adapter-react';
+// Removed wallet adapter - using Aptos SDK instead
 import { AptosClient } from 'aptos';
 import { Wallet, ArrowUpDown, RefreshCw, AlertTriangle, CheckCircle, Loader2 } from 'lucide-react';
 import WalletConnect from '../WalletConnect';
@@ -68,7 +68,7 @@ const formatTokenBalance = (balance, symbol) => {
 
 const Dashboard = () => {
   const { user, isAuthenticated } = useAuth();
-  const { connected, account } = useWallet();
+      // Removed wallet adapter hooks - using Aptos SDK instead
   const [swapHistory, setSwapHistory] = useState([]);
   const [stats, setStats] = useState({ totalSwaps: 0, totalVolume: 0, successRate: 0, avgAmount: 0 });
   const [tokenBalances, setTokenBalances] = useState({});
