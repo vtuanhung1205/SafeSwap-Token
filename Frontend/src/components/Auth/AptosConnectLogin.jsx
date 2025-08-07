@@ -71,13 +71,9 @@ const AptosConnectLogin = ({ onSuccess, onClose }) => {
         </p>
       </div>
 
-      {/* Aptos Connect Option */}
+      {/* Aptos Connect Button */}
       <div className="space-y-4">
-        {/* Recommended - Aptos Connect */}
         <div className="relative">
-          <div className="absolute -top-2 -left-2 bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
-            Recommended
-          </div>
           <button
             onClick={handleAptosConnect}
             disabled={isConnecting}
@@ -91,17 +87,15 @@ const AptosConnectLogin = ({ onSuccess, onClose }) => {
             ) : (
               <>
                 <Wallet className="w-5 h-5" />
-                <span>Connect with Aptos Connect</span>
+                <span>Connect Aptos Wallet</span>
                 <ExternalLink className="w-4 h-4" />
               </>
             )}
           </button>
           <p className="text-xs text-gray-500 mt-1 text-center">
-            Opens Aptos Connect for secure wallet connection
+            Connect your Aptos wallet securely
           </p>
         </div>
-
-
       </div>
 
       {/* Info */}
@@ -114,7 +108,7 @@ const AptosConnectLogin = ({ onSuccess, onClose }) => {
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <h3 className="font-medium text-blue-900 mb-2">How it works:</h3>
         <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
-          <li>Click "Connect with Aptos Connect"</li>
+          <li>Click "Connect Aptos Wallet"</li>
           <li>You'll be redirected to Aptos Connect</li>
           <li>Choose your wallet (Petra, Martian, etc.)</li>
           <li>Approve the connection</li>

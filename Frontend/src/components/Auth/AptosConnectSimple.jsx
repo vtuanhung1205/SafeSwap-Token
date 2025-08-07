@@ -67,13 +67,9 @@ const AptosConnectSimple = ({ onSuccess, onClose }) => {
         </p>
       </div>
 
-      {/* Aptos Connect Options */}
+      {/* Aptos Connect Button */}
       <div className="space-y-4">
-        {/* Option 1: Popup */}
         <div className="relative">
-          <div className="absolute -top-2 -left-2 bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
-            Recommended
-          </div>
           <button
             onClick={handleAptosConnect}
             disabled={isConnecting}
@@ -87,45 +83,15 @@ const AptosConnectSimple = ({ onSuccess, onClose }) => {
             ) : (
               <>
                 <Wallet className="w-5 h-5" />
-                <span>Connect with Popup</span>
+                <span>Connect Aptos Wallet</span>
                 <ExternalLink className="w-4 h-4" />
               </>
             )}
           </button>
           <p className="text-xs text-gray-500 mt-1 text-center">
-            Opens Aptos Connect in popup window
+            Connect your Aptos wallet securely
           </p>
         </div>
-
-        {/* Option 2: Direct Redirect */}
-        <div className="relative">
-          <button
-            onClick={() => {
-              setIsConnecting(true);
-              const connectUrl = createAptosConnectUrl();
-              window.location.href = connectUrl;
-            }}
-            disabled={isConnecting}
-            className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-3"
-          >
-            {isConnecting ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                <span>Redirecting...</span>
-              </>
-            ) : (
-              <>
-                <Shield className="w-5 h-5" />
-                <span>Direct Redirect</span>
-                <ExternalLink className="w-4 h-4" />
-              </>
-            )}
-          </button>
-          <p className="text-xs text-gray-500 mt-1 text-center">
-            Redirects directly to Aptos Connect
-          </p>
-        </div>
-
       </div>
 
       {/* Info */}
@@ -138,7 +104,7 @@ const AptosConnectSimple = ({ onSuccess, onClose }) => {
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <h3 className="font-medium text-blue-900 mb-2">How it works:</h3>
         <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
-          <li>Click "Connect with Popup" or "Direct Redirect"</li>
+          <li>Click "Connect Aptos Wallet"</li>
           <li>You'll be taken to Aptos Connect</li>
           <li>Choose your wallet (Petra, Martian, etc.)</li>
           <li>Approve the connection</li>
