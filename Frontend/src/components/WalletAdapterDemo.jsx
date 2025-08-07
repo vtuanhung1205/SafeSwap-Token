@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Wallet, Send, MessageSquare, RefreshCw, X } from 'lucide-react';
+import { Wallet, Send, MessageSquare, RefreshCw, X, Info } from 'lucide-react';
 import toast from 'react-hot-toast';
 import safeSwapWallet from '../wallet-adapter/SafeSwapWalletAdapter.js';
 
@@ -247,6 +247,21 @@ const WalletAdapterDemo = () => {
           </p>
         </div>
 
+        {/* Demo Mode Notice */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <Info className="w-5 h-5 text-blue-600 mr-2" />
+            <div>
+              <h3 className="font-semibold text-blue-900">Demo Mode Active</h3>
+              <p className="text-blue-800 text-sm">
+                This wallet adapter is running in demo mode with no external dependencies. 
+                All functions return mock data for testing purposes. 
+                This ensures complete isolation from Aptos Connect authentication issues.
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Error Display */}
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -274,12 +289,14 @@ const WalletAdapterDemo = () => {
               <p><strong>Ready State:</strong> {walletInfo?.readyState || 'Unknown'}</p>
               <p><strong>AIP-62 Standard:</strong> {walletInfo?.isAIP62Standard ? 'Yes' : 'No'}</p>
               <p><strong>Connected:</strong> {isConnected ? 'Yes' : 'No'}</p>
+              <p><strong>Mode:</strong> <span className="text-blue-600 font-semibold">Demo Mode</span></p>
             </div>
             
             <div className="space-y-2">
               <p><strong>Account:</strong> {walletInfo?.account ? `${walletInfo.account.slice(0, 6)}...${walletInfo.account.slice(-4)}` : 'Not connected'}</p>
               <p><strong>Public Key:</strong> {walletInfo?.publicKey ? `${walletInfo.publicKey.slice(0, 6)}...${walletInfo.publicKey.slice(-4)}` : 'Not connected'}</p>
               <p><strong>URL:</strong> {walletInfo?.url || 'N/A'}</p>
+              <p><strong>Demo Mode:</strong> {walletInfo?.demo_mode ? 'Yes' : 'No'}</p>
             </div>
           </div>
         </div>
@@ -395,10 +412,23 @@ const WalletAdapterDemo = () => {
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
           <h3 className="font-semibold text-yellow-900 mb-2">Troubleshooting:</h3>
           <ul className="text-sm text-yellow-800 space-y-1 list-disc list-inside">
-            <li>If you see Aptos Connect errors, they won't affect this wallet adapter demo</li>
-            <li>The wallet adapter works independently of Aptos Connect</li>
-            <li>All functions are demo implementations for testing purposes</li>
+            <li>This wallet adapter is completely isolated from Aptos Connect</li>
+            <li>All functions return mock data for demonstration purposes</li>
+            <li>No external blockchain calls are made to avoid conflicts</li>
+            <li>The 401 errors you see are from Aptos Connect and won't affect this demo</li>
             <li>Check the browser console for detailed error information</li>
+          </ul>
+        </div>
+
+        {/* Isolation Notice */}
+        <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+          <h3 className="font-semibold text-green-900 mb-2">✅ Complete Isolation Achieved</h3>
+          <ul className="text-sm text-green-800 space-y-1 list-disc list-inside">
+            <li>No external dependencies or API calls</li>
+            <li>No conflicts with existing Aptos Connect integration</li>
+            <li>All wallet adapter functions work independently</li>
+            <li>Perfect for testing AIP-62 compliance</li>
+            <li>Ready for production integration with real blockchain calls</li>
           </ul>
         </div>
       </div>

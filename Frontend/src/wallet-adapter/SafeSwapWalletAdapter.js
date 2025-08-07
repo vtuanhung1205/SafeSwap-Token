@@ -1,7 +1,6 @@
 // SafeSwap Wallet Adapter Plugin - AIP-62 Compatible
 // This implements the wallet-standard interface for SafeSwap wallet
-
-import { AptosClient } from 'aptos';
+// DEMO MODE - No external dependencies to avoid conflicts
 
 // Wallet Standard Types
 const WalletReadyState = {
@@ -15,7 +14,7 @@ const WalletReadyState = {
 
 const WalletName = (name) => name;
 
-// SafeSwap Wallet Implementation
+// SafeSwap Wallet Implementation (Demo Mode)
 class SafeSwapWallet {
   constructor() {
     this.name = WalletName('SafeSwap');
@@ -24,13 +23,9 @@ class SafeSwapWallet {
     this.readyState = WalletReadyState.NotDetected;
     this.isAIP62Standard = true;
     
-    // Initialize Aptos client with error handling
-    try {
-      this.client = new AptosClient('https://fullnode.mainnet.aptoslabs.com');
-    } catch (error) {
-      console.warn('Failed to initialize Aptos client:', error);
-      this.client = null;
-    }
+    // Demo mode - no external dependencies
+    this.client = null;
+    this.isDemoMode = true;
     
     // Wallet state
     this.connected = false;
@@ -129,7 +124,7 @@ class SafeSwapWallet {
     }
   }
 
-  // Sign and submit transaction
+  // Sign and submit transaction (Demo Mode)
   async signAndSubmitTransaction(transaction) {
     try {
       if (!this.connected) {
@@ -137,33 +132,27 @@ class SafeSwapWallet {
       }
       
       // For demo purposes, we'll simulate transaction signing
-      // In a real implementation, this would use the actual wallet's signing mechanism
       const signedTransaction = await this.signTransaction(transaction);
       
-      // Only submit if we have a valid client
-      if (this.client) {
-        const result = await this.client.submitTransaction(signedTransaction);
-        this.notifyListeners('transaction', result);
-        return result;
-      } else {
-        // Mock submission for demo
-        const mockResult = {
-          hash: '0x' + Math.random().toString(16).substr(2, 64),
-          sender: this.account,
-          sequence_number: '0',
-          success: true,
-          vm_status: 'Executed successfully'
-        };
-        this.notifyListeners('transaction', mockResult);
-        return mockResult;
-      }
+      // Mock submission for demo
+      const mockResult = {
+        hash: '0x' + Math.random().toString(16).substr(2, 64),
+        sender: this.account,
+        sequence_number: '0',
+        success: true,
+        vm_status: 'Executed successfully',
+        demo_mode: true
+      };
+      
+      this.notifyListeners('transaction', mockResult);
+      return mockResult;
     } catch (error) {
       console.error('Error signing and submitting transaction:', error);
       throw error;
     }
   }
 
-  // Sign transaction
+  // Sign transaction (Demo Mode)
   async signTransaction(transaction) {
     try {
       if (!this.connected) {
@@ -171,14 +160,14 @@ class SafeSwapWallet {
       }
       
       // For demo purposes, we'll create a mock signed transaction
-      // In a real implementation, this would use the actual wallet's signing mechanism
       const mockSignedTransaction = {
         ...transaction,
         signature: {
           type: 'ed25519_signature',
           public_key: this.publicKey,
           signature: '0x' + Math.random().toString(16).substr(2, 128)
-        }
+        },
+        demo_mode: true
       };
       
       return mockSignedTransaction;
@@ -188,7 +177,7 @@ class SafeSwapWallet {
     }
   }
 
-  // Sign message
+  // Sign message (Demo Mode)
   async signMessage(message) {
     try {
       if (!this.connected) {
@@ -196,12 +185,12 @@ class SafeSwapWallet {
       }
       
       // For demo purposes, we'll create a mock signature
-      // In a real implementation, this would use the actual wallet's signing mechanism
       const signature = {
         fullMessage: message,
         signedMessage: message,
         signature: '0x' + Math.random().toString(16).substr(2, 128),
-        publicKey: this.publicKey
+        publicKey: this.publicKey,
+        demo_mode: true
       };
       
       return signature;
@@ -214,7 +203,6 @@ class SafeSwapWallet {
   // Create account (for demo purposes)
   async createAccount() {
     // Generate a mock account for demo purposes
-    // In a real implementation, this would create an actual Aptos account
     const address = '0x' + Math.random().toString(16).substr(2, 64);
     const publicKey = '0x' + Math.random().toString(16).substr(2, 64);
     
@@ -225,107 +213,99 @@ class SafeSwapWallet {
     };
   }
 
-  // Get account info
+  // Get account info (Demo Mode)
   async getAccountInfo() {
     if (!this.connected || !this.account) {
       throw new Error('Wallet not connected');
     }
     
     try {
-      if (this.client) {
-        const accountInfo = await this.client.getAccount(this.account);
-        return accountInfo;
-      } else {
-        // Return mock account info for demo
-        return {
-          sequence_number: "0",
-          authentication_key: this.account,
-          coin_register_events: {
-            counter: "0",
-            guid: {
-              id: {
-                addr: this.account,
-                creation_num: "0"
-              }
+      // Return mock account info for demo
+      return {
+        sequence_number: "0",
+        authentication_key: this.account,
+        coin_register_events: {
+          counter: "0",
+          guid: {
+            id: {
+              addr: this.account,
+              creation_num: "0"
             }
-          },
-          key_rotation_events: {
-            counter: "0",
-            guid: {
-              id: {
-                addr: this.account,
-                creation_num: "1"
-              }
+          }
+        },
+        key_rotation_events: {
+          counter: "0",
+          guid: {
+            id: {
+              addr: this.account,
+              creation_num: "1"
             }
-          },
-          rotation_capability_offer: {
-            for: {
-              vec: []
-            }
-          },
-          rotation_capability: {
-            account: this.account
-          },
-          key_rotation_capability_offer: {
-            for: {
-              vec: []
-            }
-          },
-          key_rotation_capability: {
-            account: this.account
-          },
-          guid_creation_num: "2",
-          account_creation_num: "0"
-        };
-      }
+          }
+        },
+        rotation_capability_offer: {
+          for: {
+            vec: []
+          }
+        },
+        rotation_capability: {
+          account: this.account
+        },
+        key_rotation_capability_offer: {
+          for: {
+            vec: []
+          }
+        },
+        key_rotation_capability: {
+          account: this.account
+        },
+        guid_creation_num: "2",
+        account_creation_num: "0",
+        demo_mode: true
+      };
     } catch (error) {
       console.error('Error getting account info:', error);
       throw error;
     }
   }
 
-  // Get account resources
+  // Get account resources (Demo Mode)
   async getAccountResources() {
     if (!this.connected || !this.account) {
       throw new Error('Wallet not connected');
     }
     
     try {
-      if (this.client) {
-        const resources = await this.client.getAccountResources(this.account);
-        return resources;
-      } else {
-        // Return mock resources for demo
-        return [
-          {
-            type: "0x1::coin::CoinStore<0x1::aptos_coin::AptosCoin>",
-            data: {
-              coin: {
-                value: "1000000"
-              },
-              deposit_events: {
-                counter: "0",
-                guid: {
-                  id: {
-                    addr: this.account,
-                    creation_num: "3"
-                  }
+      // Return mock resources for demo
+      return [
+        {
+          type: "0x1::coin::CoinStore<0x1::aptos_coin::AptosCoin>",
+          data: {
+            coin: {
+              value: "1000000"
+            },
+            deposit_events: {
+              counter: "0",
+              guid: {
+                id: {
+                  addr: this.account,
+                  creation_num: "3"
                 }
-              },
-              withdraw_events: {
-                counter: "0",
-                guid: {
-                  id: {
-                    addr: this.account,
-                    creation_num: "4"
-                  }
+              }
+            },
+            withdraw_events: {
+              counter: "0",
+              guid: {
+                id: {
+                  addr: this.account,
+                  creation_num: "4"
                 }
-              },
-              frozen: false
-            }
-          }
-        ];
-      }
+              }
+            },
+            frozen: false
+          },
+          demo_mode: true
+        }
+      ];
     } catch (error) {
       console.error('Error getting account resources:', error);
       throw error;
@@ -372,7 +352,8 @@ class SafeSwapWallet {
       isAIP62Standard: this.isAIP62Standard,
       connected: this.connected,
       account: this.account,
-      publicKey: this.publicKey
+      publicKey: this.publicKey,
+      demo_mode: this.isDemoMode
     };
   }
 }
