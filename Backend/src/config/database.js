@@ -15,11 +15,26 @@ const connectDB = async () => {
       throw new Error('MongoDB URI is not defined in environment variables');
     }
 
+    // Validate MongoDB URI format
+    if (!mongoURI.includes('mongodb+srv://') && !mongoURI.includes('mongodb://')) {
+      throw new Error('Invalid MongoDB URI format. Must start with mongodb+srv:// or mongodb://');
+    }
+
+    // Check if URI contains username and password
+    if (mongoURI.includes('mongodb+srv://') && !mongoURI.includes('@')) {
+      throw new Error('MongoDB URI must include username and password');
+    }
+
     console.log('Attempting to connect to MongoDB...');
+    console.log('Connection string format check: OK');
+    
     const conn = await mongoose.connect(mongoURI, {
       maxPoolSize: 10,
-      serverSelectionTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 10000, // Increased timeout
       socketTimeoutMS: 45000,
+      connectTimeoutMS: 10000,
+      retryWrites: true,
+      w: 'majority'
     });
 
     console.log(`MongoDB Connected: ${conn.connection.host}`);
@@ -47,7 +62,21 @@ const connectDB = async () => {
     });
 
   } catch (error) {
-    console.error('Database connection failed:', error);
+    console.error('Database connection failed:', error.message);
+    console.error('Error details:', error);
+    
+    // Provide helpful error messages
+    if (error.message.includes('ENOTFOUND')) {
+      console.error('❌ MongoDB connection string is invalid or cluster does not exist');
+      console.error('💡 Please check your MongoDB Atlas cluster and connection string');
+    } else if (error.message.includes('Authentication failed')) {
+      console.error('❌ MongoDB authentication failed');
+      console.error('💡 Please check your username and password');
+    } else if (error.message.includes('Invalid MongoDB URI format')) {
+      console.error('❌ MongoDB URI format is incorrect');
+      console.error('💡 Format should be: mongodb+srv://username:password@cluster.mongodb.net/database');
+    }
+    
     logger.error('Database connection failed:', error);
     process.exit(1);
   }
