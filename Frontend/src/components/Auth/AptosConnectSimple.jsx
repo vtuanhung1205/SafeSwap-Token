@@ -50,15 +50,7 @@ const AptosConnectSimple = ({ onSuccess, onClose }) => {
     }, 30000);
   };
 
-  // Alternative: Direct redirect
-  const handleDirectRedirect = () => {
-    setIsConnecting(true);
-    
-    // Create Aptos Connect URL using config
-    const connectUrl = createAptosConnectUrl();
-    
-    window.location.href = connectUrl;
-  };
+
 
   return (
     <div className="space-y-6">
@@ -105,30 +97,7 @@ const AptosConnectSimple = ({ onSuccess, onClose }) => {
           </p>
         </div>
 
-        {/* Option 2: Direct Redirect */}
-        <div className="relative">
-          <button
-            onClick={handleDirectRedirect}
-            disabled={isConnecting}
-            className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-3"
-          >
-            {isConnecting ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                <span>Redirecting...</span>
-              </>
-            ) : (
-              <>
-                <Shield className="w-5 h-5" />
-                <span>Direct Redirect</span>
-                <ExternalLink className="w-4 h-4" />
-              </>
-            )}
-          </button>
-          <p className="text-xs text-gray-500 mt-1 text-center">
-            Redirects directly to Aptos Connect
-          </p>
-        </div>
+
 
         {/* Option 3: Mock Wallet */}
         <div className="relative">
@@ -168,7 +137,7 @@ const AptosConnectSimple = ({ onSuccess, onClose }) => {
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <h3 className="font-medium text-blue-900 mb-2">How it works:</h3>
         <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
-          <li>Click "Connect with Popup" or "Direct Redirect"</li>
+          <li>Click "Connect with Popup"</li>
           <li>You'll be taken to Aptos Connect</li>
           <li>Choose your wallet (Petra, Martian, etc.)</li>
           <li>Approve the connection</li>

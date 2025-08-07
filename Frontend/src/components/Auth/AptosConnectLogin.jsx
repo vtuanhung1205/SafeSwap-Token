@@ -101,31 +101,7 @@ const AptosConnectLogin = ({ onSuccess, onClose }) => {
           </p>
         </div>
 
-        {/* Alternative - Direct SDK */}
-        <div className="relative">
-          <button
-            onClick={() => {
-              // This will use the existing AptosSDKLogin
-              if (onSuccess) {
-                // Create a mock wallet for testing
-                const mockWallet = {
-                  address: '0x' + Math.random().toString(16).substr(2, 40),
-                  publicKey: '0x' + Math.random().toString(16).substr(2, 64),
-                  provider: 'aptos-sdk',
-                  createdAt: Date.now()
-                };
-                onSuccess(mockWallet);
-              }
-            }}
-            className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-3"
-          >
-            <Shield className="w-5 h-5" />
-            <span>Use Direct SDK (Testing)</span>
-          </button>
-          <p className="text-xs text-gray-500 mt-1 text-center">
-            Direct SDK connection for testing purposes
-          </p>
-        </div>
+
       </div>
 
       {/* Info */}
