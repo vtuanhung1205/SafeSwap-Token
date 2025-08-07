@@ -22,7 +22,12 @@ import ContactUs from "./components/pages/ContactUs";
 import TermsOfUse from "./components/pages/TermsOfUse";
 import PagePrivacy from "./components/pages/PagePrivacy";
 import NotFoundPage from "./components/NotFoundPage/NotFoundPage";
+import WalletAdapterDemo from "./components/WalletAdapterDemo";
 import "./index.css";
+
+// Import wallet adapter registration
+import "./wallet-adapter/registerWallet.js";
+
 // Icons
 import {
   Bot,
@@ -88,6 +93,7 @@ function App() {
               <Route path="/payment" element={<Payment />} />
               <Route path="/demo" element={<DemoPage />} />
               <Route path="/aptos-connect-callback" element={<AptosConnectCallback />} />
+              <Route path="/wallet-adapter-demo" element={<WalletAdapterDemo />} />
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </main>
