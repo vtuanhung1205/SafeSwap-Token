@@ -6,6 +6,7 @@ import {
 import { Toaster } from "react-hot-toast";
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthProvider } from "./contexts/AuthContext";
+import { WalletProvider } from "./components/AptosKeylessAuth/WalletProvider";
 import Navbar from "./components/Navbar/Navbar";
 import Footer from "./components/Footer";
 import SwapForm from "./components/SwapForm";
@@ -23,6 +24,7 @@ import TermsOfUse from "./components/pages/TermsOfUse";
 import PagePrivacy from "./components/pages/PagePrivacy";
 import NotFoundPage from "./components/NotFoundPage/NotFoundPage";
 import WalletAdapterDemo from "./components/WalletAdapterDemo";
+import AptosKeylessAuthDemo from "./components/pages/AptosKeylessAuthDemo";
 import "./index.css";
 
 // Icons
@@ -63,38 +65,40 @@ function App() {
   const [showChatbot, setShowChatbot] = useState(false);
 
   return (
-    <div className="min-h-screen flex flex-col background-animated">
-          <Navbar />
+    <WalletProvider>
+      <div className="min-h-screen flex flex-col background-animated">
+            <Navbar />
 
-          <main className="flex-1 relative z-10">
-            <Routes>
-              <Route
-                path="/"
-                element={<Home />}
-              />
-              <Route path="/swap" element={<SwapPage />} />
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/our-story" element={<OurStory />} />
-              <Route path="/feature" element={<Feature />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/docs" element={<Docs />} />
-              <Route path="/api-reference" element={<APIReference />} />
-              <Route path="/community" element={<Community />} />
-              <Route path="/help-center" element={<HelpCenter />} />
-              <Route path="/contact" element={<ContactUs />} />
-              <Route path="/terms-of-use" element={<TermsOfUse />} />
-              <Route path="/privacy-policy" element={<PagePrivacy />} />
-              <Route path="/wallet" element={<Wallet />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/pricing" element={<Pricing />} />
-              <Route path="/payment" element={<Payment />} />
-              <Route path="/demo" element={<DemoPage />} />
-              <Route path="/aptos-connect-callback" element={<AptosConnectCallback />} />
-              <Route path="/wallet-adapter-demo" element={<WalletAdapterDemo />} />
-              <Route path="*" element={<NotFoundPage />} />
-            </Routes>
-          </main>
-          <Footer />
+            <main className="flex-1 relative z-10">
+              <Routes>
+                <Route
+                  path="/"
+                  element={<Home />}
+                />
+                <Route path="/swap" element={<SwapPage />} />
+                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/our-story" element={<OurStory />} />
+                <Route path="/feature" element={<Feature />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/docs" element={<Docs />} />
+                <Route path="/api-reference" element={<APIReference />} />
+                <Route path="/community" element={<Community />} />
+                <Route path="/help-center" element={<HelpCenter />} />
+                <Route path="/contact" element={<ContactUs />} />
+                <Route path="/terms-of-use" element={<TermsOfUse />} />
+                <Route path="/privacy-policy" element={<PagePrivacy />} />
+                <Route path="/wallet" element={<Wallet />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/pricing" element={<Pricing />} />
+                <Route path="/payment" element={<Payment />} />
+                <Route path="/demo" element={<DemoPage />} />
+                <Route path="/aptos-connect-callback" element={<AptosConnectCallback />} />
+                <Route path="/wallet-adapter-demo" element={<WalletAdapterDemo />} />
+                <Route path="/keyless-auth-demo" element={<AptosKeylessAuthDemo />} />
+                <Route path="*" element={<NotFoundPage />} />
+              </Routes>
+            </main>
+            <Footer />
           <Toaster
             position="top-right"
             toastOptions={{
