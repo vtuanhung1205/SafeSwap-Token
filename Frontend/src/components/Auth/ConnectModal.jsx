@@ -3,6 +3,7 @@ import { X, Wallet, Mail, Lock } from 'lucide-react';
 import { useGoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../../contexts/AuthContext';
 import AptosConnectSimple from './AptosConnectSimple';
+import { createAptosConnectUrl } from '../../config/aptos';
 
 const ConnectModal = ({ isOpen, onClose, onSuccess }) => {
   const [showAptosConnect, setShowAptosConnect] = useState(false);
@@ -83,7 +84,11 @@ const ConnectModal = ({ isOpen, onClose, onSuccess }) => {
                   Recommended
                 </div>
                 <button
-                  onClick={() => setShowAptosConnect(true)}
+                  onClick={() => {
+                    // Go directly to Aptos Connect instead of opening another modal
+                    const connectUrl = createAptosConnectUrl();
+                    window.location.href = connectUrl;
+                  }}
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-3"
                 >
                   <Wallet className="w-5 h-5" />
