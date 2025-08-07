@@ -22,7 +22,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-
     "@pontem/liquidswap-sdk": "^0.7.3",
     "@react-oauth/google": "^0.12.2",
     "aptos": "^1.21.0",

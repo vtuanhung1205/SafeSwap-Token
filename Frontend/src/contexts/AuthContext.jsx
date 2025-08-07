@@ -1,327 +1,286 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import { authAPI, walletAPI, handleApiError } from '../utils/api';
+import authService from '../services/authService';
 import toast from 'react-hot-toast';
 
-const AuthContext = createContext();
-
+// Initial state
 const initialState = {
-  user: null,
   isAuthenticated: false,
-  isLoading: true,
-  error: null,
-  wallet: null,
-  isWalletConnected: false,
+  user: null,
+  loading: true,
+  error: null
 };
 
+// Action types
+const AUTH_ACTIONS = {
+  SET_LOADING: 'SET_LOADING',
+  SET_USER: 'SET_USER',
+  SET_ERROR: 'SET_ERROR',
+  LOGIN_SUCCESS: 'LOGIN_SUCCESS',
+  LOGOUT: 'LOGOUT',
+  CLEAR_ERROR: 'CLEAR_ERROR'
+};
+
+// Reducer
 const authReducer = (state, action) => {
   switch (action.type) {
-    case 'SET_LOADING':
-      return { ...state, isLoading: action.payload };
-    case 'SET_USER':
-      return {
-        ...state,
-        user: action.payload,
+    case AUTH_ACTIONS.SET_LOADING:
+      return { ...state, loading: action.payload };
+    case AUTH_ACTIONS.SET_USER:
+      return { 
+        ...state, 
+        user: action.payload, 
         isAuthenticated: !!action.payload,
-        isLoading: false,
-        error: null,
+        loading: false 
       };
-    case 'SET_ERROR':
-      return {
-        ...state,
-        error: action.payload,
-        isLoading: false,
+    case AUTH_ACTIONS.SET_ERROR:
+      return { ...state, error: action.payload, loading: false };
+    case AUTH_ACTIONS.LOGIN_SUCCESS:
+      return { 
+        ...state, 
+        user: action.payload.user, 
+        isAuthenticated: true, 
+        loading: false,
+        error: null 
       };
-    case 'SET_WALLET':
-      return {
-        ...state,
-        wallet: action.payload,
-        isWalletConnected: !!action.payload,
+    case AUTH_ACTIONS.LOGOUT:
+      return { 
+        ...state, 
+        user: null, 
+        isAuthenticated: false, 
+        loading: false,
+        error: null 
       };
-    case 'LOGOUT':
-      return {
-        ...initialState,
-        isLoading: false,
-      };
+    case AUTH_ACTIONS.CLEAR_ERROR:
+      return { ...state, error: null };
     default:
       return state;
   }
 };
 
+// Create context
+const AuthContext = createContext();
+
+// Auth Provider
 export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
-  // Check if user is authenticated on app load
+  // Check authentication status on mount
   useEffect(() => {
-    // Temporarily disable automatic auth check to prevent Aptos Connect errors
-    // checkAuthStatus();
-    dispatch({ type: 'SET_LOADING', payload: false });
+    const checkAuthStatus = async () => {
+      try {
+        dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: true });
+        
+        if (authService.isAuthenticated()) {
+          const user = authService.getCurrentUser();
+          dispatch({ type: AUTH_ACTIONS.SET_USER, payload: user });
+        } else {
+          dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: false });
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: false });
+      }
+    };
+
+    checkAuthStatus();
   }, []);
 
-  // Check wallet status when user is authenticated
-  useEffect(() => {
-    // Temporarily disable automatic wallet check to prevent Aptos Connect errors
-    // if (state.isAuthenticated && state.user?.walletAddress) {
-    //   checkWalletStatus();
-    // }
-  }, [state.isAuthenticated, state.user?.walletAddress]);
-
-  const checkAuthStatus = async () => {
-    try {
-      const token = localStorage.getItem('authToken');
-      if (!token) {
-        dispatch({ type: 'SET_LOADING', payload: false });
-        return;
-      }
-
-      const response = await authAPI.getProfile();
-      if (response.data.success) {
-        dispatch({ type: 'SET_USER', payload: response.data.data });
-      } else {
-        localStorage.removeItem('authToken');
-        dispatch({ type: 'SET_LOADING', payload: false });
-      }
-    } catch (error) {
-      console.error('Auth check failed:', error);
-      // Only remove token on 401 errors, not on network errors
-      if (error.response?.status === 401) {
-        localStorage.removeItem('authToken');
-      }
-      dispatch({ type: 'SET_LOADING', payload: false });
-    }
-  };
-
-  const checkWalletStatus = async () => {
-    try {
-      if (!state.isAuthenticated || !state.user?.walletAddress) return;
-      
-      const response = await walletAPI.checkConnection(state.user.walletAddress);
-      if (response.data.success && response.data.data.connected) {
-        dispatch({ type: 'SET_WALLET', payload: response.data.data });
-      }
-    } catch (error) {
-      console.error('Wallet check failed:', error);
-      // Don't show error notification for wallet check
-    }
-  };
-
+  // Google Login
   const googleLogin = async (googleData) => {
     try {
-      dispatch({ type: 'SET_LOADING', payload: true });
+      dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: true });
+      dispatch({ type: AUTH_ACTIONS.CLEAR_ERROR });
+
+      const result = await authService.googleLogin(googleData);
       
-      console.log('Google login attempt with data:', googleData);
-      
-      const response = await authAPI.googleAuth(googleData);
-      
-      console.log('Google auth response:', response.data);
-      
-      if (response.data.success) {
-        const { user, token } = response.data.data;
-        localStorage.setItem('authToken', token);
-        localStorage.setItem('user', JSON.stringify(user));
-        
-        dispatch({ type: 'SET_USER', payload: user });
-        toast.success('Successfully logged in with Google!');
-        
-        return response.data.data;
+      if (result.success) {
+        dispatch({ type: AUTH_ACTIONS.LOGIN_SUCCESS, payload: result.data });
+        toast.success('Đăng nhập thành công!');
+        return result;
       } else {
-        throw new Error(response.data.message || 'Google login failed');
+        throw new Error(result.error || 'Google login failed');
       }
     } catch (error) {
-      console.error('Google login error:', error);
-      const errorMessage = handleApiError(error);
-      dispatch({ type: 'SET_ERROR', payload: errorMessage });
+      const errorMessage = error.error || 'Đăng nhập Google thất bại';
+      dispatch({ type: AUTH_ACTIONS.SET_ERROR, payload: errorMessage });
       toast.error(errorMessage);
       throw error;
     }
   };
 
-  const aptosConnectLogin = async (aptosConnectData) => {
+  // Aptos Connect Login
+  const aptosConnectLogin = async (aptosData) => {
     try {
-      dispatch({ type: 'SET_LOADING', payload: true });
+      dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: true });
+      dispatch({ type: AUTH_ACTIONS.CLEAR_ERROR });
+
+      const result = await authService.aptosConnectLogin(aptosData);
       
-      console.log('Aptos Connect login attempt with data:', aptosConnectData);
-      
-      const response = await authAPI.aptosConnectAuth(aptosConnectData);
-      
-      console.log('Aptos Connect auth response:', response.data);
-      
-      if (response.data.success) {
-        const { user, token } = response.data.data;
-        localStorage.setItem('authToken', token);
-        localStorage.setItem('user', JSON.stringify(user));
-        
-        dispatch({ type: 'SET_USER', payload: user });
-        toast.success('Successfully logged in with Aptos Connect!');
-        
-        return response.data.data;
+      if (result.success) {
+        dispatch({ type: AUTH_ACTIONS.LOGIN_SUCCESS, payload: result.data });
+        toast.success('Đăng nhập Aptos Connect thành công!');
+        return result;
       } else {
-        throw new Error(response.data.message || 'Aptos Connect login failed');
+        throw new Error(result.error || 'Aptos Connect login failed');
       }
     } catch (error) {
-      console.error('Aptos Connect login error:', error);
-      const errorMessage = handleApiError(error);
-      dispatch({ type: 'SET_ERROR', payload: errorMessage });
+      const errorMessage = error.error || 'Đăng nhập Aptos Connect thất bại';
+      dispatch({ type: AUTH_ACTIONS.SET_ERROR, payload: errorMessage });
       toast.error(errorMessage);
       throw error;
     }
   };
 
+  // Email Login
+  const emailLogin = async (email, password) => {
+    try {
+      dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: true });
+      dispatch({ type: AUTH_ACTIONS.CLEAR_ERROR });
+
+      const result = await authService.emailLogin(email, password);
+      
+      if (result.success) {
+        dispatch({ type: AUTH_ACTIONS.LOGIN_SUCCESS, payload: result.data });
+        toast.success('Đăng nhập thành công!');
+        return result;
+      } else {
+        throw new Error(result.error || 'Email login failed');
+      }
+    } catch (error) {
+      const errorMessage = error.error || 'Đăng nhập thất bại';
+      dispatch({ type: AUTH_ACTIONS.SET_ERROR, payload: errorMessage });
+      toast.error(errorMessage);
+      throw error;
+    }
+  };
+
+  // Register
   const register = async (userData) => {
     try {
-      dispatch({ type: 'SET_LOADING', payload: true });
+      dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: true });
+      dispatch({ type: AUTH_ACTIONS.CLEAR_ERROR });
+
+      const result = await authService.register(userData);
       
-      const response = await authAPI.register(userData);
-      
-      if (response.data.success) {
-        const { user, token } = response.data.data;
-        localStorage.setItem('authToken', token);
-        localStorage.setItem('user', JSON.stringify(user));
-        
-        dispatch({ type: 'SET_USER', payload: user });
-        toast.success('Account created successfully!');
-        
-        return response.data.data;
+      if (result.success) {
+        dispatch({ type: AUTH_ACTIONS.LOGIN_SUCCESS, payload: result.data });
+        toast.success('Đăng ký thành công!');
+        return result;
       } else {
-        throw new Error(response.data.message || 'Registration failed');
+        throw new Error(result.error || 'Registration failed');
       }
     } catch (error) {
-      console.error('Registration error:', error);
-      const errorMessage = handleApiError(error);
-      dispatch({ type: 'SET_ERROR', payload: errorMessage });
+      const errorMessage = error.error || 'Đăng ký thất bại';
+      dispatch({ type: AUTH_ACTIONS.SET_ERROR, payload: errorMessage });
       toast.error(errorMessage);
       throw error;
     }
   };
 
-  const login = async (credentials) => {
+  // Wallet Login
+  const walletLogin = async (walletData) => {
     try {
-      dispatch({ type: 'SET_LOADING', payload: true });
+      dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: true });
+      dispatch({ type: AUTH_ACTIONS.CLEAR_ERROR });
+
+      const result = await authService.walletLogin(walletData);
       
-      const response = await authAPI.login(credentials);
-      
-      if (response.data.success) {
-        const { user, token } = response.data.data;
-        localStorage.setItem('authToken', token);
-        localStorage.setItem('user', JSON.stringify(user));
-        
-        dispatch({ type: 'SET_USER', payload: user });
-        toast.success('Successfully logged in!');
-        
-        return response.data.data;
+      if (result.success) {
+        dispatch({ type: AUTH_ACTIONS.LOGIN_SUCCESS, payload: result.data });
+        toast.success('Đăng nhập ví thành công!');
+        return result;
       } else {
-        throw new Error(response.data.message || 'Login failed');
+        throw new Error(result.error || 'Wallet login failed');
       }
     } catch (error) {
-      console.error('Login error:', error);
-      const errorMessage = handleApiError(error);
-      dispatch({ type: 'SET_ERROR', payload: errorMessage });
+      const errorMessage = error.error || 'Đăng nhập ví thất bại';
+      dispatch({ type: AUTH_ACTIONS.SET_ERROR, payload: errorMessage });
       toast.error(errorMessage);
       throw error;
     }
   };
 
-  const logout = async () => {
+  // Connect Wallet
+  const connectWallet = async (walletData) => {
     try {
-      await authAPI.logout();
-    } catch (error) {
-      console.error('Logout API failed:', error);
-    } finally {
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('user');
-      dispatch({ type: 'LOGOUT' });
-      toast.success('Successfully logged out!');
-    }
-  };
+      dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: true });
+      dispatch({ type: AUTH_ACTIONS.CLEAR_ERROR });
 
-  const updateProfile = async (data) => {
-    try {
-      const response = await authAPI.updateProfile(data);
-      if (response.data.success) {
-        const updatedUser = response.data.data;
-        localStorage.setItem('user', JSON.stringify(updatedUser));
-        dispatch({ type: 'SET_USER', payload: updatedUser });
-        toast.success('Profile updated successfully!');
-        return response.data.data;
+      const result = await authService.connectWallet(walletData);
+      
+      if (result.success) {
+        dispatch({ type: AUTH_ACTIONS.SET_USER, payload: result.data });
+        toast.success('Kết nối ví thành công!');
+        return result;
+      } else {
+        throw new Error(result.error || 'Wallet connection failed');
       }
     } catch (error) {
-      const errorMessage = handleApiError(error);
+      const errorMessage = error.error || 'Kết nối ví thất bại';
+      dispatch({ type: AUTH_ACTIONS.SET_ERROR, payload: errorMessage });
       toast.error(errorMessage);
       throw error;
     }
   };
 
-  const changePassword = async (currentPassword, newPassword) => {
-    try {
-      const response = await authAPI.changePassword(currentPassword, newPassword);
-      if (response.data.success) {
-        toast.success('Password changed successfully!');
-        return response.data.data;
-      }
-    } catch (error) {
-      const errorMessage = handleApiError(error);
-      toast.error(errorMessage);
-      throw error;
-    }
-  };
-
-  const connectWallet = async (walletAddress, walletType = 'other') => {
-    try {
-      const response = await authAPI.connectWallet(walletAddress, walletType);
-      if (response.data.success) {
-        const updatedUser = { ...state.user, walletAddress, walletType };
-        localStorage.setItem('user', JSON.stringify(updatedUser));
-        dispatch({ type: 'SET_USER', payload: updatedUser });
-        toast.success('Wallet connected successfully!');
-        return response.data.data;
-      }
-    } catch (error) {
-      const errorMessage = handleApiError(error);
-      toast.error(errorMessage);
-      throw error;
-    }
-  };
-
+  // Disconnect Wallet
   const disconnectWallet = async () => {
     try {
-      await authAPI.disconnectWallet();
-      const updatedUser = { ...state.user, walletAddress: null, walletType: 'other' };
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-      dispatch({ type: 'SET_USER', payload: updatedUser });
-      dispatch({ type: 'SET_WALLET', payload: null });
-      toast.success('Wallet disconnected successfully!');
+      dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: true });
+      dispatch({ type: AUTH_ACTIONS.CLEAR_ERROR });
+
+      const result = await authService.disconnectWallet();
+      
+      if (result.success) {
+        dispatch({ type: AUTH_ACTIONS.SET_USER, payload: result.data });
+        toast.success('Ngắt kết nối ví thành công!');
+        return result;
+      } else {
+        throw new Error(result.error || 'Wallet disconnection failed');
+      }
     } catch (error) {
-      console.error('Wallet disconnect failed:', error);
-      // Even if API fails, clear local state
-      const updatedUser = { ...state.user, walletAddress: null, walletType: 'other' };
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-      dispatch({ type: 'SET_USER', payload: updatedUser });
-      dispatch({ type: 'SET_WALLET', payload: null });
+      const errorMessage = error.error || 'Ngắt kết nối ví thất bại';
+      dispatch({ type: AUTH_ACTIONS.SET_ERROR, payload: errorMessage });
+      toast.error(errorMessage);
+      throw error;
     }
   };
 
-  const refreshToken = async () => {
+  // Logout
+  const logout = async () => {
     try {
-      const response = await authAPI.refreshToken();
-      if (response.data.success) {
-        const { token } = response.data.data;
-        localStorage.setItem('authToken', token);
-        return token;
-      }
+      await authService.logout();
+      dispatch({ type: AUTH_ACTIONS.LOGOUT });
+      toast.success('Đăng xuất thành công!');
     } catch (error) {
-      console.error('Token refresh failed:', error);
-      logout();
+      console.error('Logout error:', error);
+      dispatch({ type: AUTH_ACTIONS.LOGOUT });
     }
   };
 
-  const forgotPassword = async (email) => {
+  // Clear Error
+  const clearError = () => {
+    dispatch({ type: AUTH_ACTIONS.CLEAR_ERROR });
+  };
+
+  // Update Profile
+  const updateProfile = async (profileData) => {
     try {
-      const response = await authAPI.forgotPassword(email);
-      if (response.data.success) {
-        toast.success('Password reset instructions sent to your email!');
-        return response.data.data;
+      dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: true });
+      dispatch({ type: AUTH_ACTIONS.CLEAR_ERROR });
+
+      const result = await authService.updateProfile(profileData);
+      
+      if (result.success) {
+        dispatch({ type: AUTH_ACTIONS.SET_USER, payload: result.data });
+        toast.success('Cập nhật thông tin thành công!');
+        return result;
+      } else {
+        throw new Error(result.error || 'Profile update failed');
       }
     } catch (error) {
-      const errorMessage = handleApiError(error);
+      const errorMessage = error.error || 'Cập nhật thông tin thất bại';
+      dispatch({ type: AUTH_ACTIONS.SET_ERROR, payload: errorMessage });
       toast.error(errorMessage);
       throw error;
     }
@@ -331,15 +290,14 @@ export const AuthProvider = ({ children }) => {
     ...state,
     googleLogin,
     aptosConnectLogin,
+    emailLogin,
     register,
-    login,
-    logout,
-    updateProfile,
-    changePassword,
+    walletLogin,
     connectWallet,
     disconnectWallet,
-    refreshToken,
-    forgotPassword,
+    logout,
+    clearError,
+    updateProfile
   };
 
   return (
@@ -349,6 +307,7 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
+// Custom hook
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
