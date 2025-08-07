@@ -97,34 +97,35 @@ const AptosConnectSimple = ({ onSuccess, onClose }) => {
           </p>
         </div>
 
-
-
-        {/* Option 3: Mock Wallet */}
+        {/* Option 2: Direct Redirect */}
         <div className="relative">
           <button
             onClick={() => {
-              // Create a mock wallet for testing
-              const mockWallet = {
-                address: '0x' + Math.random().toString(16).substr(2, 40),
-                publicKey: '0x' + Math.random().toString(16).substr(2, 64),
-                provider: 'aptos-sdk',
-                createdAt: Date.now()
-              };
-              localStorage.setItem('aptos_connect_wallet', JSON.stringify(mockWallet));
-              toast.success(`Mock wallet created: ${mockWallet.address.slice(0, 6)}...${mockWallet.address.slice(-4)}`);
-              if (onSuccess) {
-                onSuccess(mockWallet);
-              }
+              setIsConnecting(true);
+              const connectUrl = createAptosConnectUrl();
+              window.location.href = connectUrl;
             }}
-            className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-3"
+            disabled={isConnecting}
+            className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-3"
           >
-            <Shield className="w-5 h-5" />
-            <span>Create Mock Wallet (Testing)</span>
+            {isConnecting ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                <span>Redirecting...</span>
+              </>
+            ) : (
+              <>
+                <Shield className="w-5 h-5" />
+                <span>Direct Redirect</span>
+                <ExternalLink className="w-4 h-4" />
+              </>
+            )}
           </button>
           <p className="text-xs text-gray-500 mt-1 text-center">
-            Creates a mock wallet for testing purposes
+            Redirects directly to Aptos Connect
           </p>
         </div>
+
       </div>
 
       {/* Info */}
@@ -137,7 +138,7 @@ const AptosConnectSimple = ({ onSuccess, onClose }) => {
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <h3 className="font-medium text-blue-900 mb-2">How it works:</h3>
         <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
-          <li>Click "Connect with Popup"</li>
+          <li>Click "Connect with Popup" or "Direct Redirect"</li>
           <li>You'll be taken to Aptos Connect</li>
           <li>Choose your wallet (Petra, Martian, etc.)</li>
           <li>Approve the connection</li>
