@@ -12,9 +12,10 @@ export const APTOS_CONFIG = {
   // Aptos Connect configuration (for wallet connection)
   APTOS_CONNECT: {
     baseUrl: "https://aptosconnect.app/prompt/",
+    clientId: process.env.VITE_APTOS_CONNECT_CLIENT_ID || "demo-client-id", // Add client ID
     dappName: "SafeSwap",
-    dappUrl: "https://safeswap-frontend.onrender.com",
-    callbackUrl: "https://safeswap-frontend.onrender.com/aptos-connect-callback",
+    dappUrl: process.env.VITE_DAPP_URL || "https://safeswap-frontend.onrender.com",
+    callbackUrl: process.env.VITE_CALLBACK_URL || "https://safeswap-frontend.onrender.com/aptos-connect-callback",
     chainId: "1", // Mainnet
     network: "mainnet"
   },
@@ -47,10 +48,11 @@ export const getAptosClient = () => {
   return new AptosClient(APTOS_CONFIG.NODE_URL);
 };
 
-// Create Aptos Connect URL
+// Create Aptos Connect URL with proper client ID
 export const createAptosConnectUrl = () => {
   const request = {
     type: 'connect',
+    clientId: APTOS_CONFIG.APTOS_CONNECT.clientId,
     chainId: APTOS_CONFIG.APTOS_CONNECT.chainId,
     dappName: APTOS_CONFIG.APTOS_CONNECT.dappName,
     dappUrl: APTOS_CONFIG.APTOS_CONNECT.dappUrl,
@@ -97,6 +99,7 @@ export const APTOS_CONNECT_UTILS = {
   // Get Aptos Connect info
   getConnectInfo: () => ({
     baseUrl: APTOS_CONFIG.APTOS_CONNECT.baseUrl,
+    clientId: APTOS_CONFIG.APTOS_CONNECT.clientId,
     dappName: APTOS_CONFIG.APTOS_CONNECT.dappName,
     dappUrl: APTOS_CONFIG.APTOS_CONNECT.dappUrl,
     callbackUrl: APTOS_CONFIG.APTOS_CONNECT.callbackUrl,
@@ -114,5 +117,18 @@ export const APTOS_CONNECT_UTILS = {
       message: error.message,
       retry: true
     };
+  },
+  
+  // Validate Aptos Connect configuration
+  validateConfig: () => {
+    const required = ['clientId', 'dappName', 'dappUrl', 'callbackUrl'];
+    const missing = required.filter(key => !APTOS_CONFIG.APTOS_CONNECT[key]);
+    
+    if (missing.length > 0) {
+      console.warn('Missing Aptos Connect configuration:', missing);
+      return false;
+    }
+    
+    return true;
   }
 }; 
