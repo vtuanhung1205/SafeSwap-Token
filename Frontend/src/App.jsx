@@ -25,9 +25,6 @@ import NotFoundPage from "./components/NotFoundPage/NotFoundPage";
 import WalletAdapterDemo from "./components/WalletAdapterDemo";
 import "./index.css";
 
-// Import wallet adapter registration
-import "./wallet-adapter/registerWallet.js";
-
 // Icons
 import {
   Bot,

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Wallet, Send, MessageSquare, RefreshCw, X, Info } from 'lucide-react';
 import toast from 'react-hot-toast';
 import safeSwapWallet from '../wallet-adapter/SafeSwapWalletAdapter.js';
+import { registerSafeSwapWallet } from '../wallet-adapter/registerWallet.js';
 
 // Error boundary component for wallet adapter
 class WalletAdapterErrorBoundary extends React.Component {
@@ -51,8 +52,23 @@ const WalletAdapterDemo = () => {
   const [accountInfo, setAccountInfo] = useState(null);
   const [resources, setResources] = useState([]);
   const [error, setError] = useState(null);
+  const [walletRegistered, setWalletRegistered] = useState(false);
 
   useEffect(() => {
+    // Manually register the wallet for this demo
+    const registerWallet = async () => {
+      try {
+        const success = registerSafeSwapWallet();
+        setWalletRegistered(success);
+        console.log('Wallet registration result:', success);
+      } catch (err) {
+        console.error('Failed to register wallet:', err);
+        setWalletRegistered(false);
+      }
+    };
+
+    registerWallet();
+    
     // Check initial wallet state
     checkWalletState();
     
@@ -247,6 +263,24 @@ const WalletAdapterDemo = () => {
           </p>
         </div>
 
+        {/* Registration Status */}
+        <div className={`border rounded-lg p-4 ${walletRegistered ? 'bg-green-50 border-green-200' : 'bg-yellow-50 border-yellow-200'}`}>
+          <div className="flex items-center">
+            <Info className={`w-5 h-5 mr-2 ${walletRegistered ? 'text-green-600' : 'text-yellow-600'}`} />
+            <div>
+              <h3 className={`font-semibold ${walletRegistered ? 'text-green-900' : 'text-yellow-900'}`}>
+                {walletRegistered ? 'Wallet Registered Successfully' : 'Wallet Registration Pending'}
+              </h3>
+              <p className={`text-sm ${walletRegistered ? 'text-green-800' : 'text-yellow-800'}`}>
+                {walletRegistered 
+                  ? 'SafeSwap wallet is registered and ready for use'
+                  : 'Attempting to register SafeSwap wallet...'
+                }
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Demo Mode Notice */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div className="flex items-center">
@@ -290,6 +324,7 @@ const WalletAdapterDemo = () => {
               <p><strong>AIP-62 Standard:</strong> {walletInfo?.isAIP62Standard ? 'Yes' : 'No'}</p>
               <p><strong>Connected:</strong> {isConnected ? 'Yes' : 'No'}</p>
               <p><strong>Mode:</strong> <span className="text-blue-600 font-semibold">Demo Mode</span></p>
+              <p><strong>Registered:</strong> {walletRegistered ? 'Yes' : 'No'}</p>
             </div>
             
             <div className="space-y-2">
@@ -308,7 +343,7 @@ const WalletAdapterDemo = () => {
           <div className="flex flex-wrap gap-4">
             <button
               onClick={connectWallet}
-              disabled={isLoading || isConnected}
+              disabled={isLoading || isConnected || !walletRegistered}
               className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg flex items-center"
             >
               <Wallet className="w-4 h-4 mr-2" />
@@ -400,6 +435,7 @@ const WalletAdapterDemo = () => {
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
           <h3 className="font-semibold text-blue-900 mb-2">How to Test:</h3>
           <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
+            <li>Wait for wallet registration to complete (green status)</li>
             <li>Click "Connect Wallet" to establish a connection</li>
             <li>Use the wallet functions to test different capabilities</li>
             <li>Check the console for detailed logs</li>
@@ -417,6 +453,7 @@ const WalletAdapterDemo = () => {
             <li>No external blockchain calls are made to avoid conflicts</li>
             <li>The 401 errors you see are from Aptos Connect and won't affect this demo</li>
             <li>Check the browser console for detailed error information</li>
+            <li>If wallet registration fails, refresh the page and try again</li>
           </ul>
         </div>
 
@@ -429,6 +466,7 @@ const WalletAdapterDemo = () => {
             <li>All wallet adapter functions work independently</li>
             <li>Perfect for testing AIP-62 compliance</li>
             <li>Ready for production integration with real blockchain calls</li>
+            <li>Manual registration prevents interference with other wallet systems</li>
           </ul>
         </div>
       </div>
