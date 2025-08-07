@@ -4,7 +4,7 @@
 // FULL APTOS FEATURE COMPLIANCE
 
 // Import Aptos SDK for real mainnet operations
-import { AptosClient, Account, Ed25519PrivateKey, AccountAddress } from 'aptos';
+import { AptosClient, Account } from 'aptos';
 
 // Wallet Standard Types
 const WalletReadyState = {
@@ -160,15 +160,25 @@ class SafeSwapWallet {
   async loadStoredAccount(walletData) {
     try {
       if (this.client && walletData.privateKey) {
-        // Load real account from private key
-        const privateKey = new Ed25519PrivateKey(walletData.privateKey);
-        this.account = Account.fromPrivateKey({ privateKey });
-        this.accountAddress = this.account.accountAddress.toString();
-        this.publicKey = this.account.publicKey.toString();
-        this.privateKey = walletData.privateKey;
-        this.connected = true;
-        this.readyState = WalletReadyState.Loaded;
-        this.isDemoMode = false;
+        // Load real account from private key - simplified for browser compatibility
+        try {
+          // Try to create account from private key using Account.fromPrivateKey
+          this.account = Account.fromPrivateKey({ privateKey: walletData.privateKey });
+          this.accountAddress = this.account.accountAddress.toString();
+          this.publicKey = this.account.publicKey.toString();
+          this.privateKey = walletData.privateKey;
+          this.connected = true;
+          this.readyState = WalletReadyState.Loaded;
+          this.isDemoMode = false;
+        } catch (accountError) {
+          console.warn('Failed to load account from private key, falling back to demo mode:', accountError);
+          // Fallback to demo mode if account loading fails
+          this.accountAddress = walletData.address;
+          this.publicKey = walletData.publicKey;
+          this.connected = true;
+          this.readyState = WalletReadyState.Loaded;
+          this.isDemoMode = true;
+        }
       } else {
         // Fallback to demo mode
         this.accountAddress = walletData.address;
