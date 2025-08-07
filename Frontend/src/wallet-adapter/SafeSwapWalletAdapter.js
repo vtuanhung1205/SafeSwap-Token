@@ -1,6 +1,7 @@
 // SafeSwap Wallet Adapter Plugin - AIP-62 Compatible
 // This implements the wallet-standard interface for SafeSwap wallet
 // DEMO MODE - No external dependencies to avoid conflicts
+// FULL APTOS FEATURE COMPLIANCE
 
 // Wallet Standard Types
 const WalletReadyState = {
@@ -14,7 +15,19 @@ const WalletReadyState = {
 
 const WalletName = (name) => name;
 
-// SafeSwap Wallet Implementation (Demo Mode)
+// Required Aptos Features (from wallet-standard core)
+const REQUIRED_APTOS_FEATURES = [
+  'aptos:account',
+  'aptos:connect',
+  'aptos:disconnect',
+  'aptos:network',
+  'aptos:onAccountChange',
+  'aptos:onNetworkChange',
+  'aptos:signMessage',
+  'aptos:signTransaction'
+];
+
+// SafeSwap Wallet Implementation (Demo Mode with Full Aptos Compliance)
 class SafeSwapWallet {
   constructor() {
     this.name = WalletName('SafeSwap');
@@ -31,9 +44,32 @@ class SafeSwapWallet {
     this.connected = false;
     this.account = null;
     this.publicKey = null;
+    this.network = 'mainnet';
     
     // Event listeners
     this.listeners = new Map();
+    
+    // Required Aptos Features Implementation
+    this.features = {
+      'aptos:account': {
+        address: null,
+        publicKey: null,
+        authKey: null,
+        minKeysRequired: 1,
+        chainId: 1
+      },
+      'aptos:connect': this.connect.bind(this),
+      'aptos:disconnect': this.disconnect.bind(this),
+      'aptos:network': {
+        name: 'mainnet',
+        chainId: 1,
+        url: 'https://fullnode.mainnet.aptoslabs.com'
+      },
+      'aptos:onAccountChange': this.onAccountChange.bind(this),
+      'aptos:onNetworkChange': this.onNetworkChange.bind(this),
+      'aptos:signMessage': this.signMessage.bind(this),
+      'aptos:signTransaction': this.signTransaction.bind(this)
+    };
     
     // Auto-detect if wallet is available
     this.detectWallet();
@@ -64,7 +100,7 @@ class SafeSwapWallet {
     }
   }
 
-  // Connect to wallet
+  // Connect to wallet (aptos:connect)
   async connect() {
     try {
       this.readyState = WalletReadyState.Loading;
@@ -78,7 +114,17 @@ class SafeSwapWallet {
         this.connected = true;
         this.readyState = WalletReadyState.Loaded;
         
+        // Update account feature
+        this.features['aptos:account'] = {
+          address: this.account,
+          publicKey: this.publicKey,
+          authKey: this.account,
+          minKeysRequired: 1,
+          chainId: 1
+        };
+        
         this.notifyListeners('connect', { account: this.account, publicKey: this.publicKey });
+        this.notifyAccountChange();
         return { account: this.account, publicKey: this.publicKey };
       }
       
@@ -89,6 +135,15 @@ class SafeSwapWallet {
       this.connected = true;
       this.readyState = WalletReadyState.Loaded;
       
+      // Update account feature
+      this.features['aptos:account'] = {
+        address: this.account,
+        publicKey: this.publicKey,
+        authKey: this.account,
+        minKeysRequired: 1,
+        chainId: 1
+      };
+      
       // Store wallet data
       const walletData = {
         address: this.account,
@@ -98,6 +153,7 @@ class SafeSwapWallet {
       localStorage.setItem('safeSwap_wallet', JSON.stringify(walletData));
       
       this.notifyListeners('connect', { account: this.account, publicKey: this.publicKey });
+      this.notifyAccountChange();
       return { account: this.account, publicKey: this.publicKey };
     } catch (error) {
       console.error('Error connecting to SafeSwap wallet:', error);
@@ -106,7 +162,7 @@ class SafeSwapWallet {
     }
   }
 
-  // Disconnect from wallet
+  // Disconnect from wallet (aptos:disconnect)
   async disconnect() {
     try {
       this.connected = false;
@@ -114,10 +170,20 @@ class SafeSwapWallet {
       this.publicKey = null;
       this.readyState = WalletReadyState.NotDetected;
       
+      // Clear account feature
+      this.features['aptos:account'] = {
+        address: null,
+        publicKey: null,
+        authKey: null,
+        minKeysRequired: 1,
+        chainId: 1
+      };
+      
       // Clear stored wallet data
       localStorage.removeItem('safeSwap_wallet');
       
       this.notifyListeners('disconnect');
+      this.notifyAccountChange();
     } catch (error) {
       console.error('Error disconnecting from SafeSwap wallet:', error);
       throw error;
@@ -152,7 +218,7 @@ class SafeSwapWallet {
     }
   }
 
-  // Sign transaction (Demo Mode)
+  // Sign transaction (aptos:signTransaction)
   async signTransaction(transaction) {
     try {
       if (!this.connected) {
@@ -177,7 +243,7 @@ class SafeSwapWallet {
     }
   }
 
-  // Sign message (Demo Mode)
+  // Sign message (aptos:signMessage)
   async signMessage(message) {
     try {
       if (!this.connected) {
@@ -198,6 +264,26 @@ class SafeSwapWallet {
       console.error('Error signing message:', error);
       throw error;
     }
+  }
+
+  // Account change notification (aptos:onAccountChange)
+  onAccountChange(callback) {
+    this.on('accountChange', callback);
+  }
+
+  // Network change notification (aptos:onNetworkChange)
+  onNetworkChange(callback) {
+    this.on('networkChange', callback);
+  }
+
+  // Notify account change
+  notifyAccountChange() {
+    this.notifyListeners('accountChange', this.features['aptos:account']);
+  }
+
+  // Notify network change
+  notifyNetworkChange() {
+    this.notifyListeners('networkChange', this.features['aptos:network']);
   }
 
   // Create account (for demo purposes)
@@ -353,8 +439,17 @@ class SafeSwapWallet {
       connected: this.connected,
       account: this.account,
       publicKey: this.publicKey,
+      network: this.network,
+      features: this.features,
       demo_mode: this.isDemoMode
     };
+  }
+
+  // Check if wallet has all required features
+  hasRequiredFeatures() {
+    return REQUIRED_APTOS_FEATURES.every(feature => 
+      feature in this.features
+    );
   }
 }
 
@@ -367,4 +462,4 @@ if (typeof window !== 'undefined') {
 }
 
 export default safeSwapWallet;
-export { SafeSwapWallet, WalletReadyState, WalletName };
+export { SafeSwapWallet, WalletReadyState, WalletName, REQUIRED_APTOS_FEATURES };

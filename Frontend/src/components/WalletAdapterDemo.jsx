@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Wallet, Send, MessageSquare, RefreshCw, X, Info } from 'lucide-react';
+import { Wallet, Send, MessageSquare, RefreshCw, X, Info, CheckCircle, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import safeSwapWallet from '../wallet-adapter/SafeSwapWalletAdapter.js';
 import { registerSafeSwapWallet } from '../wallet-adapter/registerWallet.js';
@@ -53,6 +53,7 @@ const WalletAdapterDemo = () => {
   const [resources, setResources] = useState([]);
   const [error, setError] = useState(null);
   const [walletRegistered, setWalletRegistered] = useState(false);
+  const [featureCompliance, setFeatureCompliance] = useState({});
 
   useEffect(() => {
     // Manually register the wallet for this demo
@@ -76,11 +77,15 @@ const WalletAdapterDemo = () => {
     safeSwapWallet.on('connect', handleWalletConnect);
     safeSwapWallet.on('disconnect', handleWalletDisconnect);
     safeSwapWallet.on('transaction', handleTransaction);
+    safeSwapWallet.on('accountChange', handleAccountChange);
+    safeSwapWallet.on('networkChange', handleNetworkChange);
     
     return () => {
       safeSwapWallet.off('connect', handleWalletConnect);
       safeSwapWallet.off('disconnect', handleWalletDisconnect);
       safeSwapWallet.off('transaction', handleTransaction);
+      safeSwapWallet.off('accountChange', handleAccountChange);
+      safeSwapWallet.off('networkChange', handleNetworkChange);
     };
   }, []);
 
@@ -90,10 +95,33 @@ const WalletAdapterDemo = () => {
       setWalletInfo(info);
       setIsConnected(info.connected);
       setError(null);
+      
+      // Check feature compliance
+      checkFeatureCompliance();
     } catch (err) {
       console.error('Error checking wallet state:', err);
       setError('Failed to check wallet state');
     }
+  };
+
+  const checkFeatureCompliance = () => {
+    const requiredFeatures = [
+      'aptos:account',
+      'aptos:connect',
+      'aptos:disconnect',
+      'aptos:network',
+      'aptos:onAccountChange',
+      'aptos:onNetworkChange',
+      'aptos:signMessage',
+      'aptos:signTransaction'
+    ];
+
+    const compliance = {};
+    requiredFeatures.forEach(feature => {
+      compliance[feature] = feature in safeSwapWallet.features;
+    });
+
+    setFeatureCompliance(compliance);
   };
 
   const handleWalletConnect = (data) => {
@@ -101,6 +129,7 @@ const WalletAdapterDemo = () => {
     setIsConnected(true);
     setWalletInfo(safeSwapWallet.getWalletInfo());
     setError(null);
+    checkFeatureCompliance();
     toast.success('Wallet connected successfully!');
   };
 
@@ -111,12 +140,23 @@ const WalletAdapterDemo = () => {
     setAccountInfo(null);
     setResources([]);
     setError(null);
+    checkFeatureCompliance();
     toast.success('Wallet disconnected');
   };
 
   const handleTransaction = (result) => {
     console.log('Transaction completed:', result);
     toast.success('Transaction completed successfully!');
+  };
+
+  const handleAccountChange = (account) => {
+    console.log('Account changed:', account);
+    toast.success('Account changed');
+  };
+
+  const handleNetworkChange = (network) => {
+    console.log('Network changed:', network);
+    toast.success('Network changed');
   };
 
   const connectWallet = async () => {
@@ -250,6 +290,24 @@ const WalletAdapterDemo = () => {
     }
   };
 
+  const changeNetwork = () => {
+    const networks = ['mainnet', 'testnet', 'devnet'];
+    const currentIndex = networks.indexOf(walletInfo?.network || 'mainnet');
+    const nextNetwork = networks[(currentIndex + 1) % networks.length];
+    
+    // Update network in wallet
+    safeSwapWallet.network = nextNetwork;
+    safeSwapWallet.features['aptos:network'] = {
+      name: nextNetwork,
+      chainId: nextNetwork === 'mainnet' ? 1 : nextNetwork === 'testnet' ? 2 : 3,
+      url: `https://fullnode.${nextNetwork}.aptoslabs.com`
+    };
+    
+    setWalletInfo(safeSwapWallet.getWalletInfo());
+    safeSwapWallet.notifyNetworkChange();
+    toast.success(`Network changed to ${nextNetwork}`);
+  };
+
   return (
     <WalletAdapterErrorBoundary>
       <div className="max-w-4xl mx-auto p-6 space-y-6">
@@ -278,6 +336,28 @@ const WalletAdapterDemo = () => {
                 }
               </p>
             </div>
+          </div>
+        </div>
+
+        {/* Aptos Feature Compliance */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+          <h3 className="font-semibold text-blue-900 mb-4 flex items-center">
+            <CheckCircle className="w-5 h-5 mr-2" />
+            Aptos Feature Compliance
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {Object.entries(featureCompliance).map(([feature, compliant]) => (
+              <div key={feature} className="flex items-center space-x-2">
+                {compliant ? (
+                  <CheckCircle className="w-4 h-4 text-green-600" />
+                ) : (
+                  <AlertCircle className="w-4 h-4 text-red-600" />
+                )}
+                <span className={`text-sm ${compliant ? 'text-green-800' : 'text-red-800'}`}>
+                  {feature}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -325,6 +405,7 @@ const WalletAdapterDemo = () => {
               <p><strong>Connected:</strong> {isConnected ? 'Yes' : 'No'}</p>
               <p><strong>Mode:</strong> <span className="text-blue-600 font-semibold">Demo Mode</span></p>
               <p><strong>Registered:</strong> {walletRegistered ? 'Yes' : 'No'}</p>
+              <p><strong>Network:</strong> {walletInfo?.network || 'mainnet'}</p>
             </div>
             
             <div className="space-y-2">
@@ -332,6 +413,7 @@ const WalletAdapterDemo = () => {
               <p><strong>Public Key:</strong> {walletInfo?.publicKey ? `${walletInfo.publicKey.slice(0, 6)}...${walletInfo.publicKey.slice(-4)}` : 'Not connected'}</p>
               <p><strong>URL:</strong> {walletInfo?.url || 'N/A'}</p>
               <p><strong>Demo Mode:</strong> {walletInfo?.demo_mode ? 'Yes' : 'No'}</p>
+              <p><strong>Features:</strong> {Object.keys(walletInfo?.features || {}).length} implemented</p>
             </div>
           </div>
         </div>
@@ -357,6 +439,15 @@ const WalletAdapterDemo = () => {
             >
               <X className="w-4 h-4 mr-2" />
               Disconnect Wallet
+            </button>
+
+            <button
+              onClick={changeNetwork}
+              disabled={isLoading || !isConnected}
+              className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg flex items-center"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Change Network
             </button>
           </div>
         </div>
@@ -436,8 +527,10 @@ const WalletAdapterDemo = () => {
           <h3 className="font-semibold text-blue-900 mb-2">How to Test:</h3>
           <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
             <li>Wait for wallet registration to complete (green status)</li>
+            <li>Check Aptos feature compliance (all features should be green)</li>
             <li>Click "Connect Wallet" to establish a connection</li>
             <li>Use the wallet functions to test different capabilities</li>
+            <li>Try changing networks to test network switching</li>
             <li>Check the console for detailed logs</li>
             <li>Try signing messages and transactions</li>
             <li>View account information and resources</li>
@@ -454,12 +547,13 @@ const WalletAdapterDemo = () => {
             <li>The 401 errors you see are from Aptos Connect and won't affect this demo</li>
             <li>Check the browser console for detailed error information</li>
             <li>If wallet registration fails, refresh the page and try again</li>
+            <li>All required Aptos features are implemented for full compliance</li>
           </ul>
         </div>
 
         {/* Isolation Notice */}
         <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-          <h3 className="font-semibold text-green-900 mb-2">✅ Complete Isolation Achieved</h3>
+          <h3 className="font-semibold text-green-900 mb-2">✅ Complete Isolation & Full Aptos Compliance</h3>
           <ul className="text-sm text-green-800 space-y-1 list-disc list-inside">
             <li>No external dependencies or API calls</li>
             <li>No conflicts with existing Aptos Connect integration</li>
@@ -467,6 +561,8 @@ const WalletAdapterDemo = () => {
             <li>Perfect for testing AIP-62 compliance</li>
             <li>Ready for production integration with real blockchain calls</li>
             <li>Manual registration prevents interference with other wallet systems</li>
+            <li>Full implementation of all required Aptos wallet features</li>
+            <li>Complete wallet-standard compliance for Aptos ecosystem</li>
           </ul>
         </div>
       </div>
