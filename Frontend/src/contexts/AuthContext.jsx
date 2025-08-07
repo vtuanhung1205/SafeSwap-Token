@@ -52,14 +52,17 @@ export const AuthProvider = ({ children }) => {
 
   // Check if user is authenticated on app load
   useEffect(() => {
-    checkAuthStatus();
+    // Temporarily disable automatic auth check to prevent Aptos Connect errors
+    // checkAuthStatus();
+    dispatch({ type: 'SET_LOADING', payload: false });
   }, []);
 
   // Check wallet status when user is authenticated
   useEffect(() => {
-    if (state.isAuthenticated && state.user?.walletAddress) {
-      checkWalletStatus();
-    }
+    // Temporarily disable automatic wallet check to prevent Aptos Connect errors
+    // if (state.isAuthenticated && state.user?.walletAddress) {
+    //   checkWalletStatus();
+    // }
   }, [state.isAuthenticated, state.user?.walletAddress]);
 
   const checkAuthStatus = async () => {
