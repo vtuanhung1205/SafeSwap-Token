@@ -65,9 +65,13 @@ const userSchema = new mongoose.Schema({
     lowercase: true,
     trim: true
   },
+  publicKey: {
+    type: String,
+    trim: true
+  },
   walletType: {
     type: String,
-    enum: ['petra', 'martian', 'pontem', 'fewcha', 'nightly', 'other'],
+    enum: ['petra', 'martian', 'pontem', 'fewcha', 'nightly', 'other', 'aptos'],
     default: 'other'
   },
   

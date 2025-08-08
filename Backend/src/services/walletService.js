@@ -238,17 +238,17 @@ class WalletService {
   }
 
   // Connect wallet to user account
-  async connectWallet(userId, walletAddress, walletType) {
+  async connectWallet(userId, address, publicKey) {
     try {
       const User = require('../models/User');
       
       // Validate wallet address
-      if (!this.validateWalletAddress(walletAddress)) {
+      if (!this.validateWalletAddress(address)) {
         throw new Error('Invalid wallet address');
       }
       
       // Check if wallet is already connected to another user
-      const existingUser = await User.findOne({ walletAddress: walletAddress.toLowerCase() });
+      const existingUser = await User.findOne({ walletAddress: address.toLowerCase() });
       if (existingUser && existingUser._id.toString() !== userId) {
         throw new Error('Wallet is already connected to another account');
       }
@@ -259,23 +259,51 @@ class WalletService {
         throw new Error('User not found');
       }
       
-      user.walletAddress = walletAddress.toLowerCase();
-      user.walletType = walletType || 'other';
+      user.walletAddress = address.toLowerCase();
+      user.publicKey = publicKey;
+      user.walletType = 'aptos';
       await user.save();
       
       // Get wallet info from blockchain
-      const walletInfo = await this.getWalletInfo(walletAddress);
+      const walletInfo = await this.getWalletInfo(address);
       
       return {
         success: true,
         wallet: {
           address: user.walletAddress,
+          publicKey: user.publicKey,
           type: user.walletType,
           ...walletInfo
         }
       };
     } catch (error) {
       logger.error('Error connecting wallet:', error);
+      throw error;
+    }
+  }
+
+  // Disconnect wallet from user account
+  async disconnectWallet(userId) {
+    try {
+      const User = require('../models/User');
+      
+      const user = await User.findById(userId);
+      if (!user) {
+        throw new Error('User not found');
+      }
+      
+      // Clear wallet info
+      user.walletAddress = null;
+      user.publicKey = null;
+      user.walletType = null;
+      await user.save();
+      
+      return {
+        success: true,
+        message: 'Wallet disconnected successfully'
+      };
+    } catch (error) {
+      logger.error('Error disconnecting wallet:', error);
       throw error;
     }
   }

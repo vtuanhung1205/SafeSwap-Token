@@ -1,11 +1,14 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import authService from '../services/authService';
+import { walletAPI, handleApiError } from '../utils/api';
 import toast from 'react-hot-toast';
 
 // Initial state
 const initialState = {
   isAuthenticated: false,
   user: null,
+  wallet: null,
+  isWalletConnected: false,
   loading: true,
   error: null
 };
@@ -14,6 +17,7 @@ const initialState = {
 const AUTH_ACTIONS = {
   SET_LOADING: 'SET_LOADING',
   SET_USER: 'SET_USER',
+  SET_WALLET: 'SET_WALLET',
   SET_ERROR: 'SET_ERROR',
   LOGIN_SUCCESS: 'LOGIN_SUCCESS',
   LOGOUT: 'LOGOUT',
@@ -30,6 +34,13 @@ const authReducer = (state, action) => {
         ...state, 
         user: action.payload, 
         isAuthenticated: !!action.payload,
+        loading: false 
+      };
+    case AUTH_ACTIONS.SET_WALLET:
+      return { 
+        ...state, 
+        wallet: action.payload, 
+        isWalletConnected: !!action.payload,
         loading: false 
       };
     case AUTH_ACTIONS.SET_ERROR:
@@ -95,13 +106,17 @@ export const AuthProvider = ({ children }) => {
       
       if (result.success) {
         dispatch({ type: AUTH_ACTIONS.LOGIN_SUCCESS, payload: result.data });
-        toast.success('Đăng nhập thành công!');
+        toast.success('Login successfully!');
+        
+        // Check wallet status after login
+        await checkWalletStatus();
+        
         return result;
       } else {
         throw new Error(result.error || 'Google login failed');
       }
     } catch (error) {
-      const errorMessage = error.error || 'Đăng nhập Google thất bại';
+      const errorMessage = error.error || 'Login Google failed';
       dispatch({ type: AUTH_ACTIONS.SET_ERROR, payload: errorMessage });
       toast.error(errorMessage);
       throw error;
@@ -203,46 +218,56 @@ export const AuthProvider = ({ children }) => {
   // Connect Wallet
   const connectWallet = async (walletData) => {
     try {
-      dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: true });
-      dispatch({ type: AUTH_ACTIONS.CLEAR_ERROR });
-
-      const result = await authService.connectWallet(walletData);
+      if (!state.isAuthenticated) {
+        toast.error('Please login before connecting your wallet');
+        return { success: false, error: 'Authentication required' };
+      }
       
-      if (result.success) {
-        dispatch({ type: AUTH_ACTIONS.SET_USER, payload: result.data });
-        toast.success('Kết nối ví thành công!');
-        return result;
-      } else {
-        throw new Error(result.error || 'Wallet connection failed');
+      const response = await walletAPI.connect(walletData.address, walletData.publicKey);
+      
+      if (response.data.success) {
+        dispatch({ type: 'SET_WALLET', payload: response.data.data.wallet });
+        toast.success('Wallet connected successfully');
+        return { success: true, wallet: response.data.data.wallet };
       }
     } catch (error) {
-      const errorMessage = error.error || 'Kết nối ví thất bại';
-      dispatch({ type: AUTH_ACTIONS.SET_ERROR, payload: errorMessage });
+      const errorMessage = handleApiError(error);
       toast.error(errorMessage);
-      throw error;
+      return { success: false, error: errorMessage };
+    }
+  };
+
+  // Check Wallet Status
+  const checkWalletStatus = async () => {
+    try {
+      if (!state.isAuthenticated) return;
+      
+      const response = await walletAPI.getInfo();
+      
+      if (response.data.success) {
+        dispatch({ type: 'SET_WALLET', payload: response.data.data.wallet });
+      }
+    } catch (error) {
+      console.error('Wallet status check failed:', error);
     }
   };
 
   // Disconnect Wallet
   const disconnectWallet = async () => {
     try {
-      dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: true });
-      dispatch({ type: AUTH_ACTIONS.CLEAR_ERROR });
-
-      const result = await authService.disconnectWallet();
+      if (!state.isWalletConnected) return { success: true };
       
-      if (result.success) {
-        dispatch({ type: AUTH_ACTIONS.SET_USER, payload: result.data });
-        toast.success('Ngắt kết nối ví thành công!');
-        return result;
-      } else {
-        throw new Error(result.error || 'Wallet disconnection failed');
+      const response = await walletAPI.disconnect();
+      
+      if (response.data.success) {
+        dispatch({ type: 'SET_WALLET', payload: null });
+        toast.success('Wallet disconnected successfully');
+        return { success: true };
       }
     } catch (error) {
-      const errorMessage = error.error || 'Ngắt kết nối ví thất bại';
-      dispatch({ type: AUTH_ACTIONS.SET_ERROR, payload: errorMessage });
+      const errorMessage = handleApiError(error);
       toast.error(errorMessage);
-      throw error;
+      return { success: false, error: errorMessage };
     }
   };
 
@@ -295,6 +320,7 @@ export const AuthProvider = ({ children }) => {
     walletLogin,
     connectWallet,
     disconnectWallet,
+    checkWalletStatus,
     logout,
     clearError,
     updateProfile

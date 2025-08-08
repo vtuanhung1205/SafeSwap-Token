@@ -199,6 +199,58 @@ router.get('/tokens/:address', auth, async (req, res) => {
   }
 });
 
+// Connect wallet
+router.post('/connect', auth, [
+  body('address').isString().notEmpty().withMessage('Wallet address is required'),
+  body('publicKey').isString().notEmpty().withMessage('Public key is required')
+], async (req, res) => {
+  try {
+    // Check validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        errors: errors.array()
+      });
+    }
+
+    const { address, publicKey } = req.body;
+    
+    const wallet = await walletService.connectWallet(req.user.userId, address, publicKey);
+    
+    res.json({
+      success: true,
+      data: { wallet },
+      message: 'Wallet connected successfully'
+    });
+  } catch (error) {
+    logger.error('Error connecting wallet:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to connect wallet'
+    });
+  }
+});
+
+// Disconnect wallet
+router.post('/disconnect', auth, async (req, res) => {
+  try {
+    const result = await walletService.disconnectWallet(req.user.userId);
+    
+    res.json({
+      success: true,
+      data: result,
+      message: 'Wallet disconnected successfully'
+    });
+  } catch (error) {
+    logger.error('Error disconnecting wallet:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to disconnect wallet'
+    });
+  }
+});
+
 // Check wallet connection
 router.post('/check-connection', auth, [
   body('address').isString().notEmpty().withMessage('Wallet address is required')
