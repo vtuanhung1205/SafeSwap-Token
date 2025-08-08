@@ -3,7 +3,7 @@ import { X, LogIn, Wallet } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import { useGoogleLogin } from '@react-oauth/google';
-import ConnectModal from './ConnectModal';
+
 import { createAptosConnectUrl } from '../../config/aptos';
 
 const LoginModal = ({ isOpen, onClose }) => {

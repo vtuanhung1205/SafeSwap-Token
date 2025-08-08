@@ -8,7 +8,7 @@ import { Wallet, ArrowUpDown, RefreshCw, AlertTriangle, CheckCircle, Loader2 } f
 import WalletConnect from '../WalletConnect';
 import TransactionHistory from '../TransactionHistory';
 import TokenList from '../TokenList';
-import FavoriteTokens from '../FavoriteTokens';
+
 import SwapForm from '../SwapForm';
 import './Dashboard.css';
 

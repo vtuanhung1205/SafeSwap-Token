@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Loader2, Search, Filter } from 'lucide-react';
+import { Loader2, Search, Filter, TrendingUp, TrendingDown } from 'lucide-react';
 
 const TokenList = () => {
   const [tokens, setTokens] = useState([]);
@@ -8,6 +8,8 @@ const TokenList = () => {
   const [filter, setFilter] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState(null);
+  const [tokenPrices, setTokenPrices] = useState({});
+  const [isPriceLoading, setIsPriceLoading] = useState(true);
 
   useEffect(() => {
     const getTokens = async () => {
@@ -25,6 +27,35 @@ const TokenList = () => {
     };
 
     getTokens();
+  }, []);
+
+  // Fetch token prices from CoinGecko
+  useEffect(() => {
+    const fetchTokenPrices = async () => {
+      try {
+        // Get popular token IDs for CoinGecko
+        const popularTokenIds = [
+          'aptos', 'usd-coin', 'tether', 'bitcoin', 'ethereum', 'solana',
+          'binancecoin', 'cardano', 'dogecoin', 'polkadot', 'chainlink',
+          'polygon', 'avalanche-2', 'uniswap', 'litecoin', 'stellar'
+        ];
+        
+        const ids = popularTokenIds.join(',');
+        const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`);
+        
+        if (!response.ok) throw new Error("Failed to fetch prices from CoinGecko");
+        const data = await response.json();
+        setTokenPrices(data);
+      } catch (error) {
+        console.error('Error fetching token prices:', error);
+      } finally {
+        setIsPriceLoading(false);
+      }
+    };
+
+    fetchTokenPrices();
+    const intervalId = setInterval(fetchTokenPrices, 60000); // Update every minute
+    return () => clearInterval(intervalId);
   }, []);
 
   const filteredTokens = tokens.filter((token) => {
@@ -159,6 +190,8 @@ const TokenList = () => {
                 <div className="text-gray-400 text-sm">
                   {token.tokenAddress || token.faAddress}
                 </div>
+                {/* Price Display */}
+                <TokenPriceDisplay token={token} tokenPrices={tokenPrices} isLoading={isPriceLoading} />
                 {token.panoraTags && token.panoraTags.length > 0 && (
                   <div className="flex gap-1 mt-1">
                     {token.panoraTags.map((tag, index) => (
@@ -179,6 +212,64 @@ const TokenList = () => {
             No tokens found matching your criteria
           </div>
         )}
+      </div>
+    </div>
+  );
+};
+
+// Token Price Display Component
+const TokenPriceDisplay = ({ token, tokenPrices, isLoading }) => {
+  // Map token symbols to CoinGecko IDs
+  const getCoinGeckoId = (symbol) => {
+    const mapping = {
+      'APT': 'aptos',
+      'USDC': 'usd-coin',
+      'USDT': 'tether',
+      'BTC': 'bitcoin',
+      'ETH': 'ethereum',
+      'SOL': 'solana',
+      'BNB': 'binancecoin',
+      'ADA': 'cardano',
+      'DOGE': 'dogecoin',
+      'DOT': 'polkadot',
+      'LINK': 'chainlink',
+      'MATIC': 'polygon',
+      'AVAX': 'avalanche-2',
+      'UNI': 'uniswap',
+      'LTC': 'litecoin',
+      'XLM': 'stellar'
+    };
+    return mapping[symbol?.toUpperCase()];
+  };
+
+  const coinGeckoId = getCoinGeckoId(token.symbol);
+  const priceData = tokenPrices[coinGeckoId];
+
+  if (isLoading) {
+    return <div className="h-8 w-16 bg-[#2a2a35] rounded animate-pulse mt-1"></div>;
+  }
+
+  if (!priceData) {
+    return <div className="text-xs text-gray-500 mt-1">N/A</div>;
+  }
+
+  const price = priceData.usd;
+  const change = priceData.usd_24h_change;
+  const isPositive = change >= 0;
+
+  const formattedPrice = price.toLocaleString("en-US", { 
+    style: "currency", 
+    currency: "USD", 
+    minimumFractionDigits: 2, 
+    maximumFractionDigits: price > 1 ? 2 : 6 
+  });
+
+  return (
+    <div className="text-right mt-1">
+      <div className="text-sm text-white">{formattedPrice}</div>
+      <div className={`text-xs flex items-center justify-end ${isPositive ? "text-green-400" : "text-red-400"}`}>
+        {isPositive ? <TrendingUp size={10} className="mr-1" /> : <TrendingDown size={10} className="mr-1" />}
+        {change.toFixed(2)}%
       </div>
     </div>
   );

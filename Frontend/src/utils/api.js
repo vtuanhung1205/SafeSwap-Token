@@ -92,7 +92,7 @@ export const authAPI = {
   
   // Connect wallet
   connectWallet: (walletAddress, walletType) => 
-    api.post('/auth/connect-wallet', { walletAddress, walletType }),
+    api.post('/auth   /connect-wallet', { walletAddress, walletType }),
   
   // Disconnect wallet
   disconnectWallet: () => 
