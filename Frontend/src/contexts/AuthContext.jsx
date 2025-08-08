@@ -100,61 +100,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const login = async (email, password) => {
-    try {
-      dispatch({ type: 'SET_LOADING', payload: true });
-      
-      const response = await authAPI.login(email, password);
-      
-      if (response.data.success) {
-        const { user, tokens } = response.data.data;
-        
-        // Store tokens
-        localStorage.setItem('accessToken', tokens.accessToken);
-        localStorage.setItem('refreshToken', tokens.refreshToken);
-        
-        dispatch({ type: 'SET_USER', payload: user });
-        toast.success('Login successful!');
-        
-        // Check wallet status after login
-        await checkWalletStatus();
-        
-        return { success: true, user };
-      }
-    } catch (error) {
-      const errorMessage = handleApiError(error);
-      dispatch({ type: 'SET_ERROR', payload: errorMessage });
-      toast.error(errorMessage);
-      return { success: false, error: errorMessage };
-    }
-  };
-
-  const register = async (email, name, password, avatar) => {
-    try {
-      dispatch({ type: 'SET_LOADING', payload: true });
-      
-      const response = await authAPI.register(email, name, password, avatar);
-      
-      if (response.data.success) {
-        const { user, tokens } = response.data.data;
-        
-        // Store tokens
-        localStorage.setItem('accessToken', tokens.accessToken);
-        localStorage.setItem('refreshToken', tokens.refreshToken);
-        
-        dispatch({ type: 'SET_USER', payload: user });
-        toast.success('Registration successful!');
-        
-        return { success: true, user };
-      }
-    } catch (error) {
-      const errorMessage = handleApiError(error);
-      dispatch({ type: 'SET_ERROR', payload: errorMessage });
-      toast.error(errorMessage);
-      return { success: false, error: errorMessage };
-    }
-  };
-
   const logout = async () => {
     try {
       // Disconnect wallet if connected
@@ -269,8 +214,6 @@ export const AuthProvider = ({ children }) => {
     error: state.error,
     wallet: state.wallet,
     isWalletConnected: state.isWalletConnected,
-    login,
-    register,
     logout,
     updateProfile,
     checkAuthStatus,

@@ -190,15 +190,9 @@ const Navbar = () => {
                   <div className="flex items-center space-x-4">
                     <button
                       onClick={() => setShowLoginModal(true)}
-                      className="px-4 py-2 rounded-lg text-gray-300 hover:text-cyan-400 transition"
+                      className="px-6 py-2 rounded-lg bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-medium hover:from-cyan-700 hover:to-blue-700 transition-all duration-200 transform hover:scale-105"
                     >
-                      Sign In
-                    </button>
-                    <button
-                      onClick={() => setShowLoginModal(true)}
-                      className="px-4 py-2 rounded-lg bg-cyan-600 text-white hover:bg-cyan-700 transition"
-                    >
-                      Get Started
+                      Sign in with Google
                     </button>
                   </div>
                 )}

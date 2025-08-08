@@ -67,6 +67,10 @@ export const authAPI = {
   register: (email, name, password, avatar) => 
     api.post('/auth/register', { email, name, password, avatar }),
   
+  // Google OAuth authentication
+  googleAuth: (googleData) => 
+    api.post('/auth/google', googleData),
+  
   getProfile: () => 
     api.get('/auth/profile'),
   
