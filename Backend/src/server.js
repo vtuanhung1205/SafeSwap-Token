@@ -27,19 +27,46 @@ const app = express();
 app.set('trust proxy', 1); // Trust the first proxy (e.g., Render)
 const server = createServer(app);
 
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:3000,http://localhost:5173,https://safeswap-token.vercel.app,https://safeswap-frontend.onrender.com').split(',');
+// Get allowed origins from environment or use defaults
+const defaultOrigins = [
+  'http://localhost:3000',
+  'http://localhost:5173', 
+  'http://localhost:5174',
+  'https://safeswap-token.vercel.app',
+  'https://safeswap-frontend.onrender.com'
+];
+
+const envOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : [];
+const allowedOrigins = [...new Set([...defaultOrigins, ...envOrigins])];
+
+// Log allowed origins for debugging
+console.log('Environment ALLOWED_ORIGINS:', process.env.ALLOWED_ORIGINS);
+console.log('Final allowed origins:', allowedOrigins);
 
 const corsOptions = {
   origin: (origin, callback) => {
     // allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) {
+    if (!origin) {
+      console.log('Request with no origin - allowing');
+      return callback(null, true);
+    }
+    
+    console.log('Request origin:', origin);
+    console.log('Checking against allowed origins:', allowedOrigins);
+    
+    // Check if origin is in allowed list
+    if (allowedOrigins.includes(origin)) {
+      console.log('Origin allowed:', origin);
+      return callback(null, true);
+    } else {
+      console.log('Origin blocked:', origin);
       const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
       return callback(new Error(msg), false);
     }
-    return callback(null, true);
   },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 };
 
 
@@ -57,7 +84,32 @@ app.use(helmet({
   contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false
 }));
-app.use(cors(corsOptions));
+
+// Apply CORS with error handling
+app.use((req, res, next) => {
+  cors(corsOptions)(req, res, (err) => {
+    if (err) {
+      console.error('CORS error:', err.message);
+      console.log('Request headers:', req.headers);
+      console.log('Request origin:', req.headers.origin);
+      
+      // For preflight requests, still allow them to pass
+      if (req.method === 'OPTIONS') {
+        res.status(200).end();
+        return;
+      }
+      
+      return res.status(500).json({
+        error: 'CORS Error',
+        message: err.message,
+        origin: req.headers.origin,
+        allowedOrigins: allowedOrigins
+      });
+    }
+    next();
+  });
+});
+
 app.use(morgan(process.env.LOG_FORMAT || 'combined'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
@@ -70,6 +122,16 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+// CORS test endpoint
+app.get('/cors-test', (req, res) => {
+  res.status(200).json({
+    message: 'CORS test successful',
+    origin: req.headers.origin,
+    allowedOrigins: allowedOrigins,
+    timestamp: new Date().toISOString()
   });
 });
 
