@@ -250,21 +250,21 @@ class AptosService {
         normalizedAddress = `0x${normalizedAddress}`;
       }
       
-      // Basic format validation - be more lenient with length for development
-      const aptosAddressRegex = process.env.NODE_ENV === 'production' 
-        ? /^0x[a-fA-F0-9]{64}$/ // Strict validation for production
-        : /^0x[a-fA-F0-9]{1,64}$/; // More lenient for development
+      // Aptos address validation - should be exactly 64 hex characters after 0x
+      const aptosAddressRegex = /^0x[a-fA-F0-9]{64}$/;
       
       if (!aptosAddressRegex.test(normalizedAddress)) {
+        logger.warn(`Invalid Aptos address format: ${normalizedAddress}`);
         return false;
       }
 
-      // For development or test environments, skip the network call
+      // For development or test environments, accept valid format
       if (process.env.NODE_ENV !== 'production') {
+        logger.info(`Address validation passed for ${normalizedAddress} (development mode)`);
         return true;
       }
       
-      // Try to get account info to verify if address exists
+      // For production, try to get account info to verify if address exists
       try {
         await axios.get(`${this.nodeUrl}/accounts/${normalizedAddress}`, {
           timeout: 5000
@@ -273,6 +273,7 @@ class AptosService {
       } catch (error) {
         // If we get a 404, the address format is valid but the account doesn't exist yet
         if (error.response?.status === 404) {
+          logger.info(`Address format valid but account not initialized: ${normalizedAddress}`);
           return true; // Valid format, just not initialized
         }
         // For other errors, we'll assume the address is invalid

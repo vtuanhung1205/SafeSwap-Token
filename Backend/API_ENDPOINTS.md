@@ -14,30 +14,10 @@
 
 | Method | Endpoint | Description | Auth Required |
 |--------|----------|-------------|---------------|
-| `POST` | `/api/auth/register` | Register new user | ❌ |
-| `POST` | `/api/auth/login` | Login with email/password | ❌ |
 | `POST` | `/api/auth/google` | Google OAuth login | ❌ |
-| `POST` | `/api/auth/refresh` | Refresh access token | ❌ |
 | `GET` | `/api/auth/profile` | Get user profile | ✅ |
 | `PUT` | `/api/auth/profile` | Update user profile | ✅ |
 | `POST` | `/api/auth/logout` | Logout user | ✅ |
-| `GET` | `/api/auth/validate` | Validate access token | ✅ |
-| `POST` | `/api/auth/forgot-password` | Request password reset | ❌ |
-| `POST` | `/api/auth/reset-password` | Reset password with token | ❌ |
-
-### 📊 Transaction Management (`/api/transactions`)
-
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| `GET` | `/api/transactions` | Get user transactions | ✅ |
-| `GET` | `/api/transactions/{hash}` | Get transaction by hash | ✅ |
-| `POST` | `/api/transactions` | Create new transaction | ✅ |
-| `PUT` | `/api/transactions/{hash}` | Update transaction | ✅ |
-| `GET` | `/api/transactions/stats/summary` | Get transaction statistics | ✅ |
-| `GET` | `/api/transactions/analytics/overview` | Get transaction analytics | ✅ |
-| `GET` | `/api/transactions/export/csv` | Export transactions to CSV | ✅ |
-| `POST` | `/api/transactions/monitor/{address}` | Start monitoring address | ✅ |
-| `DELETE` | `/api/transactions/monitor/{address}` | Stop monitoring address | ✅ |
 
 ### 💰 Wallet Management (`/api/wallet`)
 
@@ -48,19 +28,12 @@
 | `GET` | `/api/wallet/info` | Get wallet information | ✅ |
 | `GET` | `/api/wallet/balance` | Get wallet balance | ✅ |
 | `GET` | `/api/wallet/transactions` | Get transaction history | ✅ |
-| `POST` | `/api/wallet/generate` | Generate new wallet | ✅ |
-| `POST` | `/api/wallet/import` | Import wallet with private key | ✅ |
-| `GET` | `/api/wallet/info/{address}` | Get wallet info by address | ✅ |
-| `GET` | `/api/wallet/balance/{address}` | Get balance by address | ✅ |
-| `GET` | `/api/wallet/tokens/{address}` | Get tokens by address | ✅ |
-| `POST` | `/api/wallet/check-connection` | Check wallet connection | ✅ |
-| `POST` | `/api/wallet/validate-transaction` | Validate transaction | ✅ |
-| `POST` | `/api/wallet/estimate-fee` | Estimate transaction fee | ✅ |
-| `POST` | `/api/wallet/transfer` | Execute transfer | ✅ |
-| `GET` | `/api/wallet/history/{address}` | Get transaction history | ✅ |
-| `POST` | `/api/wallet/qr-code` | Generate wallet QR code | ✅ |
-| `POST` | `/api/wallet/parse-qr` | Parse wallet QR code | ✅ |
-| `POST` | `/api/wallet/validate-address` | Validate wallet address | ✅ |
+
+### 📊 Transaction Management (`/api/transactions`)
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| `GET` | `/api/transactions` | Get user transactions | ✅ |
 
 ### 💱 Token Swapping (`/api/swap`)
 
