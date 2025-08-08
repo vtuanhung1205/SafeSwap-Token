@@ -181,7 +181,7 @@ class AuthController {
 
       res.json({
         success: true,
-        data: { user: user.toJSON() },
+        data: user.toJSON(),
       });
     } catch (error) {
       next(error);
@@ -211,7 +211,7 @@ class AuthController {
       res.json({
         success: true,
         message: 'Profile updated successfully',
-        data: { user: user.toJSON() },
+        data: user.toJSON(),
       });
     } catch (error) {
       next(error);
