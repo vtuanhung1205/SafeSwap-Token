@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import { AptosClient } from 'aptos';
 import { Wallet, ArrowUpDown, RefreshCw, AlertTriangle, CheckCircle, Loader2 } from 'lucide-react';
 import WalletConnect from '../WalletConnect';
-import TransactionHistory from '../TransactionHistory';
+
 import TokenList from '../TokenList';
 
 import SwapForm from '../SwapForm';
@@ -398,7 +398,7 @@ const Dashboard = () => {
       {activeTab === 'history' && (
         <div className="bg-[#18181c] border border-[#23232a] rounded-2xl p-6">
           <h2 className="text-2xl font-bold mb-6">Transaction History</h2>
-          <TransactionHistory />
+          <p className="text-gray-400">Transaction history component temporarily unavailable.</p>
         </div>
       )}
 
@@ -412,7 +412,7 @@ const Dashboard = () => {
       {activeTab === 'favorites' && (
         <div className="bg-[#18181c] border border-[#23232a] rounded-2xl p-6">
           <h2 className="text-2xl font-bold mb-6">Favorite Tokens</h2>
-          <FavoriteTokens />
+          <p className="text-gray-400">Favorite tokens component temporarily unavailable.</p>
         </div>
       )}
     </div>

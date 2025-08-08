@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import { useGoogleLogin } from '@react-oauth/google';
 
-import { createAptosConnectUrl } from '../../config/aptos';
+
 
 const LoginModal = ({ isOpen, onClose }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -127,9 +127,8 @@ const LoginModal = ({ isOpen, onClose }) => {
           {/* Aptos Connect Login Button */}
           <button
             onClick={() => {
-              // Go directly to Aptos Connect instead of opening another modal
-              const connectUrl = createAptosConnectUrl();
-              window.location.href = connectUrl;
+              // Traditional Wallet Adapters handle this automatically
+              toast.info("Please use the Connect Wallet button in the navbar");
             }}
             className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl py-3 px-4 font-semibold flex items-center justify-center gap-3 hover:from-purple-700 hover:to-blue-700 transition-all"
           >

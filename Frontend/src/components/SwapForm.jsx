@@ -16,7 +16,7 @@ import WalletConnect from "./WalletConnect";
 import { AptosClient } from "aptos";
 import axios from "axios";
 import { SDK } from "@pontem/liquidswap-sdk";
-import { APTOS_CONFIG, validateAptosConfig } from "../config/aptos";
+import { APTOS_CONFIG } from "../config/aptos";
 
 // --- Custom Hooks and tokens array (Unchanged) ---
 const useDebounce = (value, delay) => {

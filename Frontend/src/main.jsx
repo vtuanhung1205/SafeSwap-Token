@@ -7,7 +7,7 @@ import { BrowserRouter as Router } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { AptosWalletAdapterProvider } from "@aptos-labs/wallet-adapter-react";
-import { PetraWallet } from "petra-plugin-wallet-adapter";
+
 import { MartianWallet } from "@martianwallet/aptos-wallet-adapter";
 import { PontemWallet } from "@pontem/aptos-wallet-adapter";
 import { RiseWallet } from "@rise-wallet/wallet-adapter";
@@ -32,7 +32,6 @@ UNSAFE_LocationContext.displayName = "Location";
 UNSAFE_RouteContext.displayName = "Route";
 
 const wallets = [
-  new PetraWallet(),
   new MartianWallet(),
   new PontemWallet(),
   new RiseWallet(),
@@ -41,7 +40,7 @@ const wallets = [
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+    <GoogleOAuthProvider clientId="68865718442-0na32flmllvguiilt67os6p6rvgl0eqi.apps.googleusercontent.com">
       <AptosWalletAdapterProvider plugins={wallets} autoConnect={true}>
         <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <AuthProvider>
