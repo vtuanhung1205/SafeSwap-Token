@@ -11,6 +11,8 @@ class WalletController {
   async connectWallet(req, res, next) {
     try {
       console.log("Received wallet connect request:", req.body); // Log the request body
+      console.log("Request headers:", req.headers); // Log headers
+      console.log("User from request:", req.user); // Log user info
       let { address, publicKey, signature } = req.body;
       
       // Get userId from authenticated user - guest users are no longer allowed
@@ -42,12 +44,16 @@ class WalletController {
 
       // Validation
       if (!address || !publicKey) {
+        console.log("Validation failed - missing data:", { address: !!address, publicKey: !!publicKey });
         throw createError(400, 'Wallet address and public key are required');
       }
 
+      console.log("About to validate address:", address);
       // Validate address format
       const isValidAddress = await aptosService.validateAddress(address);
+      console.log("Address validation result:", isValidAddress);
       if (!isValidAddress) {
+        console.log("Address validation failed for:", address);
         throw createError(400, 'Invalid wallet address format');
       }
 
