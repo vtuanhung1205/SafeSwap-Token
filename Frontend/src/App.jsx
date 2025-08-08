@@ -10,7 +10,6 @@ import Navbar from "./components/Navbar/Navbar";
 import Footer from "./components/Footer";
 import SwapForm from "./components/SwapForm";
 import Dashboard from "./components/Dashboard/Dashboard";
-import DemoBadge from "./components/DemoBadge";
 import OurStory from "./components/pages/OurStory";
 import Feature from "./components/Feature";
 import About from "../src/components/pages/About";
@@ -22,8 +21,6 @@ import ContactUs from "./components/pages/ContactUs";
 import TermsOfUse from "./components/pages/TermsOfUse";
 import PagePrivacy from "./components/pages/PagePrivacy";
 import NotFoundPage from "./components/NotFoundPage/NotFoundPage";
-import WalletAdapterDemo from "./components/WalletAdapterDemo";
-import AptosKeylessAuthDemo from "./components/pages/AptosKeylessAuthDemo";
 import "./index.css";
 
 // Icons
@@ -36,7 +33,6 @@ import Wallet from "./components/pages/Wallet";
 import Settings from "./components/pages/Settings";
 import Pricing from "./components/pages/Pricing";
 import Payment from "./components/pages/Payment";
-import DemoPage from "./components/DemoPage";
 import AptosConnectCallback from "./components/pages/AptosConnectCallback";
 
 // --- Custom Hook to Track Mouse Position ---
@@ -88,10 +84,7 @@ function App() {
           <Route path="/settings" element={<Settings />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/payment" element={<Payment />} />
-          <Route path="/demo" element={<DemoPage />} />
           <Route path="/aptos-connect-callback" element={<AptosConnectCallback />} />
-          <Route path="/wallet-adapter-demo" element={<WalletAdapterDemo />} />
-          <Route path="/keyless-auth-demo" element={<AptosKeylessAuthDemo />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
@@ -110,9 +103,6 @@ function App() {
 
       {/* Chatbot Avatar */}
       <ChatbotAvatar />
-
-      {/* Demo Badge */}
-      <DemoBadge />
     </div>
   );
 }

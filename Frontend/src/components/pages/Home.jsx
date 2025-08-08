@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Shield, Zap, Users, TrendingUp } from "lucide-react";
 import SwapForm from "../SwapForm";
 import Feature from "../Feature";
-import DemoBadge from "../DemoBadge";
+
 
 const Home = () => {
   return (
@@ -13,7 +13,7 @@ const Home = () => {
         <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-purple-500/10 to-pink-500/10"></div>
         <div className="relative container mx-auto px-4 py-20">
           <div className="text-center">
-            <DemoBadge />
+
             <h1 className="text-5xl md:text-7xl font-bold text-white mb-6">
               SafeSwap
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400">
@@ -38,12 +38,7 @@ const Home = () => {
               >
                 Go to Dashboard
               </Link>
-              <Link
-                to="/demo"
-                className="inline-flex items-center px-8 py-4 border-2 border-gray-600 text-gray-300 font-semibold rounded-xl hover:border-cyan-500 hover:text-cyan-400 transition-all duration-300"
-              >
-                View Demo
-              </Link>
+
             </div>
           </div>
         </div>

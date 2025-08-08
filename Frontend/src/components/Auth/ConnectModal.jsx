@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { X, Wallet, Mail, Lock } from 'lucide-react';
 import { useGoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../../contexts/AuthContext';
-import AptosConnectSimple from './AptosConnectSimple';
+
 import { createAptosConnectUrl } from '../../config/aptos';
 
 const ConnectModal = ({ isOpen, onClose, onSuccess }) => {
@@ -147,40 +147,7 @@ const ConnectModal = ({ isOpen, onClose, onSuccess }) => {
         </div>
       </div>
 
-      {/* Aptos Connect Simple Modal */}
-      {showAptosConnect && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          {/* Backdrop */}
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
-            onClick={() => setShowAptosConnect(false)}
-          />
-          
-          {/* Modal */}
-          <div className="flex min-h-full items-center justify-center p-4">
-            <div className="relative w-full max-w-md transform overflow-hidden rounded-lg bg-white p-6 shadow-xl transition-all">
-              {/* Header */}
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">
-                  Connect Aptos Wallet
-                </h2>
-                <button
-                  onClick={() => setShowAptosConnect(false)}
-                  className="rounded-full p-1 hover:bg-gray-100 transition-colors"
-                >
-                  <X className="w-5 h-5 text-gray-500" />
-                </button>
-              </div>
 
-              {/* Content */}
-              <AptosConnectSimple 
-                onSuccess={handleAptosConnectSuccess}
-                onClose={() => setShowAptosConnect(false)}
-              />
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 };

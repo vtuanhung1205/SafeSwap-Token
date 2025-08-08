@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { authAPI } from '../utils/api';
 import { Loader2, LogOut, PlusCircle, Wallet as WalletIcon } from 'lucide-react';
 import { useGoogleLogin } from '@react-oauth/google';
-import DemoBadge from './DemoBadge';
+
 import { APTOS_CONFIG, validateAptosConfig } from '../config/aptos';
 // Removed wallet adapter - using Aptos SDK instead
 import ConnectModal from './Auth/ConnectModal';
@@ -209,7 +209,7 @@ const WalletConnect = ({ onWalletConnected }) => {
                                 <span className="text-white font-mono text-sm">
                                     {formatAddress(connectedWallet.address)}
                                 </span>
-                                <DemoBadge isDemoMode={walletBalance === '0.0000 (Demo Mode)'} />
+                
                             </div>
                             {walletBalance !== null && (
                                 <div className="text-gray-400 text-xs">
