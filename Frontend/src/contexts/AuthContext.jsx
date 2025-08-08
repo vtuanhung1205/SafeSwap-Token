@@ -264,6 +264,7 @@ export const AuthProvider = ({ children }) => {
         toast.success('Wallet disconnected successfully');
         return { success: true };
       }
+
     } catch (error) {
       const errorMessage = handleApiError(error);
       toast.error(errorMessage);
