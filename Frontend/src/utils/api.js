@@ -115,6 +115,7 @@ export const authAPI = {
 export const walletAPI = {
   // Connect wallet
   connect: (address, publicKey) => {
+    console.log("API: Connecting wallet with data:", { address, publicKey });
     return api.post('/wallet/connect', { address, publicKey });
   },
   

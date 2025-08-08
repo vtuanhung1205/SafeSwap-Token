@@ -77,8 +77,12 @@ const WalletConnect = ({ onWalletConnected }) => {
         }
       }
     };
-    syncWallet();
-  }, [connected, account?.address, account?.publicKey, isAuthenticated, isConnecting]);
+    
+    // Only sync if we have all required data and haven't already synced
+    if (connected && account?.address && account?.publicKey && isAuthenticated && !isConnecting) {
+      syncWallet();
+    }
+  }, [connected, account?.address, account?.publicKey, isAuthenticated]); // Removed isConnecting from dependencies
 
   const handleConnectClick = () => {
     if (!isAuthenticated) {
