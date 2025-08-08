@@ -89,32 +89,49 @@ class AuthController {
 
   async googleAuth(req, res, next) {
     try {
-      const { googleId, email, name, avatar } = req.body;
+      const { access_token, user: googleUser, googleId, email, name, picture } = req.body;
 
-      if (!googleId || !email) {
-        throw createError(400, 'Google ID and email are required');
+      // Validate required fields
+      if (!access_token) {
+        throw createError(400, 'Google access token is required');
       }
 
-      let user = await User.findOne({ $or: [{ googleId }, { email }] });
+      // Extract user info from Google user object or direct fields
+      const userEmail = email || googleUser?.email;
+      const userName = name || googleUser?.name;
+      const userPicture = picture || googleUser?.picture;
+      const userGoogleId = googleId || googleUser?.sub;
+
+      if (!userEmail) {
+        throw createError(400, 'Email is required from Google OAuth');
+      }
+
+      // Find existing user by Google ID or email
+      let user = await User.findOne({ 
+        $or: [
+          { googleId: userGoogleId }, 
+          { email: userEmail }
+        ] 
+      });
 
       if (!user) {
         // Create new user from Google
         user = new User({
-          googleId,
-          email,
-          name,
-          avatar,
+          googleId: userGoogleId,
+          email: userEmail,
+          name: userName,
+          avatar: userPicture,
           isVerified: true,
         });
         await user.save();
-        logger.info(`New Google user created: ${email}`);
+        logger.info(`New Google user created: ${userEmail}`);
       } else if (!user.googleId) {
         // Link existing user with Google
-        user.googleId = googleId;
-        user.avatar = avatar || user.avatar;
+        user.googleId = userGoogleId;
+        user.avatar = userPicture || user.avatar;
         user.isVerified = true;
         await user.save();
-        logger.info(`Google linked to existing user: ${email}`);
+        logger.info(`Google linked to existing user: ${userEmail}`);
       }
 
       // Generate tokens

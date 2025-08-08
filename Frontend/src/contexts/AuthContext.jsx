@@ -164,14 +164,41 @@ export const AuthProvider = ({ children }) => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       
+      console.log('Sending Google data to backend:', googleData);
+      
       const response = await authAPI.googleAuth(googleData);
+      console.log('Backend response:', response.data);
       
       if (response.data.success) {
         const { user, tokens } = response.data.data;
         
-        // Store tokens
-        localStorage.setItem('accessToken', tokens.accessToken);
-        localStorage.setItem('refreshToken', tokens.refreshToken);
+        // Handle different token structures
+        if (tokens) {
+          if (tokens.accessToken) {
+            localStorage.setItem('accessToken', tokens.accessToken);
+          } else if (tokens.access_token) {
+            localStorage.setItem('accessToken', tokens.access_token);
+          }
+          
+          if (tokens.refreshToken) {
+            localStorage.setItem('refreshToken', tokens.refreshToken);
+          } else if (tokens.refresh_token) {
+            localStorage.setItem('refreshToken', tokens.refresh_token);
+          }
+        } else {
+          // If tokens are directly in the response
+          if (response.data.data.accessToken) {
+            localStorage.setItem('accessToken', response.data.data.accessToken);
+          } else if (response.data.data.access_token) {
+            localStorage.setItem('accessToken', response.data.data.access_token);
+          }
+          
+          if (response.data.data.refreshToken) {
+            localStorage.setItem('refreshToken', response.data.data.refreshToken);
+          } else if (response.data.data.refresh_token) {
+            localStorage.setItem('refreshToken', response.data.data.refresh_token);
+          }
+        }
         
         dispatch({ type: 'SET_USER', payload: user });
         toast.success('Google login successful!');
@@ -180,12 +207,17 @@ export const AuthProvider = ({ children }) => {
         await checkWalletStatus();
         
         return { success: true, user };
+      } else {
+        throw new Error(response.data.message || 'Google login failed');
       }
     } catch (error) {
+      console.error('Google login error:', error);
       const errorMessage = handleApiError(error);
       dispatch({ type: 'SET_ERROR', payload: errorMessage });
       toast.error(errorMessage);
       return { success: false, error: errorMessage };
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false });
     }
   };
 
