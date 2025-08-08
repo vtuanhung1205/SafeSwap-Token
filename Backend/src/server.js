@@ -201,8 +201,15 @@ process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 const startServer = async () => {
   try {
     // Connect to database
-    await connectDatabase();
-    logger.info('Database connected successfully');
+    const dbConnected = await connectDatabase();
+    if (dbConnected) {
+      logger.info('Database connected successfully');
+    } else if (process.env.NODE_ENV === 'production') {
+      logger.error('Database connection required in production mode');
+      process.exit(1);
+    } else {
+      logger.warn('Running without database connection in development mode');
+    }
 
     // Initialize price feed service AFTER database connection
     const priceFeedService = new PriceFeedService();
@@ -218,6 +225,9 @@ const startServer = async () => {
       logger.info(`SafeSwap Backend API server running on port ${PORT}`);
       logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
       logger.info(`Health check: http://localhost:${PORT}/health`);
+      if (!dbConnected && process.env.NODE_ENV !== 'production') {
+        logger.warn('⚠️  Running in development mode without database. Some features may not work.');
+      }
     });
 
   } catch (error) {

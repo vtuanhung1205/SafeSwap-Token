@@ -28,7 +28,7 @@ import {
   Bot,
 } from "lucide-react";
 // Import pages
-
+import Home from "./components/pages/Home";
 import Wallet from "./components/pages/Wallet";
 import Settings from "./components/pages/Settings";
 import Pricing from "./components/pages/Pricing";
@@ -66,7 +66,7 @@ function App() {
         <Routes>
           <Route
             path="/"
-            element={<SwapForm />}
+            element={<Home />}
           />
           <Route path="/swap" element={<SwapPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />

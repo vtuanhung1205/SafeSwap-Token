@@ -22,12 +22,17 @@ const LoginModal = ({ isOpen, onClose }) => {
         }).then(res => res.json());
 
         const googleData = {
-          idToken: response.access_token, // For now, using access token as ID token
-          accessToken: response.access_token,
+          access_token: response.access_token,
+          user: {
+            sub: userInfo.sub,
+            email: userInfo.email,
+            name: userInfo.name,
+            picture: userInfo.picture
+          },
           googleId: userInfo.sub,
           email: userInfo.email,
           name: userInfo.name,
-          avatar: userInfo.picture
+          picture: userInfo.picture
         };
         
         console.log('Sending Google data to backend:', googleData);
