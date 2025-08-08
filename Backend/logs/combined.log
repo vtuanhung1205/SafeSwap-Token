@@ -83,3 +83,17 @@
 {"code":"ENOTFOUND","hostname":"_mongodb._tcp.safeswap.6pk7wds.mongodb.net","level":"error","message":"Database connection failed: querySrv ENOTFOUND _mongodb._tcp.safeswap.6pk7wds.mongodb.net","service":"safeswap-backend","stack":"Error: querySrv ENOTFOUND _mongodb._tcp.safeswap.6pk7wds.mongodb.net\n    at QueryReqWrap.onresolve [as oncomplete] (node:internal/dns/promises:294:17)","syscall":"querySrv","timestamp":"2025-08-07 03:26:02"}
 {"code":"ENOTFOUND","hostname":"_mongodb._tcp.safeswap.6pk7wds.mongodb.net","level":"error","message":"Database connection failed: querySrv ENOTFOUND _mongodb._tcp.safeswap.6pk7wds.mongodb.net","service":"safeswap-backend","stack":"Error: querySrv ENOTFOUND _mongodb._tcp.safeswap.6pk7wds.mongodb.net\n    at QueryReqWrap.onresolve [as oncomplete] (node:internal/dns/promises:294:17)","syscall":"querySrv","timestamp":"2025-08-07 03:32:33"}
 {"code":"ENOTFOUND","hostname":"_mongodb._tcp.safeswap.6pk7wds.mongodb.net","level":"error","message":"Database connection failed: querySrv ENOTFOUND _mongodb._tcp.safeswap.6pk7wds.mongodb.net","service":"safeswap-backend","stack":"Error: querySrv ENOTFOUND _mongodb._tcp.safeswap.6pk7wds.mongodb.net\n    at QueryReqWrap.onresolve [as oncomplete] (node:internal/dns/promises:294:17)","syscall":"querySrv","timestamp":"2025-08-07 03:43:15"}
+{"level":"info","message":"MongoDB Connected: ac-hri7ju9-shard-00-01.kjc9fo6.mongodb.net","service":"safeswap-backend","timestamp":"2025-08-08 17:06:09"}
+{"level":"info","message":"Database connected successfully","service":"safeswap-backend","timestamp":"2025-08-08 17:06:09"}
+{"level":"info","message":"Connected to Aptos mainnet: Ledger version 3197246375","service":"safeswap-backend","timestamp":"2025-08-08 17:06:10"}
+{"level":"info","message":"Chain ID: 1","service":"safeswap-backend","timestamp":"2025-08-08 17:06:10"}
+{"level":"info","message":"Aptos service initialized","service":"safeswap-backend","timestamp":"2025-08-08 17:06:10"}
+{"level":"info","message":"Starting transaction monitoring...","service":"safeswap-backend","timestamp":"2025-08-08 17:06:10"}
+{"level":"info","message":"Transaction monitoring started","service":"safeswap-backend","timestamp":"2025-08-08 17:06:10"}
+{"level":"info","message":"Transaction monitoring started","service":"safeswap-backend","timestamp":"2025-08-08 17:06:10"}
+{"level":"info","message":"Server running on port 3001","service":"safeswap-backend","timestamp":"2025-08-08 17:06:10"}
+{"level":"info","message":"Environment: development","service":"safeswap-backend","timestamp":"2025-08-08 17:06:10"}
+{"level":"info","message":"MongoDB Connected: ac-hri7ju9-shard-00-01.kjc9fo6.mongodb.net","service":"safeswap-backend","timestamp":"2025-08-08 17:25:15"}
+{"level":"info","message":"Database connected successfully","service":"safeswap-backend","timestamp":"2025-08-08 17:25:15"}
+{"level":"info","message":"Connected to Aptos mainnet: Ledger version 3197333937","service":"safeswap-backend","timestamp":"2025-08-08 17:25:15"}
+{"level":"info","message":"Chain ID: 1","service":"safeswap-backend","timestamp":"2025-08-08 17:25:15"}

@@ -8,7 +8,6 @@ import { createAptosConnectUrl } from '../../config/aptos';
 
 const LoginModal = ({ isOpen, onClose }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showAptosConnect, setShowAptosConnect] = useState(false);
   const { googleLogin } = useAuth();
 
   const googleLoginHook = useGoogleLogin({
@@ -53,11 +52,7 @@ const LoginModal = ({ isOpen, onClose }) => {
     googleLoginHook();
   };
 
-  const handleAptosConnectSuccess = (walletData) => {
-    console.log('Aptos Connect wallet connected:', walletData);
-    toast.success(`Connected with ${walletData.provider}: ${walletData.address}`);
-    // You can add additional logic here to handle wallet connection
-  };
+
 
   if (!isOpen) return null;
 
@@ -165,12 +160,7 @@ const LoginModal = ({ isOpen, onClose }) => {
         </div>
       </div>
 
-      {/* Connect Modal */}
-      <ConnectModal
-        isOpen={showAptosConnect}
-        onClose={() => setShowAptosConnect(false)}
-        onSuccess={handleAptosConnectSuccess}
-      />
+
     </div>
   );
 };
