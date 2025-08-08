@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
 import authService from '../services/authService';
 import { walletAPI, handleApiError } from '../utils/api';
 import toast from 'react-hot-toast';
@@ -216,7 +216,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Connect Wallet
-  const connectWallet = async (walletData) => {
+  const connectWallet = useCallback(async (walletData) => {
     try {
       if (!state.isAuthenticated) {
         toast.error('Please login before connecting your wallet');
@@ -235,10 +235,10 @@ export const AuthProvider = ({ children }) => {
       toast.error(errorMessage);
       return { success: false, error: errorMessage };
     }
-  };
+  }, [state.isAuthenticated]);
 
   // Check Wallet Status
-  const checkWalletStatus = async () => {
+  const checkWalletStatus = useCallback(async () => {
     try {
       if (!state.isAuthenticated) return;
       
@@ -250,10 +250,10 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Wallet status check failed:', error);
     }
-  };
+  }, [state.isAuthenticated]);
 
   // Disconnect Wallet
-  const disconnectWallet = async () => {
+  const disconnectWallet = useCallback(async () => {
     try {
       if (!state.isWalletConnected) return { success: true };
       
@@ -270,7 +270,7 @@ export const AuthProvider = ({ children }) => {
       toast.error(errorMessage);
       return { success: false, error: errorMessage };
     }
-  };
+  }, [state.isWalletConnected]);
 
   // Logout
   const logout = async () => {

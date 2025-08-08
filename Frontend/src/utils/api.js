@@ -15,7 +15,7 @@ const api = axios.create({
 // Request interceptor - Add JWT token to headers
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem('token'); // Changed from 'authToken' to 'token'
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -39,7 +39,7 @@ api.interceptors.response.use(
   async (error) => {
     // Handle JWT token expiration
     if (error.response?.status === 401) {
-      localStorage.removeItem('authToken');
+      localStorage.removeItem('token'); // Changed from 'authToken' to 'token'
       localStorage.removeItem('user');
       window.location.href = '/login';
     }
@@ -92,7 +92,7 @@ export const authAPI = {
   
   // Connect wallet
   connectWallet: (walletAddress, walletType) => 
-    api.post('/auth   /connect-wallet', { walletAddress, walletType }),
+    api.post('/auth/connect-wallet', { walletAddress, walletType }),
   
   // Disconnect wallet
   disconnectWallet: () => 
