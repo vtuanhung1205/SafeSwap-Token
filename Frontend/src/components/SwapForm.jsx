@@ -122,8 +122,7 @@ const SwapForm = () => {
     if (!isAuthenticated) return;
     setIsLoadingBalances(true);
     try {
-      // Validate config trước khi sử dụng
-      validateAptosConfig();
+      // Removed validateAptosConfig() call as it's no longer defined
       
       const client = new AptosClient(APTOS_CONFIG.NODE_URL);
       // Fetch APT balance
@@ -227,8 +226,7 @@ const SwapForm = () => {
     try {
       setIsLoading(true);
       
-      // Validate config trước khi sử dụng
-      validateAptosConfig();
+      // Removed validateAptosConfig() call as it's no longer defined
       
       // Initialize Liquidswap SDK với config đúng
       const sdk = new SDK({ 

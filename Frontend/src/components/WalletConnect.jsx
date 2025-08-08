@@ -78,7 +78,7 @@ const WalletConnect = ({ onWalletConnected }) => {
       }
     };
     syncWallet();
-  }, [connected, account?.address, account?.publicKey, isAuthenticated, isConnecting]); // Removed connectWallet and other functions from dependencies
+  }, [connected, account?.address, account?.publicKey, isAuthenticated, isConnecting]);
 
   const handleConnectClick = () => {
     if (!isAuthenticated) {
