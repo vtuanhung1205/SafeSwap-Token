@@ -236,4 +236,259 @@ router.post('/fund', verifyToken, standardRateLimiter, asyncHandler(walletContro
  */
 router.get('/account', verifyToken, asyncHandler(walletController.getAccountInfo.bind(walletController)));
 
+/**
+ * @swagger
+ * /api/wallet/supported:
+ *   get:
+ *     summary: Get supported wallet types
+ *     tags: [Wallet]
+ *     responses:
+ *       200:
+ *         description: Supported wallets retrieved successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       name:
+ *                         type: string
+ *                         example: Petra
+ *                       description:
+ *                         type: string
+ *                         example: Official Aptos wallet
+ *                       icon:
+ *                         type: string
+ *                         example: https://example.com/petra-icon.png
+ */
+router.get('/supported', asyncHandler(walletController.getSupportedWallets.bind(walletController)));
+
+/**
+ * @swagger
+ * /api/wallet/qr-code:
+ *   post:
+ *     summary: Generate wallet QR code
+ *     tags: [Wallet]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - address
+ *             properties:
+ *               address:
+ *                 type: string
+ *                 description: Wallet address
+ *                 example: 0x1234567890abcdef1234567890abcdef12345678
+ *     responses:
+ *       200:
+ *         description: QR code generated successfully.
+ *       400:
+ *         description: Invalid address.
+ *       401:
+ *         description: Unauthorized, token is missing or invalid.
+ */
+router.post('/qr-code', verifyToken, asyncHandler(walletController.generateQRCode.bind(walletController)));
+
+/**
+ * @swagger
+ * /api/wallet/parse-qr:
+ *   post:
+ *     summary: Parse wallet QR code
+ *     tags: [Wallet]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - qrData
+ *             properties:
+ *               qrData:
+ *                 type: string
+ *                 description: QR code data
+ *                 example: aptos://0x1234567890abcdef1234567890abcdef12345678
+ *     responses:
+ *       200:
+ *         description: QR code parsed successfully.
+ *       400:
+ *         description: Invalid QR code data.
+ */
+router.post('/parse-qr', asyncHandler(walletController.parseQRCode.bind(walletController)));
+
+/**
+ * @swagger
+ * /api/wallet/check-connection:
+ *   post:
+ *     summary: Check wallet connection status
+ *     tags: [Wallet]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - address
+ *             properties:
+ *               address:
+ *                 type: string
+ *                 description: Wallet address to check
+ *                 example: 0x1234567890abcdef1234567890abcdef12345678
+ *     responses:
+ *       200:
+ *         description: Connection status checked successfully.
+ *       401:
+ *         description: Unauthorized, token is missing or invalid.
+ */
+router.post('/check-connection', verifyToken, asyncHandler(walletController.checkConnection.bind(walletController)));
+
+/**
+ * @swagger
+ * /api/wallet/validate-transaction:
+ *   post:
+ *     summary: Validate transaction parameters
+ *     tags: [Wallet]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - senderAddress
+ *               - toAddress
+ *               - amount
+ *               - tokenAddress
+ *             properties:
+ *               senderAddress:
+ *                 type: string
+ *                 description: Sender wallet address
+ *               toAddress:
+ *                 type: string
+ *                 description: Recipient wallet address
+ *               amount:
+ *                 type: number
+ *                 description: Transaction amount
+ *               tokenAddress:
+ *                 type: string
+ *                 description: Token contract address
+ *     responses:
+ *       200:
+ *         description: Transaction validation result.
+ *       400:
+ *         description: Invalid transaction parameters.
+ *       401:
+ *         description: Unauthorized, token is missing or invalid.
+ */
+router.post('/validate-transaction', verifyToken, asyncHandler(walletController.validateTransaction.bind(walletController)));
+
+/**
+ * @swagger
+ * /api/wallet/estimate-fee:
+ *   post:
+ *     summary: Estimate transaction fee
+ *     tags: [Wallet]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - senderAddress
+ *               - toAddress
+ *               - amount
+ *               - tokenAddress
+ *               - tokenName
+ *             properties:
+ *               senderAddress:
+ *                 type: string
+ *                 description: Sender wallet address
+ *               toAddress:
+ *                 type: string
+ *                 description: Recipient wallet address
+ *               amount:
+ *                 type: number
+ *                 description: Transaction amount
+ *               tokenAddress:
+ *                 type: string
+ *                 description: Token contract address
+ *               tokenName:
+ *                 type: string
+ *                 description: Token name
+ *     responses:
+ *       200:
+ *         description: Fee estimation result.
+ *       400:
+ *         description: Invalid parameters.
+ *       401:
+ *         description: Unauthorized, token is missing or invalid.
+ */
+router.post('/estimate-fee', verifyToken, asyncHandler(walletController.estimateFee.bind(walletController)));
+
+/**
+ * @swagger
+ * /api/wallet/transfer:
+ *   post:
+ *     summary: Execute token transfer
+ *     tags: [Wallet]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - privateKey
+ *               - toAddress
+ *               - amount
+ *               - tokenAddress
+ *               - tokenName
+ *             properties:
+ *               privateKey:
+ *                 type: string
+ *                 description: Sender's private key
+ *               toAddress:
+ *                 type: string
+ *                 description: Recipient wallet address
+ *               amount:
+ *                 type: number
+ *                 description: Transaction amount
+ *               tokenAddress:
+ *                 type: string
+ *                 description: Token contract address
+ *               tokenName:
+ *                 type: string
+ *                 description: Token name
+ *     responses:
+ *       200:
+ *         description: Transfer executed successfully.
+ *       400:
+ *         description: Invalid parameters or insufficient balance.
+ *       401:
+ *         description: Unauthorized, token is missing or invalid.
+ */
+router.post('/transfer', verifyToken, asyncHandler(walletController.transfer.bind(walletController)));
+
 module.exports = router;
