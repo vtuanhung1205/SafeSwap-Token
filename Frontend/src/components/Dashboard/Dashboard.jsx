@@ -74,7 +74,7 @@ const Dashboard = () => {
   const [tokenBalances, setTokenBalances] = useState({});
   const [loading, setLoading] = useState(true);
   const [loadingBalances, setLoadingBalances] = useState(false);
-  const [error, setError] = useState(null);
+  const [dataErrors, setDataErrors] = useState({}); // Track errors for each data type
   const [activeTab, setActiveTab] = useState('overview');
 
   // Token metadata for UI display
@@ -101,7 +101,7 @@ const Dashboard = () => {
     },
     USDT: {
       name: "Tether",
-      icon: "https://public.bnbstatic.com/static/academy/uploads-original/2fd4345d8c3a46278941afd9ab7ad225.png",
+      icon: "https://s2.coinmarketcap.com/static/img/coins/200x200/825.png",
       decimals: 6
     }
   };
@@ -117,49 +117,64 @@ const Dashboard = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      setError(null);
+      setDataErrors({}); // Reset errors
       
-      // Use Promise.all to fetch data in parallel
-      const [historyResponse, statsResponse] = await Promise.all([
-        userAPI.getSwapHistory(),
-        userAPI.getUserStats()
-      ]);
+      // Fetch data with individual error handling
+      const promises = [
+        fetchSwapHistory(),
+        fetchUserStats(),
+        fetchWalletBalances()
+      ];
 
-      if (historyResponse.data.success) {
-        setSwapHistory(historyResponse.data.data?.swaps || []);
+      await Promise.allSettled(promises);
+    } catch (err) {
+      console.error('Error in dashboard data fetch:', err);
+      // Don't set global error, let individual sections handle their own errors
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchSwapHistory = async () => {
+    try {
+      const response = await userAPI.getSwapHistory();
+      if (response.data.success) {
+        setSwapHistory(response.data.data?.swaps || []);
       } else {
-        toast.error('Failed to load swap history');
+        setDataErrors(prev => ({ ...prev, swapHistory: 'Failed to load swap history' }));
       }
+    } catch (err) {
+      console.error('Error fetching swap history:', err);
+      setDataErrors(prev => ({ ...prev, swapHistory: 'No swap history available' }));
+    }
+  };
 
-      if (statsResponse.data.success) {
-        setStats(statsResponse.data.data || { 
+  const fetchUserStats = async () => {
+    try {
+      const response = await userAPI.getUserStats();
+      if (response.data.success) {
+        setStats(response.data.data || { 
           totalSwaps: 0, 
           totalVolume: 0, 
           successRate: 0, 
           avgAmount: 0 
         });
       } else {
-        toast.error('Failed to load swap statistics');
-      }
-
-      // Fetch wallet balances if authenticated
-      if (isAuthenticated) {
-        fetchWalletBalances();
+        setDataErrors(prev => ({ ...prev, stats: 'Failed to load statistics' }));
       }
     } catch (err) {
-      console.error('Error fetching dashboard data:', err);
-      setError(handleApiError(err) || 'Failed to load dashboard data. Please try again later.');
-      toast.error('Failed to load dashboard data');
-    } finally {
-      setLoading(false);
+      console.error('Error fetching user stats:', err);
+      setDataErrors(prev => ({ ...prev, stats: 'Statistics unavailable' }));
     }
   };
 
   const fetchWalletBalances = async () => {
     if (!isAuthenticated) return;
+    
     try {
       setLoadingBalances(true);
       const client = new AptosClient("https://fullnode.mainnet.aptoslabs.com/v1");
+      
       // Fetch APT balance
       let aptBalance = 0;
       try {
@@ -169,9 +184,11 @@ const Dashboard = () => {
         });
         aptBalance = Number(resource.data.coin.value) / 1e8;
       } catch (e) {
+        console.log('No APT balance found or account not initialized');
         aptBalance = 0;
       }
-      // Fetch token balances (nâng cao: có thể fetch thêm các resource khác nếu muốn)
+      
+      // Set token balances
       setTokenBalances({
         APT: {
           symbol: "APT",
@@ -183,6 +200,7 @@ const Dashboard = () => {
       });
     } catch (err) {
       console.error('Error fetching wallet balances:', err);
+      setDataErrors(prev => ({ ...prev, balances: 'Unable to load wallet balances' }));
     } finally {
       setLoadingBalances(false);
     }
@@ -226,22 +244,14 @@ const Dashboard = () => {
     );
   }
 
-  if (loading && !loadingBalances) {
-    return <div className="flex items-center justify-center h-96 text-gray-400">Loading Dashboard...</div>;
-  }
-
-  if (error) {
+  // Show loading only for initial load, not for individual section refreshes
+  if (loading && !swapHistory.length && Object.keys(tokenBalances).length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-96 text-red-400 bg-red-500/10 rounded-lg p-8">
-        <div className="text-3xl mb-4">❌</div>
-        <h3 className="text-xl font-bold mb-2">Error Loading Dashboard</h3>
-        <p className="text-center mb-4">{error}</p>
-        <button 
-          onClick={fetchDashboardData}
-          className="px-4 py-2 bg-cyan-600 text-white font-semibold rounded-lg hover:bg-cyan-700 transition-colors"
-        >
-          Try Again
-        </button>
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <Loader2 className="animate-spin w-8 h-8 mx-auto mb-4 text-cyan-400" />
+          <p className="text-gray-400">Loading Dashboard...</p>
+        </div>
       </div>
     );
   }
@@ -322,11 +332,38 @@ const Dashboard = () => {
         <div className="space-y-8">
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-            <StatCard icon="🔄" title="Total Swaps" value={stats.totalSwaps} />
-            <StatCard icon="💰" title="Total Volume" value={formatCurrency(stats.totalVolume)} />
-            <StatCard icon="📊" title="Success Rate" value={`${stats.successRate?.toFixed(1) || 0}%`} />
-            <StatCard icon="📈" title="Avg. Amount" value={formatCurrency(stats.avgAmount || 0)} />
+            <StatCard 
+              icon="🔄" 
+              title="Total Swaps" 
+              value={dataErrors.stats ? 'N/A' : stats.totalSwaps} 
+            />
+            <StatCard 
+              icon="💰" 
+              title="Total Volume" 
+              value={dataErrors.stats ? 'N/A' : formatCurrency(stats.totalVolume)} 
+            />
+            <StatCard 
+              icon="📊" 
+              title="Success Rate" 
+              value={dataErrors.stats ? 'N/A' : `${stats.successRate?.toFixed(1) || 0}%`} 
+            />
+            <StatCard 
+              icon="📈" 
+              title="Avg. Amount" 
+              value={dataErrors.stats ? 'N/A' : formatCurrency(stats.avgAmount || 0)} 
+            />
           </div>
+
+          {/* Error notification for stats */}
+          {dataErrors.stats && (
+            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4 flex items-center gap-3">
+              <AlertTriangle className="text-yellow-400" size={20} />
+              <div>
+                <p className="text-yellow-400 font-medium">Statistics Unavailable</p>
+                <p className="text-yellow-400/70 text-sm">Some statistics could not be loaded. This doesn't affect your ability to use the dashboard.</p>
+              </div>
+            </div>
+          )}
 
           {/* Wallet Overview Section */}
           <div className="bg-[#18181c] border border-[#23232a] rounded-2xl">
@@ -360,13 +397,27 @@ const Dashboard = () => {
                 <p className="text-gray-400 mb-4">Connect your wallet to view your balances</p>
                 <WalletConnect />
               </div>
-            ) : Object.keys(tokenBalances).length === 0 ? (
+            ) : dataErrors.balances ? (
               <div className="text-center py-16">
                 <div className="inline-block p-4 rounded-full bg-yellow-500/10 mb-4">
                   <AlertTriangle size={40} className="text-yellow-400" />
                 </div>
+                <h3 className="text-xl font-semibold">Unable to Load Balances</h3>
+                <p className="text-gray-400 mb-4">There was an issue loading your wallet balances. You can still use other dashboard features.</p>
+                <button 
+                  onClick={fetchWalletBalances}
+                  className="px-4 py-2 bg-cyan-600 text-white font-semibold rounded-lg hover:bg-cyan-700 transition-colors"
+                >
+                  Try Again
+                </button>
+              </div>
+            ) : Object.keys(tokenBalances).length === 0 ? (
+              <div className="text-center py-16">
+                <div className="inline-block p-4 rounded-full bg-gray-500/10 mb-4">
+                  <Wallet size={40} className="text-gray-400" />
+                </div>
                 <h3 className="text-xl font-semibold">No Balances Found</h3>
-                <p className="text-gray-400 mb-4">Your wallet balances will appear here</p>
+                <p className="text-gray-400 mb-4">Your wallet balances will appear here once you have tokens</p>
               </div>
             ) : (
               <div className="p-6">
@@ -380,6 +431,55 @@ const Dashboard = () => {
                       icon={tokenMetadata[symbol]?.icon || `https://via.placeholder.com/40x40?text=${symbol}`}
                       usdValue={data.usdValue}
                     />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Recent Activity Section */}
+          <div className="bg-[#18181c] border border-[#23232a] rounded-2xl">
+            <div className="p-6 border-b border-[#23232a]">
+              <h2 className="text-2xl font-bold">Recent Activity</h2>
+            </div>
+            
+            {dataErrors.swapHistory ? (
+              <div className="text-center py-16">
+                <div className="inline-block p-4 rounded-full bg-yellow-500/10 mb-4">
+                  <AlertTriangle size={40} className="text-yellow-400" />
+                </div>
+                <h3 className="text-xl font-semibold">Activity History Unavailable</h3>
+                <p className="text-gray-400 mb-4">Unable to load recent activity. This doesn't affect your ability to perform new transactions.</p>
+              </div>
+            ) : swapHistory.length === 0 ? (
+              <div className="text-center py-16">
+                <div className="inline-block p-4 rounded-full bg-gray-500/10 mb-4">
+                  <ArrowUpDown size={40} className="text-gray-400" />
+                </div>
+                <h3 className="text-xl font-semibold">No Recent Activity</h3>
+                <p className="text-gray-400 mb-4">Your transaction history will appear here</p>
+              </div>
+            ) : (
+              <div className="p-6">
+                <div className="space-y-4">
+                  {swapHistory.slice(0, 5).map((swap, index) => (
+                    <div key={index} className="flex items-center justify-between p-4 bg-[#23232a] rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-full ${getStatusClasses(swap.status)}`}>
+                          {swap.status === 'completed' ? <CheckCircle size={16} /> : <Loader2 size={16} className="animate-spin" />}
+                        </div>
+                        <div>
+                          <p className="font-semibold">{swap.fromToken} → {swap.toToken}</p>
+                          <p className="text-sm text-gray-400">{formatDate(swap.createdAt)}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold">{formatCurrency(swap.amount)}</p>
+                        <span className={`text-xs px-2 py-1 rounded-full ${getStatusClasses(swap.status)}`}>
+                          {swap.status}
+                        </span>
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>
