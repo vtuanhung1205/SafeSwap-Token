@@ -215,6 +215,35 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const googleLogin = async (googleData) => {
+    try {
+      dispatch({ type: 'SET_LOADING', payload: true });
+      
+      const response = await authAPI.googleAuth(googleData);
+      
+      if (response.data.success) {
+        const { user, tokens } = response.data.data;
+        
+        // Store tokens
+        localStorage.setItem('accessToken', tokens.accessToken);
+        localStorage.setItem('refreshToken', tokens.refreshToken);
+        
+        dispatch({ type: 'SET_USER', payload: user });
+        toast.success('Google login successful!');
+        
+        // Check wallet status after login
+        await checkWalletStatus();
+        
+        return { success: true, user };
+      }
+    } catch (error) {
+      const errorMessage = handleApiError(error);
+      dispatch({ type: 'SET_ERROR', payload: errorMessage });
+      toast.error(errorMessage);
+      return { success: false, error: errorMessage };
+    }
+  };
+
   const disconnectWallet = async () => {
     try {
       if (!state.isWalletConnected) return { success: true };
@@ -248,6 +277,7 @@ export const AuthProvider = ({ children }) => {
     connectWallet,
     disconnectWallet,
     checkWalletStatus,
+    googleLogin,
   };
 
   return (

@@ -12,7 +12,6 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { useWebSocket } from "../../hooks/useWebSocket";
 import LoginModal from "../Auth/LoginModal";
-import RegisterModal from "../Auth/RegisterModal";
 import WalletConnect from "../WalletConnect";
 import toast from "react-hot-toast";
 
@@ -22,7 +21,6 @@ const Navbar = () => {
   const location = useLocation();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications] = useState([
     { id: 1, message: "Welcome to SafeSwap!" },
@@ -40,14 +38,9 @@ const Navbar = () => {
     console.log(`Wallet connected: ${account.address.slice(0, 6)}...`);
   };
 
-  const switchToRegister = () => {
+  const handleLoginSuccess = (user) => {
     setShowLoginModal(false);
-    setShowRegisterModal(true);
-  };
-
-  const switchToLogin = () => {
-    setShowRegisterModal(false);
-    setShowLoginModal(true);
+    toast.success(`Welcome back, ${user.name}!`);
   };
 
   return (
@@ -202,10 +195,10 @@ const Navbar = () => {
                       Sign In
                     </button>
                     <button
-                      onClick={() => setShowRegisterModal(true)}
+                      onClick={() => setShowLoginModal(true)}
                       className="px-4 py-2 rounded-lg bg-cyan-600 text-white hover:bg-cyan-700 transition"
                     >
-                      Sign Up
+                      Get Started
                     </button>
                   </div>
                 )}
@@ -215,19 +208,12 @@ const Navbar = () => {
         </div>
       </nav>
 
-      {/* Modals */}
+      {/* Login Modal */}
       {showLoginModal && (
         <LoginModal
           isOpen={showLoginModal}
           onClose={() => setShowLoginModal(false)}
-          onSwitchToRegister={switchToRegister}
-        />
-      )}
-      {showRegisterModal && (
-        <RegisterModal
-          isOpen={showRegisterModal}
-          onClose={() => setShowRegisterModal(false)}
-          onSwitchToLogin={switchToLogin}
+          onSuccess={handleLoginSuccess}
         />
       )}
     </>
