@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import { AptosClient } from 'aptos';
 import { Wallet, ArrowUpDown, RefreshCw, AlertTriangle, CheckCircle, Loader2 } from 'lucide-react';
 import WalletConnect from '../WalletConnect';
+import { useWallet } from '@aptos-labs/wallet-adapter-react';
 
 import TokenList from '../TokenList';
 
@@ -68,7 +69,7 @@ const formatTokenBalance = (balance, symbol) => {
 
 const Dashboard = () => {
   const { user, isAuthenticated } = useAuth();
-      // Removed wallet adapter hooks - using Aptos SDK instead
+  const { account } = useWallet();
   const [swapHistory, setSwapHistory] = useState([]);
   const [stats, setStats] = useState({ totalSwaps: 0, totalVolume: 0, successRate: 0, avgAmount: 0 });
   const [tokenBalances, setTokenBalances] = useState({});
@@ -169,7 +170,7 @@ const Dashboard = () => {
   };
 
   const fetchWalletBalances = async () => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated || !account?.address) return;
     
     try {
       setLoadingBalances(true);

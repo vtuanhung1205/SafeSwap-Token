@@ -95,6 +95,21 @@ export const transactionAPI = {
     api.get('/transactions', { params }),
 };
 
+// User API
+export const userAPI = {
+  // Get user statistics
+  getUserStats: () => 
+    api.get('/users/stats'),
+  
+  // Get swap history
+  getSwapHistory: (params = {}) => 
+    api.get('/users/swap-history', { params }),
+  
+  // Get user activity
+  getUserActivity: (params = {}) => 
+    api.get('/users/activity', { params }),
+};
+
 // System API
 export const systemAPI = {
   // Health check
