@@ -1,289 +1,258 @@
-# SafeSwap Token Backend
+# SafeSwap Backend API
 
-Backend API cho SafeSwap Token - Hệ thống quản lý giao dịch token trên Aptos blockchain với tính năng bảo mật và phân tích rủi ro real-time.
+Backend API cho SafeSwap - nền tảng swap token trên Aptos blockchain với tính năng real-time scam detection.
 
-## 🚀 Tính năng chính
+## ✨ Tính năng chính
 
-### 🔗 Aptos Blockchain Integration
-- Kết nối trực tiếp với Aptos mainnet
-- Quản lý giao dịch token real-time
-- Hỗ trợ đầy đủ các ví Aptos (Petra, Martian, Pontem, etc.)
-- Validation và security checks
+- 🔐 **Authentication**: JWT + Google OAuth
+- 🎯 **Aptos Wallet Integration**: Kết nối và quản lý ví Aptos
+- 💰 **Real-time Price Feed**: Cập nhật giá token theo thời gian thực
+- 🛡️ **Scam Detection**: Phân tích và cảnh báo token nguy hiểm
+- 📊 **Swap History**: Theo dõi lịch sử giao dịch
+- 🔌 **WebSocket**: Cập nhật real-time qua WebSocket
+- 📈 **Rate Limiting**: Bảo vệ API khỏi spam
 
-### 💰 Transaction Management
-- Theo dõi giao dịch real-time
-- Lưu trữ lịch sử giao dịch
-- Phân tích rủi ro AI
-- Export dữ liệu giao dịch
+## 🚀 Cài đặt
 
-### 🔐 Security & Authentication
-- JWT authentication
-- Rate limiting
-- Input validation
-- Error handling
-- Logging system
-
-### 📊 Analytics & Monitoring
-- Dashboard analytics
-- Risk analysis
-- Transaction trends
-- Network statistics
-
-## 🛠️ Cài đặt
-
-### Yêu cầu hệ thống
-- Node.js >= 18.0.0
-- MongoDB >= 5.0
-- npm hoặc yarn
-
-### Cài đặt dependencies
+### 1. Clone repository
 ```bash
-cd Backend
+git clone <repository-url>
+cd SafeSwap-Token/Backend
+```
+
+### 2. Cài đặt dependencies
+```bash
 npm install
 ```
 
-### Cấu hình môi trường
-1. Copy file `env.example` thành `.env`
+### 3. Thiết lập environment variables
 ```bash
-cp env.example .env
+cp .env.example .env
+# Chỉnh sửa các giá trị trong file .env
 ```
 
-2. Cập nhật các biến môi trường trong `.env`:
-```env
-# Server Configuration
-PORT=3001
-NODE_ENV=development
+### 4. Chạy MongoDB
+```bash
+# Sử dụng Docker
+docker run -d -p 27017:27017 --name mongodb mongo:latest
 
-# Database Configuration
-MONGODB_URI=mongodb://localhost:27017/safeswap
-
-# Aptos Configuration
-APTOS_NODE_URL=https://fullnode.mainnet.aptoslabs.com/v1
-APTOS_NETWORK=mainnet
-
-# JWT Configuration
-JWT_SECRET=your-super-secret-jwt-key-here
-JWT_EXPIRES_IN=7d
-
-# Rate Limiting
-RATE_LIMIT_WINDOW_MS=900000
-RATE_LIMIT_MAX_REQUESTS=100
+# Hoặc cài đặt MongoDB local
 ```
 
-### Khởi chạy server
+### 5. Khởi chạy server
 ```bash
 # Development mode
 npm run dev
 
-# Production mode
+# Production build
+npm run build
 npm start
 ```
 
-## 📚 API Documentation
+## 🔧 Environment Variables
+
+```env
+# Server
+NODE_ENV=development
+PORT=5000
+API_VERSION=v1
+
+# Database
+MONGODB_URI=mongodb://localhost:27017/safeswap
+
+# JWT
+JWT_SECRET=your-super-secret-jwt-key
+JWT_EXPIRES_IN=7d
+
+# Google OAuth
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+
+# Aptos
+APTOS_NODE_URL=https://fullnode.testnet.aptoslabs.com/v1
+APTOS_FAUCET_URL=https://faucet.testnet.aptoslabs.com
+
+# APIs
+COINGECKO_API_KEY=your-coingecko-api-key
+COINMARKETCAP_API_KEY=your-coinmarketcap-api-key
+
+# CORS
+CORS_ORIGIN=http://localhost:3000
+```
+
+## 📋 API Endpoints
 
 ### Authentication
-```
-POST /api/auth/register     - Đăng ký tài khoản
-POST /api/auth/login        - Đăng nhập
-GET  /api/auth/profile      - Lấy thông tin profile
-PUT  /api/auth/profile      - Cập nhật profile
-POST /api/auth/connect-wallet - Kết nối ví
-```
-
-### Transactions
-```
-GET    /api/transactions                    - Lấy danh sách giao dịch
-POST   /api/transactions                    - Tạo giao dịch mới
-GET    /api/transactions/:hash              - Lấy chi tiết giao dịch
-PUT    /api/transactions/:hash              - Cập nhật giao dịch
-GET    /api/transactions/stats/summary      - Thống kê giao dịch
-GET    /api/transactions/analytics/overview - Phân tích giao dịch
-GET    /api/transactions/export/csv         - Export giao dịch
-```
-
-### Tokens
-```
-GET /api/tokens/:address/:name              - Lấy metadata token
-GET /api/tokens/balances                    - Lấy balance tokens
-GET /api/tokens/balance/:address/:name      - Lấy balance token cụ thể
-GET /api/tokens/popular/list                - Danh sách token phổ biến
-GET /api/tokens/search                      - Tìm kiếm token
-GET /api/tokens/price/:address/:name        - Lấy giá token
-POST /api/tokens/validate                   - Validate token
-```
+- `POST /api/v1/auth/login` - Đăng nhập
+- `POST /api/v1/auth/register` - Đăng ký
+- `GET /api/v1/auth/google` - Google OAuth
+- `GET /api/v1/auth/profile` - Thông tin profile
+- `POST /api/v1/auth/refresh` - Refresh token
 
 ### Wallet
-```
-GET    /api/wallet/supported                - Danh sách ví hỗ trợ
-POST   /api/wallet/generate                 - Tạo ví mới
-POST   /api/wallet/import                   - Import ví
-GET    /api/wallet/info/:address            - Thông tin ví
-GET    /api/wallet/balance/:address         - Balance ví
-GET    /api/wallet/tokens/:address          - Tokens trong ví
-POST   /api/wallet/check-connection         - Kiểm tra kết nối
-POST   /api/wallet/validate-transaction     - Validate giao dịch
-POST   /api/wallet/estimate-fee             - Ước tính phí
-POST   /api/wallet/transfer                 - Chuyển token
-GET    /api/wallet/history/:address         - Lịch sử giao dịch
-```
+- `POST /api/v1/wallet/connect` - Kết nối ví
+- `POST /api/v1/wallet/disconnect` - Ngắt kết nối ví
+- `GET /api/v1/wallet/info` - Thông tin ví
+- `GET /api/v1/wallet/balance` - Số dư ví
+- `GET /api/v1/wallet/transactions` - Lịch sử giao dịch
 
-### Users
-```
-GET  /api/users/stats                       - Thống kê user
-GET  /api/users/dashboard                   - Dashboard user
-PUT  /api/users/preferences                 - Cập nhật preferences
-GET  /api/users/risk-profile                - Risk profile
-PUT  /api/users/risk-profile                - Cập nhật risk profile
-GET  /api/users/limits                      - Giới hạn giao dịch
-PUT  /api/users/limits                      - Cập nhật limits
-```
+### Price Feed
+- `GET /api/v1/price/all` - Tất cả giá token
+- `GET /api/v1/price/token/:symbol` - Giá của token cụ thể
+- `GET /api/v1/price/exchange-rate` - Tỷ giá hối đoái
+- `POST /api/v1/price/analyze` - Phân tích token
 
-### Analytics
-```
-GET /api/analytics/overview                 - Tổng quan analytics
-GET /api/analytics/trends                   - Xu hướng giao dịch
-GET /api/analytics/risk-analysis            - Phân tích rủi ro
-GET /api/analytics/network-stats            - Thống kê network
-```
+### Swap
+- `POST /api/v1/swap/quote` - Lấy quote swap
+- `POST /api/v1/swap/execute` - Thực hiện swap
+- `GET /api/v1/swap/history` - Lịch sử swap
+- `GET /api/v1/swap/stats` - Thống kê swap
 
-## 🔧 WebSocket Events
-
-### Client Events
-```javascript
-// Join user room
-socket.emit('join-user', userId);
-
-// Subscribe to transaction updates
-socket.emit('subscribe-transactions', userId);
-
-// Subscribe to price updates
-socket.emit('subscribe-prices');
-```
-
-### Server Events
-```javascript
-// Transaction created
-socket.on('transaction-created', { transaction });
-
-// Transaction updated
-socket.on('transaction-updated', { hash, status, additionalData });
-
-// Price update
-socket.on('price-update', { timestamp, prices });
-```
-
-## 🏗️ Cấu trúc dự án
+## 🏗️ Kiến trúc
 
 ```
 Backend/
 ├── src/
-│   ├── config/
-│   │   └── database.js          # Database configuration
-│   ├── middleware/
-│   │   └── auth.js              # Authentication middleware
-│   ├── models/
-│   │   ├── Transaction.js       # Transaction model
-│   │   └── User.js              # User model
-│   ├── routes/
-│   │   ├── auth.js              # Authentication routes
-│   │   ├── transactions.js      # Transaction routes
-│   │   ├── tokens.js            # Token routes
-│   │   ├── users.js             # User routes
-│   │   ├── analytics.js         # Analytics routes
-│   │   └── wallet.js            # Wallet routes
-│   ├── services/
-│   │   ├── aptosService.js      # Aptos blockchain service
-│   │   ├── transactionService.js # Transaction management
-│   │   └── walletService.js     # Wallet management
-│   ├── utils/
-│   │   └── logger.js            # Logging utility
-│   └── index.js                 # Main server file
-├── logs/                        # Log files
-├── package.json                 # Dependencies
-├── env.example                  # Environment variables example
-└── README.md                    # This file
+│   ├── config/          # Cấu hình database
+│   ├── controllers/     # Controllers xử lý request
+│   ├── middleware/      # Middleware xử lý request
+│   ├── models/          # MongoDB models
+│   ├── routes/          # API routes
+│   ├── services/        # Business logic services
+│   ├── types/           # TypeScript type definitions
+│   ├── utils/           # Utility functions
+│   └── server.ts        # Main server file
+├── logs/                # Log files
+├── dist/                # Compiled JavaScript
+├── package.json
+├── tsconfig.json
+└── README.md
 ```
+
+## 🔄 Services
+
+### AuthService
+- Quản lý JWT tokens
+- Google OAuth integration
+- User management
+
+### AptosService
+- Kết nối Aptos blockchain
+- Quản lý ví và balance
+- Transaction handling
+
+### PriceFeedService
+- Fetch giá từ CoinGecko
+- Cập nhật real-time với cron job
+- Tính toán exchange rates
+
+### ScamDetectionService
+- Phân tích token addresses
+- Kiểm tra suspicious patterns
+- Risk scoring system
+
+### WebSocketService
+- Real-time price updates
+- Client connection management
+- Event broadcasting
+
+## 📊 Database Models
+
+### User
+- Email, name, avatar
+- Google OAuth integration
+- Wallet address linking
+
+### Wallet
+- Aptos wallet information
+- Balance tracking
+- Connection status
+
+### TokenPrice
+- Token price data
+- Market statistics
+- Last update timestamps
+
+### SwapTransaction
+- Swap transaction records
+- Status tracking
+- Scam risk scores
 
 ## 🔒 Security Features
 
-### Authentication
-- JWT token-based authentication
-- Password hashing với bcrypt
-- Session management
+- JWT authentication
 - Rate limiting
+- Input validation
+- Error handling
+- CORS protection
+- Helmet security headers
 
-### Input Validation
-- Express-validator cho tất cả inputs
-- Address validation cho Aptos
-- Amount validation
-- Token validation
+## 📦 Scripts
 
-### Error Handling
-- Centralized error handling
-- Detailed error logging
-- User-friendly error messages
-- Graceful degradation
+```bash
+# Development
+npm run dev          # Chạy với nodemon
 
-## 📊 Monitoring & Logging
+# Production
+npm run build        # Build TypeScript
+npm start           # Chạy production server
 
-### Logging
-- Winston logger
-- Structured logging
-- Log rotation
-- Error tracking
-
-### Health Checks
-```
-GET /health
+# Utilities
+npm run lint        # ESLint check
+npm test           # Run tests
 ```
 
-Response:
-```json
-{
-  "status": "OK",
-  "timestamp": "2024-01-01T00:00:00.000Z",
-  "uptime": 3600
-}
+## 🔧 Development
+
+### 1. Cài đặt development dependencies
+```bash
+npm install --save-dev
 ```
 
-## 🚀 Deployment
+### 2. Chạy development server
+```bash
+npm run dev
+```
 
-### Production Setup
+### 3. Monitor logs
+```bash
+tail -f logs/combined.log
+```
+
+## 🌐 WebSocket Events
+
+### Client -> Server
+- `subscribe_prices` - Subscribe to price updates
+- `unsubscribe_prices` - Unsubscribe from price updates
+
+### Server -> Client
+- `initial_prices` - Initial price data
+- `price_update` - Real-time price updates
+- `subscription_success` - Subscription confirmation
+
+## 📈 Monitoring
+
+- Health check endpoint: `GET /health`
+- Winston logging to files
+- Real-time error reporting
+- Performance metrics
+
+## 🚀 Production Deployment
+
 1. Set `NODE_ENV=production`
-2. Configure MongoDB production URI
-3. Set strong JWT secret
-4. Configure rate limiting
-5. Set up monitoring
-
-### Docker (Optional)
-```dockerfile
-FROM node:18-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production
-COPY . .
-EXPOSE 3001
-CMD ["npm", "start"]
-```
+2. Configure production database
+3. Set up SSL certificates
+4. Configure reverse proxy (Nginx)
+5. Set up process manager (PM2)
 
 ## 🤝 Contributing
 
 1. Fork the repository
 2. Create feature branch
-3. Make changes
-4. Add tests
-5. Submit pull request
+3. Commit changes
+4. Push to branch
+5. Create Pull Request
 
 ## 📄 License
 
-MIT License - see LICENSE file for details
-
-## 🆘 Support
-
-- Documentation: [API Docs]
-- Issues: [GitHub Issues]
-- Email: support@safeswap.com
-
----
-
-**SafeSwap Token Backend** - Secure, Real-time Aptos Token Management System 
+MIT License - see LICENSE file for details 

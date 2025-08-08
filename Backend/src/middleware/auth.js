@@ -1,169 +1,116 @@
-const jwt = require('jsonwebtoken');
-const User = require('../models/User');
-const logger = require('../utils/logger');
+const passport = require('passport');
+const { Strategy: JwtStrategy, ExtractJwt } = require('passport-jwt');
+const { User } = require('../models/User.model');
+const { createError } = require('./errorHandler');
+const { logger } = require('../utils/logger');
 
-const auth = async (req, res, next) => {
+// Configure JWT strategy
+const jwtOptions = {
+  jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+  secretOrKey: process.env.JWT_SECRET || 'default_secret_key',
+};
+
+// Initialize passport with JWT strategy
+passport.use(
+  new JwtStrategy(jwtOptions, async (payload, done) => {
+    try {
+      // Find user by ID from JWT payload
+      const user = await User.findById(payload.id);
+      
+      if (!user) {
+        return done(null, false);
+      }
+      
+      return done(null, user);
+    } catch (error) {
+      return done(error, false);
+    }
+  })
+);
+
+// Middleware to authenticate requests
+const authenticate = () => {
+  return (req, res, next) => {
+    passport.authenticate('jwt', { session: false }, (err, user) => {
+      if (err) {
+        logger.error('Authentication failed:', err);
+        return next(createError(500, 'Authentication error'));
+      }
+      
+      if (!user) {
+        return next(createError(401, 'Unauthorized'));
+      }
+      
+      // Attach user to request
+      req.user = user;
+      
+      next();
+    })(req, res, next);
+  };
+};
+
+// Middleware to check if user is admin
+const requireAdmin = (req, res, next) => {
+  if (!req.user) {
+    return next(createError(401, 'Unauthorized'));
+  }
+  
+  if (!req.user.isAdmin) {
+    return next(createError(403, 'Admin access required'));
+  }
+  
+  next();
+};
+
+// Middleware to verify token manually (alternative to passport)
+const verifyToken = async (req, res, next) => {
   try {
-    const token = req.header('Authorization')?.replace('Bearer ', '');
+    const token = req.headers.authorization?.split(' ')[1];
     
     if (!token) {
-      return res.status(401).json({
-        success: false,
-        error: 'Access denied. No token provided.'
-      });
+      return next(createError(401, 'No token provided'));
     }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.userId).select('-password');
     
+    const jwt = require('jsonwebtoken');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default_secret_key');
+    
+    const user = await User.findById(decoded.id);
     if (!user) {
-      return res.status(401).json({
-        success: false,
-        error: 'Invalid token. User not found.'
-      });
+      return next(createError(401, 'Invalid token'));
     }
-
-    if (user.accountStatus !== 'active') {
-      return res.status(401).json({
-        success: false,
-        error: 'Account is not active.'
-      });
-    }
-
+    
     req.user = user;
     next();
   } catch (error) {
-    logger.error('Authentication error:', error);
-    
-    if (error.name === 'JsonWebTokenError') {
-      return res.status(401).json({
-        success: false,
-        error: 'Invalid token.'
-      });
-    }
-    
-    if (error.name === 'TokenExpiredError') {
-      return res.status(401).json({
-        success: false,
-        error: 'Token expired.'
-      });
-    }
-    
-    res.status(500).json({
-      success: false,
-      error: 'Authentication failed.'
-    });
+    logger.error('Token verification failed:', error);
+    return next(createError(401, 'Invalid token'));
   }
 };
 
-// Optional auth middleware for public endpoints
+// Middleware to extract user from token (optional auth)
 const optionalAuth = async (req, res, next) => {
   try {
-    const token = req.header('Authorization')?.replace('Bearer ', '');
+    const token = req.headers.authorization?.split(' ')[1];
     
     if (token) {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const user = await User.findById(decoded.userId).select('-password');
-      
-      if (user && user.accountStatus === 'active') {
+      const jwt = require('jsonwebtoken');
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default_secret_key');
+      const user = await User.findById(decoded.id);
+      if (user) {
         req.user = user;
       }
     }
     
     next();
   } catch (error) {
-    // Continue without authentication
+    // Continue without user if token is invalid
     next();
   }
 };
-
-// Admin auth middleware
-const adminAuth = async (req, res, next) => {
-  try {
-    const token = req.header('Authorization')?.replace('Bearer ', '');
-    
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        error: 'Access denied. No token provided.'
-      });
-    }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.userId).select('-password');
-    
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        error: 'Invalid token. User not found.'
-      });
-    }
-
-    if (user.accountStatus !== 'active') {
-      return res.status(401).json({
-        success: false,
-        error: 'Account is not active.'
-      });
-    }
-
-    // Check if user is admin (you can add isAdmin field to User model)
-    if (!user.isAdmin) {
-      return res.status(403).json({
-        success: false,
-        error: 'Access denied. Admin privileges required.'
-      });
-    }
-
-    req.user = user;
-    next();
-  } catch (error) {
-    logger.error('Admin authentication error:', error);
-    
-    if (error.name === 'JsonWebTokenError') {
-      return res.status(401).json({
-        success: false,
-        error: 'Invalid token.'
-      });
-    }
-    
-    if (error.name === 'TokenExpiredError') {
-      return res.status(401).json({
-        success: false,
-        error: 'Token expired.'
-      });
-    }
-    
-    res.status(500).json({
-      success: false,
-      error: 'Authentication failed.'
-    });
-  }
-};
-
-// Rate limiting middleware
-const rateLimit = require('express-rate-limit');
-
-const createRateLimiter = (windowMs, max, message) => {
-  return rateLimit({
-    windowMs,
-    max,
-    message: {
-      success: false,
-      error: message
-    }
-  });
-};
-
-// Specific rate limiters
-const authLimiter = createRateLimiter(15 * 60 * 1000, 5, 'Too many authentication attempts. Please try again later.');
-const transactionLimiter = createRateLimiter(60 * 1000, 10, 'Too many transaction requests. Please try again later.');
-const apiLimiter = createRateLimiter(15 * 60 * 1000, 100, 'Too many API requests. Please try again later.');
 
 module.exports = {
-  auth,
-  optionalAuth,
-  adminAuth,
-  authLimiter,
-  transactionLimiter,
-  apiLimiter
-}; 
+  authenticate,
+  requireAdmin,
+  verifyToken,
+  optionalAuth
+};

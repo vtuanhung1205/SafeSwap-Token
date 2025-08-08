@@ -1,0 +1,17 @@
+# Copy các giá trị này vào Render Environment Variables:
+
+NODE_ENV=production
+PORT=10000
+MONGODB_URI=mongodb+srv://safeswap_user:12345@safeswap.6pk7wds.mongodb.net/safeswap?retryWrites=true&w=majority&appName=SafeSwap
+JWT_SECRET=SafeSwap2025SecureJWTSecretKeyForProductionUse!@#$%
+JWT_REFRESH_SECRET=SafeSwap2025RefreshTokenSecretKeyForProductionUse!@#$%
+JWT_EXPIRES_IN=24h
+JWT_REFRESH_EXPIRES_IN=7d
+ALLOWED_ORIGINS=https://your-frontend-domain.onrender.com,http://localhost:5173
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX_REQUESTS=100
+BCRYPT_ROUNDS=12
+
+# Optional (để trống nếu chưa có):
+COINGECKO_API_KEY=
+AI_SERVICE_URL=https://safeswap-ai-service.onrender.com
