@@ -12,7 +12,7 @@
 
 ### **2. Supported Wallets:**
 - ✅ **Martian Wallet**: `@martianwallet/aptos-wallet-adapter`
-- ✅ **Pontem Wallet**: `@pontem/aptos-wallet-adapter`
+- ✅ **Pontem Wallet**: `@pontem/aptos-wallet-adapter` (PontemWalletAdapter)
 - ✅ **Rise Wallet**: `@rise-wallet/wallet-adapter`
 - ✅ **Fewcha Wallet**: `fewcha-plugin-wallet-adapter`
 
@@ -29,13 +29,13 @@
 // main.jsx
 import { AptosWalletAdapterProvider } from "@aptos-labs/wallet-adapter-react";
 import { MartianWallet } from "@martianwallet/aptos-wallet-adapter";
-import { PontemWallet } from "@pontem/aptos-wallet-adapter";
+import { PontemWalletAdapter } from "@pontem/aptos-wallet-adapter";
 import { RiseWallet } from "@rise-wallet/wallet-adapter";
 import { FewchaWallet } from "fewcha-plugin-wallet-adapter";
 
 const wallets = [
   new MartianWallet(),
-  new PontemWallet(),
+  new PontemWalletAdapter(),
   new RiseWallet(),
   new FewchaWallet(),
 ];

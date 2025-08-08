@@ -39,7 +39,7 @@ export const APTOS_CONFIG = {
     // They work directly with wallet extensions
     SUPPORTED_WALLETS: [
       'martian',
-      'pontem', 
+      'pontem-adapter', 
       'rise',
       'fewcha'
     ],

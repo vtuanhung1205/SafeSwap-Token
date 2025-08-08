@@ -9,7 +9,7 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 import { AptosWalletAdapterProvider } from "@aptos-labs/wallet-adapter-react";
 
 import { MartianWallet } from "@martianwallet/aptos-wallet-adapter";
-import { PontemWallet } from "@pontem/aptos-wallet-adapter";
+import { PontemWalletAdapter } from "@pontem/aptos-wallet-adapter";
 import { RiseWallet } from "@rise-wallet/wallet-adapter";
 import { FewchaWallet } from "fewcha-plugin-wallet-adapter";
 
@@ -33,7 +33,7 @@ UNSAFE_RouteContext.displayName = "Route";
 
 const wallets = [
   new MartianWallet(),
-  new PontemWallet(),
+  new PontemWalletAdapter(),
   new RiseWallet(),
   new FewchaWallet(),
 ];
