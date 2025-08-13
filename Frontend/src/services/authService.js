@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.VITE_API_URL || 'https://safeswap-backend-service.onrender.com/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://safeswap-backend-service.onrender.com/api';
 
 // Create axios instance
 const api = axios.create({
@@ -98,4 +98,4 @@ class AuthService {
   }
 }
 
-export default new AuthService(); 
+export default new AuthService();

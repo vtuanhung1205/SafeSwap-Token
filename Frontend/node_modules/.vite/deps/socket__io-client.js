@@ -936,12 +936,12 @@ function unloadHandler() {
     }
   }
 }
-var hasXHR2 = function() {
+var hasXHR2 = (function() {
   const xhr = newRequest({
     xdomain: false
   });
   return xhr && xhr.responseType !== null;
-}();
+})();
 var XHR = class extends BaseXHR {
   constructor(opts) {
     super(opts);

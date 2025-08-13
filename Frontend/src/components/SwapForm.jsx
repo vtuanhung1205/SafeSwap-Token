@@ -334,6 +334,9 @@ const SwapForm = () => {
     return parseFloat(balance).toPrecision(4);
   };
 
+ console.log("Quote object:", quote);
+  console.log("Scam Analysis object:", scamAnalysis);
+
   return (
     <div className="flex flex-col items-center justify-center min-h-[80vh] bg-transparent px-4">
       <div ref={formRef} className={`w-full max-w-md transition-all duration-700 ease-out ${animationClasses}`}>
@@ -414,40 +417,98 @@ const SwapForm = () => {
             </div>
 
             {/* Price and Rate Info */}
-            {quote && (
-              <div className="bg-[#111112] rounded-xl p-3 mb-4 border border-[#2a2a35]">
-                <div className="flex justify-between items-center mb-2">
+                      {quote && (
+              <div className="bg-[#111112] rounded-xl p-3 mb-4 border border-[#2a2a35] space-y-2">
+                
+                {/* Price Row */}
+                <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-400">Price</span>
                   <span className="text-sm text-white">1 {fromToken.symbol} ≈ {quote.rate.toFixed(6)} {toToken.symbol}</span>
                 </div>
+
+                {/* Fee Row */}
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-400">Fee</span>
-                  <span className="text-sm text-white">{(quote.fee * 100).toFixed(2)}%</span>
+                  <span className="text-sm text-white">
+                    {typeof quote.fee === 'number' ? `${(quote.fee * 100).toFixed(2)}%` : '0.01%'}
+                  </span>
                 </div>
-              </div>
-            )}
 
-            {/* Scam Analysis */}
-            {scamAnalysis && (
-              <div className={`rounded-xl p-3 mb-4 border ${scamAnalysis.isScam ? "bg-red-500/10 border-red-500/30 text-red-400" : scamAnalysis.riskScore > 50 ? "bg-yellow-500/10 border-yellow-500/30 text-yellow-400" : "bg-green-500/10 border-green-500/30 text-green-400"}`}>
-                <div className="flex items-start space-x-2">
-                  {scamAnalysis.isScam ? <AlertTriangle size={18} /> : <CheckCircle size={18} />}
-                  <div>
-                    <div className="font-medium mb-1">{scamAnalysis.isScam ? "High Risk" : scamAnalysis.riskScore > 50 ? "Medium Risk" : "Low Risk"}</div>
-                    <div className="text-xs">{scamAnalysis.recommendation}</div>
-                  </div>
+                {/* --- CHANGE: Scam Risk Row now handles the 'null' case --- */}
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-400 flex items-center">
+                    Scam Risk
+                  </span>
+                  
+                  {/* Use a ternary operator to decide what to render */}
+                  {scamAnalysis ? (
+                    // If scamAnalysis has data, display the dynamic risk level
+                    (() => {
+                      const riskLevel = scamAnalysis.isScam ? "High" : scamAnalysis.riskScore > 50 ? "Medium" : "Low";
+                      const riskColor = scamAnalysis.isScam ? "red" : scamAnalysis.riskScore > 50 ? "yellow" : "green";
+
+                      return (
+                        <span 
+                          className={`text-sm font-medium flex items-center text-${riskColor}-400`}
+                          title={`Risk Score: ${scamAnalysis.riskScore}/100. Recommendation: ${scamAnalysis.recommendation}`}
+                        >
+                          <span className={`w-2 h-2 rounded-full mr-2 bg-${riskColor}-400`}></span>
+                          {riskLevel} Risk
+                        </span>
+                      );
+                    })()
+                  ) : (
+                    // If scamAnalysis is null or undefined, display the "safe" status
+                    <span className="text-sm font-medium flex items-center text-green-400" title="No risk has been detected for this token.">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                      Verified
+                    </span>
+                  )}
                 </div>
               </div>
             )}
 
             {/* Connect Wallet / Swap Button */}
-            {!isAuthenticated ? <WalletConnect /> : (
-              <button className={`w-full py-3 rounded-xl font-medium transition ${isLoadingQuote || isSwapping || !quote ? "bg-cyan-600/50 text-cyan-300 cursor-not-allowed" : "bg-cyan-600 text-white hover:bg-cyan-700"}`} disabled={isLoadingQuote || isSwapping || !quote} onClick={handleSwap}>
-                {loading ? <div className="flex items-center justify-center space-x-2"><Loader2 size={18} className="animate-spin" /><span>Swapping...</span></div> : isLoadingQuote ? <div className="flex items-center justify-center space-x-2"><Loader2 size={18} className="animate-spin" /><span>Getting Quote...</span></div> : !quote ? "Enter Amount" : "Swap Tokens"}
+             {!isAuthenticated ? (
+              // --- Button for non-authenticated users with hover effect ---
+              <button 
+                className="group relative w-full py-3 rounded-xl font-medium transition-colors duration-200 bg-gray-800 border border-gray-700 text-white hover:border-red-500/50 hover:bg-red-500/10"
+                // You should add your wallet connection function here, for example:
+                // onClick={() => openConnectModal()} 
+              >
+                {/* This container helps center both the default and hover content */}
+                <div className="relative flex items-center justify-center h-6">
+                  
+                  {/* Default Text: "Connect Wallet" (fades out on hover) */}
+                  <span className="absolute transition-opacity duration-200 group-hover:opacity-0">
+                    Connect Wallet
+                  </span>
+                  
+                  {/* Hover Content: Ban Icon + "Login Required" (fades in on hover) */}
+                  <div className="absolute flex items-center justify-center space-x-2 text-red-400 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                    {/* Ban Icon */}
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+                    </svg>
+                    <span>Login Required</span>
+                  </div>
+
+                </div>
+              </button>
+            ) : (
+              // --- Button for authenticated users (logic preserved) ---
+              <button 
+                className={`w-full py-3 rounded-xl font-medium transition ${isLoadingQuote || isSwapping || !quote ? "bg-cyan-600/50 text-cyan-300 cursor-not-allowed" : "bg-cyan-600 text-white hover:bg-cyan-700"}`} 
+                disabled={isLoadingQuote || isSwapping || !quote} 
+                onClick={handleSwap}
+              >
+                {loading ? <div className="flex items-center justify-center space-x-2"><Loader2 size={18} className="animate-spin" /><span>Swapping...</span></div> : isLoadingQuote ? <div className="flex items-center justify-center space-x-2"><Loader2 size={18} className="animate-spin" /><span>Getting Quote...</span></div> : !quote ? "Enter Amount" : "Swap"}
               </button>
             )}
           </div>
         </div>
+            
 
         {/* Token Selection Modal */}
         {showTokenModal && (
