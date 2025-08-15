@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { X, LogIn, Wallet } from 'lucide-react';
+import { X, LogIn } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import { useGoogleLogin } from '@react-oauth/google';
-import AptosConnectButton from './AptosConnectButton';
 
 
 
@@ -120,29 +119,11 @@ const LoginModal = ({ isOpen, onClose }) => {
             )}
           </button>
 
-          {/* Divider */}
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-600"></div>
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-[#18181c] px-2 text-gray-400">Or</span>
-            </div>
-          </div>
-
-          {/* Aptos Connect Button - NEW! */}
-          <AptosConnectButton 
-            onSuccess={(user) => {
-              console.log('Aptos Connect success:', user);
-              onClose();
-            }}
-            className="w-full"
-          />
 
           {/* Authentication Note */}
           <div className="text-center">
             <p className="text-xs text-gray-500">
-              Sign in with Google or connect your Aptos wallet
+              Sign in with Google
             </p>
           </div>
         </div>
