@@ -34,12 +34,12 @@ UNSAFE_RouteContext.displayName = "Route";
 
 const wallets = [
   new AptosConnectGoogleWallet({
+    // Aptos Connect Google Wallet configuration
+    environment: "mainnet",
+    autoConnect: false,
+    // Google OAuth configuration
     clientId: "68865718442-0na32flmllvguiilt67os6p6rvgl0eqi.apps.googleusercontent.com",
-    redirectUri: window.location.origin,
-    scope: "openid email profile",
-    // Aptos Connect options
-    environment: "mainnet", // or "testnet"
-    autoConnect: true
+    redirectUri: window.location.origin
   }),
   new MartianWallet(),
   new PontemWalletAdapter(),
