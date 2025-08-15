@@ -150,6 +150,75 @@ class AuthController {
     }
   }
 
+  async aptosConnectAuth(req, res, next) {
+    try {
+      const { addressString, publicKeyString, walletType, network } = req.body;
+
+      // Validate required fields
+      if (!addressString || !publicKeyString) {
+        throw createError(400, 'Wallet addressString and publicKeyString are required');
+      }
+
+      // Find existing user by wallet address
+      let user = await User.findOne({ 
+        $or: [
+          { walletAddress: addressString }, 
+          { 'wallets.address': addressString }
+        ] 
+      });
+
+      if (!user) {
+        // Create new user from Aptos wallet
+        user = new User({
+          walletAddress: addressString,
+          wallets: [{
+            address: addressString,
+            publicKey: publicKeyString,
+            type: walletType || 'aptos',
+            network: network || 'mainnet',
+            isConnected: true
+          }],
+          isVerified: true,
+          name: `Aptos User ${addressString.slice(0, 6)}...${addressString.slice(-4)}`
+        });
+        await user.save();
+        logger.info(`New Aptos Connect user created: ${addressString}`);
+      } else {
+        // Update existing user's wallet info
+        const existingWallet = user.wallets.find(w => w.address === addressString);
+        if (existingWallet) {
+          existingWallet.publicKey = publicKeyString;
+          existingWallet.isConnected = true;
+          existingWallet.lastConnected = new Date();
+        } else {
+          user.wallets.push({
+            address: addressString,
+            publicKey: publicKeyString,
+            type: walletType || 'aptos',
+            network: network || 'mainnet',
+            isConnected: true
+          });
+        }
+        await user.save();
+        logger.info(`Aptos Connect login for existing user: ${addressString}`);
+      }
+
+      // Generate tokens
+      const tokens = authService.generateTokens(user._id);
+
+      res.json({
+        success: true,
+        message: 'Aptos Connect authentication successful',
+        data: {
+          user: user.toJSON(),
+          tokens,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async refreshToken(req, res, next) {
     try {
       const { refreshToken } = req.body;

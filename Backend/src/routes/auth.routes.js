@@ -46,6 +46,42 @@ router.post('/google', strictRateLimiter, asyncHandler(authController.googleAuth
 
 /**
  * @swagger
+ * /api/auth/aptos-connect:
+ *   post:
+ *     summary: Authenticate with Aptos Connect
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - addressString
+ *               - publicKeyString
+ *             properties:
+ *               addressString:
+ *                 type: string
+ *                 description: Aptos wallet address string
+ *               publicKeyString:
+ *                 type: string
+ *                 description: Wallet public key string
+ *               walletType:
+ *                 type: string
+ *                 description: Type of wallet (e.g., aptos, martian, pontem)
+ *               network:
+ *                 type: string
+ *                 description: Network (e.g., mainnet, testnet)
+ *     responses:
+ *       200:
+ *         description: Authentication successful, returns access and refresh tokens.
+ *       400:
+ *         description: Invalid wallet data or missing fields.
+ */
+router.post('/aptos-connect', strictRateLimiter, asyncHandler(authController.aptosConnectAuth.bind(authController)));
+
+/**
+ * @swagger
  * /api/auth/profile:
  *   get:
  *     summary: Get user profile

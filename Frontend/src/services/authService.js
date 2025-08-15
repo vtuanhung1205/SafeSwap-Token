@@ -46,6 +46,20 @@ class AuthService {
     }
   }
 
+  // Aptos Connect Login
+  async aptosConnectLogin(aptosData) {
+    try {
+      const response = await api.post('/auth/aptos-connect', aptosData);
+      if (response.data.success) {
+        localStorage.setItem('token', response.data.data.tokens.accessToken);
+        localStorage.setItem('user', JSON.stringify(response.data.data.user));
+      }
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { error: 'Aptos Connect login failed' };
+    }
+  }
+
   // Get user profile
   async getProfile() {
     try {

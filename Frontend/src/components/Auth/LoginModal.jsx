@@ -3,6 +3,7 @@ import { X, LogIn, Wallet } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import { useGoogleLogin } from '@react-oauth/google';
+import AptosConnectButton from './AptosConnectButton';
 
 
 
@@ -129,22 +130,19 @@ const LoginModal = ({ isOpen, onClose }) => {
             </div>
           </div>
 
-          {/* Aptos Connect Login Button */}
-          <button
-            onClick={() => {
-              // Traditional Wallet Adapters handle this automatically
-              toast.info("Please use the Connect Wallet button in the navbar");
+          {/* Aptos Connect Button - NEW! */}
+          <AptosConnectButton 
+            onSuccess={(user) => {
+              console.log('Aptos Connect success:', user);
+              onClose();
             }}
-            className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl py-3 px-4 font-semibold flex items-center justify-center gap-3 hover:from-purple-700 hover:to-blue-700 transition-all"
-          >
-            <Wallet size={20} />
-            Connect Aptos Wallet
-          </button>
+            className="w-full"
+          />
 
-          {/* Google OAuth Note */}
+          {/* Authentication Note */}
           <div className="text-center">
             <p className="text-xs text-gray-500">
-              Sign in with your real Google account
+              Sign in with Google or connect your Aptos wallet
             </p>
           </div>
         </div>
