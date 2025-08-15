@@ -50,7 +50,7 @@ const wallets = [
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <GoogleOAuthProvider clientId="68865718442-0na32flmllvguiilt67os6p6rvgl0eqi.apps.googleusercontent.com">
-      <AptosWalletAdapterProvider plugins={wallets} autoConnect={true}>
+      <AptosWalletAdapterProvider plugins={wallets} autoConnect={false}>
         <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <AuthProvider>
             <App />
