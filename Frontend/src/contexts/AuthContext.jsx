@@ -133,13 +133,13 @@ export const AuthProvider = ({ children }) => {
       
       if (result.success) {
         dispatch({ type: AUTH_ACTIONS.LOGIN_SUCCESS, payload: result.data });
-        toast.success('Đăng nhập Aptos Connect thành công!');
+        toast.success('Aptos Connect login successfully!');
         return result;
       } else {
         throw new Error(result.error || 'Aptos Connect login failed');
       }
     } catch (error) {
-      const errorMessage = error.error || 'Đăng nhập Aptos Connect thất bại';
+      const errorMessage = error.error || 'Aptos Connect login failed';
       dispatch({ type: AUTH_ACTIONS.SET_ERROR, payload: errorMessage });
       toast.error(errorMessage);
       throw error;
@@ -156,13 +156,13 @@ export const AuthProvider = ({ children }) => {
       
       if (result.success) {
         dispatch({ type: AUTH_ACTIONS.LOGIN_SUCCESS, payload: result.data });
-        toast.success('Đăng nhập thành công!');
+        toast.success('Login successfully!');
         return result;
       } else {
         throw new Error(result.error || 'Email login failed');
       }
     } catch (error) {
-      const errorMessage = error.error || 'Đăng nhập thất bại';
+      const errorMessage = error.error || 'Login failed';
       dispatch({ type: AUTH_ACTIONS.SET_ERROR, payload: errorMessage });
       toast.error(errorMessage);
       throw error;
@@ -179,13 +179,13 @@ export const AuthProvider = ({ children }) => {
       
       if (result.success) {
         dispatch({ type: AUTH_ACTIONS.LOGIN_SUCCESS, payload: result.data });
-        toast.success('Đăng ký thành công!');
+        toast.success('Registration successfully!');
         return result;
       } else {
         throw new Error(result.error || 'Registration failed');
       }
     } catch (error) {
-      const errorMessage = error.error || 'Đăng ký thất bại';
+      const errorMessage = error.error || 'Registration failed';
       dispatch({ type: AUTH_ACTIONS.SET_ERROR, payload: errorMessage });
       toast.error(errorMessage);
       throw error;
@@ -202,7 +202,7 @@ export const AuthProvider = ({ children }) => {
       
       if (result.success) {
         dispatch({ type: AUTH_ACTIONS.LOGIN_SUCCESS, payload: result.data });
-        toast.success('Đăng nhập ví thành công!');
+        toast.success('Wallet login successfully!');
         return result;
       } else {
         throw new Error(result.error || 'Wallet login failed');
@@ -277,7 +277,7 @@ export const AuthProvider = ({ children }) => {
     try {
       await authService.logout();
       dispatch({ type: AUTH_ACTIONS.LOGOUT });
-      toast.success('Đăng xuất thành công!');
+      toast.success('Logout successfully!');
     } catch (error) {
       console.error('Logout error:', error);
       dispatch({ type: AUTH_ACTIONS.LOGOUT });
@@ -299,13 +299,13 @@ export const AuthProvider = ({ children }) => {
       
       if (result.success) {
         dispatch({ type: AUTH_ACTIONS.SET_USER, payload: result.data });
-        toast.success('Cập nhật thông tin thành công!');
+        toast.success('Profile updated successfully!');
         return result;
       } else {
         throw new Error(result.error || 'Profile update failed');
       }
     } catch (error) {
-      const errorMessage = error.error || 'Cập nhật thông tin thất bại';
+      const errorMessage = error.error || 'Profile update failed';
       dispatch({ type: AUTH_ACTIONS.SET_ERROR, payload: errorMessage });
       toast.error(errorMessage);
       throw error;

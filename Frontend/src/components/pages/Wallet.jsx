@@ -16,6 +16,10 @@ const Wallet = () => {
   const [transactions, setTransactions] = useState([]);
   const [error, setError] = useState(null);
 
+  // Define isAuthenticated based on user or account presence
+  const account = user?.account;
+  const isAuthenticated = !!account;
+
   useEffect(() => {
     if (isAuthenticated) {
       fetchWalletData();

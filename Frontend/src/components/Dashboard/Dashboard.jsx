@@ -263,12 +263,12 @@ const Dashboard = () => {
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
         <div>
           <h1 className="text-4xl font-bold">Dashboard</h1>
-          <p className="text-gray-400 mt-1">Welcome back, {user?.name || 'Guest'}</p>
+          <p className="text-gray-400 mt-1">Welcome back, {user?.profile?.displayName || 'Guest'}</p>
         </div>
         <div className="flex items-center gap-4 mt-4 md:mt-0 bg-[#18181c] border border-[#23232a] p-3 rounded-2xl">
-          <img src={user?.avatar || `https://i.pravatar.cc/150?u=${user?.email || 'guest'}`} alt="User" className="w-12 h-12 rounded-full" />
+          <img src={user?.profile.avatar || `https://i.pravatar.cc/150?u=${user?.email || 'guest'}`} alt="User" className="w-12 h-12 rounded-full" />
           <div>
-            <h3 className="font-semibold">{user?.name || 'Anonymous User'}</h3>
+            <h3 className="font-semibold">{user?.profile?.displayName || 'Anonymous User'}</h3>
             <p className="text-sm text-gray-400">{user?.email}</p>
           </div>
         </div>

@@ -6,7 +6,7 @@ import {
   Loader2,
   Wallet,
   TrendingUp,
-  TrendingDown,
+  TrendingDown, 
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { userAPI, walletAPI, handleApiError } from "../utils/api";
@@ -53,7 +53,7 @@ const tokens = [
   { symbol: "USDT", name: "Tether", icon: "https://public.bnbstatic.com/static/academy/uploads-original/2fd4345d8c3a46278941afd9ab7ad225.png", coingeckoId: "tether", address: "0xf22bede237a07e121b56d91a491eb7bcdfd1f5907926a9e58338f964a01b17fa::asset::USDT" },
   { symbol: "BTC", name: "Bitcoin", icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Bitcoin.svg/800px-Bitcoin.svg.png", coingeckoId: "bitcoin", address: "0xae478ff7d83ed071dbcaf62d0c9c832d41c4b6c8c8c8c8c8c8c8c8c8c8c8c8c8::coin::BTC" },
   { symbol: "ETH", name: "Ethereum", icon: "https://static1.tokenterminal.com//ethereum/logo.png?logo_hash=fd8f54cab23f8f4980041f4e74607cac0c7ab880", coingeckoId: "ethereum", address: "0xae478ff7d83ed071dbcaf62d0c9c832d41c4b6c8c8c8c8c8c8c8c8c8c8c8c8c8::coin::ETH" },
-  { symbol: "SOL", name: "Solana", icon: "https://s2.coinmarketcap.com/static/img/coins/64x64/5426.png", coingeckoId: "solana", address: "0xae478ff7d83ed071dbcaf62d0c9c832d41c4b6c8c8c8c8c8c8c8c8c8c8c8c8c8::coin::SOL" },
+  { symbol: "SOL", name: "Solana", icon: "https://s2.coinmarketcap.com/static/img/coins/64x64/5426.png", coingeckoId: "solana", address: "0xdd87f5f64af48e1f51934ab1db5e47276b6039805337450584d25644d7b94d06::coin::SOL" },
 ];
 
 
@@ -217,6 +217,24 @@ const SwapForm = () => {
     }
   };
 
+  // Defined signAndSubmitTransaction function to handle transaction signing and submission
+  const signAndSubmitTransaction = async (payload) => {
+    // The wallet provider is available at window.aptos
+    if (!window.aptos) {
+      throw new Error("Aptos wallet not found. Please install a wallet extension.");
+    }
+    try {
+      // This opens the wallet popup for the user to approve
+      const response = await window.aptos.signAndSubmitTransaction(payload);
+      return response; // This will contain the transaction hash
+    } catch (error) {
+      // This will catch errors if the user rejects the transaction in their wallet
+      console.error("Transaction failed:", error);
+      throw error;
+    }
+  };
+
+
   const handleSwap = async () => {
     if (!isAuthenticated || !fromToken || !toToken || !amount) {
       toast.error("Please connect wallet and fill all fields");
@@ -224,22 +242,24 @@ const SwapForm = () => {
     }
 
     try {
-      setIsLoading(true);
-      
-      // Removed validateAptosConfig() call as it's no longer defined
-      
-      // Initialize Liquidswap SDK với config đúng
-      const sdk = new SDK({ 
+      setIsSwapping(true);
+
+      // Initialize Liquidswap SDK with correct config
+      const sdk = new SDK({
         nodeUrl: APTOS_CONFIG.NODE_URL
       });
+
+      if (!sdk) {
+        throw new Error("SDK initialization failed");
+      }
 
       // Convert amount to proper format (APT has 8 decimals)
       const fromAmount = parseFloat(amount) * Math.pow(10, 8);
 
       // Calculate swap rates
       const rates = await sdk.Swap.calculateRates({
-        fromToken: '0x1::aptos_coin::AptosCoin',
-        toToken: '0xf22bede237a07e121b56d91a491eb7bcdfd1f5907926a9e58338f964a01b17fa::asset::USDT',
+        fromToken: fromToken.address,
+        toToken: toToken.address,
         amount: fromAmount,
         curveType: 'uncorrelated',
         interactiveToken: 'from',
@@ -248,8 +268,8 @@ const SwapForm = () => {
 
       // Create swap transaction payload
       const payload = await sdk.Swap.createSwapTransactionPayload({
-        fromToken: '0x1::aptos_coin::AptosCoin',
-        toToken: '0xf22bede237a07e121b56d91a491eb7bcdfd1f5907926a9e58338f964a01b17fa::asset::USDT',
+        fromToken: fromToken.address,
+        toToken: toToken.address,
         fromAmount: fromAmount,
         toAmount: Number(rates),
         interactiveToken: 'from',
@@ -261,25 +281,26 @@ const SwapForm = () => {
 
       // Sign and submit transaction
       const response = await signAndSubmitTransaction(payload);
-      
-      // Wait for transaction với config đúng
+
+      // Wait for transaction confirmation
       const client = new AptosClient(APTOS_CONFIG.NODE_URL);
       await client.waitForTransaction({ transactionHash: response.hash });
 
       toast.success(`Swap successful! Hash: ${response.hash}`);
-      
+
       // Reset form
       setAmount("");
       setToAmount("");
       setQuote(null);
-      
+
       // Refresh balances
       fetchWalletBalances();
-      
+
     } catch (error) {
-      console.error('Error swapping tokens:', error);
+      console.error('Swap error:', error);
       toast.error('Swap failed: ' + (error.message || 'Unknown error'));
     } finally {
+      setIsSwapping(false);
       setIsLoading(false);
     }
   };
@@ -334,8 +355,6 @@ const SwapForm = () => {
     return parseFloat(balance).toPrecision(4);
   };
 
- console.log("Quote object:", quote);
-  console.log("Scam Analysis object:", scamAnalysis);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[80vh] bg-transparent px-4">
@@ -430,7 +449,7 @@ const SwapForm = () => {
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-400">Fee</span>
                   <span className="text-sm text-white">
-                    {typeof quote.fee === 'number' ? `${(quote.fee * 100).toFixed(2)}%` : '0.01%'}
+                    {typeof quote.fee === 'number' ? `${(quote.fee * 100).toFixed(2)}%` : '0.001%'}
                   </span>
                 </div>
 

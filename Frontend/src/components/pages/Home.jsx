@@ -59,15 +59,18 @@ const Home = () => {
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               {!isAuthenticated ? (
-                <button className="px-8 py-4 bg-gradient-to-r from-cyan-600 to-blue-600 rounded-xl font-semibold text-lg hover:from-cyan-700 hover:to-blue-700 transition-all transform hover:scale-105">
-                  Get Started
-                </button>
+                <a href="/swap">
+                  <button className="px-8 py-4 bg-gradient-to-r from-cyan-600 to-blue-600 rounded-xl font-semibold text-lg hover:from-cyan-700 hover:to-blue-700 transition-all transform hover:scale-105">
+                    Get Started
+                  </button>
+                </a>
               ) : (
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <WalletConnect />
-                  <button className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-semibold text-lg hover:from-purple-700 hover:to-pink-700 transition-all transform hover:scale-105">
-                    View Dashboard
-                  </button>
+                  <a href="/dashboard">
+                    <button className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-semibold text-lg hover:from-purple-700 hover:to-pink-700 transition-all transform hover:scale-105">
+                      View Dashboard
+                    </button>
+                  </a>
                 </div>
               )}
             </div>
@@ -163,15 +166,18 @@ const Home = () => {
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             {!isAuthenticated ? (
-              <button className="px-8 py-4 bg-gradient-to-r from-cyan-600 to-blue-600 rounded-xl font-semibold text-lg hover:from-cyan-700 hover:to-blue-700 transition-all transform hover:scale-105">
-                Connect Wallet
-              </button>
+              <a href="/swap">
+                <button className="px-8 py-4 bg-gradient-to-r from-cyan-600 to-blue-600 rounded-xl font-semibold text-lg hover:from-cyan-700 hover:to-blue-700 transition-all transform hover:scale-105">
+                  Get Started
+                </button>
+              </a>
             ) : (
               <div className="flex flex-col sm:flex-row gap-4">
-                <WalletConnect />
-                <button className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-semibold text-lg hover:from-purple-700 hover:to-pink-700 transition-all transform hover:scale-105">
-                  View Dashboard
-                </button>
+                <a href="/dashboard">
+                  <button className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-semibold text-lg hover:from-purple-700 hover:to-pink-700 transition-all transform hover:scale-105">
+                    View Dashboard
+                  </button>
+                </a>
               </div>
             )}
           </div>
