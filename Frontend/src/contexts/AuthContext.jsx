@@ -223,7 +223,7 @@ export const AuthProvider = ({ children }) => {
         return { success: false, error: 'Authentication required' };
       }
       
-      const response = await walletAPI.connect(walletData.address, walletData.publicKey);
+      const response = await walletAPI.connect(walletData.addressString, walletData.publicKeyString);
       
       if (response.data.success) {
         dispatch({ type: 'SET_WALLET', payload: response.data.data.wallet });

@@ -13,7 +13,7 @@ class WalletController {
       console.log("Received wallet connect request:", req.body); // Log the request body
       console.log("Request headers:", req.headers); // Log headers
       console.log("User from request:", req.user); // Log user info
-      let { address, publicKey, signature } = req.body;
+      let { addressString, publicKeyString, signature } = req.body;
       
       // Get userId from authenticated user - guest users are no longer allowed
       if (!req.user || !req.user._id) {
@@ -23,39 +23,18 @@ class WalletController {
       const userId = req.user._id;
       console.log(`Connecting wallet for user: ${userId}`);
 
-      // Normalize address and publicKey
-      try {
-        // Ensure address is a string and properly formatted
-        if (typeof address === 'object') {
-          address = address.hexString || JSON.stringify(address);
-        } else if (address) {
-          address = String(address);
-        }
-        
-        // Ensure publicKey is a string
-        if (typeof publicKey === 'object') {
-          publicKey = publicKey.hexString || JSON.stringify(publicKey);
-        } else if (publicKey) {
-          publicKey = String(publicKey);
-        }
-      } catch (error) {
-        logger.error('Error normalizing wallet data:', error);
-      }
+      // Trust the received addressString and publicKeyString directly
+      const address = addressString;
+      const publicKey = publicKeyString;
 
-      // Validation
+      // Basic validation - only check if values exist
       if (!address || !publicKey) {
         console.log("Validation failed - missing data:", { address: !!address, publicKey: !!publicKey });
         throw createError(400, 'Wallet address and public key are required');
       }
 
-      console.log("About to validate address:", address);
-      // Validate address format
-      const isValidAddress = await aptosService.validateAddress(address);
-      console.log("Address validation result:", isValidAddress);
-      if (!isValidAddress) {
-        console.log("Address validation failed for:", address);
-        throw createError(400, 'Invalid wallet address format');
-      }
+      console.log("Trusting received wallet data:", { address, publicKey });
+      console.log("Backend will use these values directly without additional validation or transformation");
 
       try {
         // Connect wallet using Aptos service

@@ -56,14 +56,14 @@ const WalletConnect = ({ onWalletConnected }) => {
           console.log("Syncing wallet with backend:", { address: addressString, publicKey: publicKeyString });
           
           const result = await connectWallet({
-            address: addressString,
-            publicKey: publicKeyString
+            addressString: addressString,
+            publicKeyString: publicKeyString
           });
           
           if (result.success) {
             // Only show notification when explicitly requested via onWalletConnected
             if (onWalletConnected) {
-              onWalletConnected({...account, address: addressString, publicKey: publicKeyString});
+              onWalletConnected({...account, addressString: addressString, publicKeyString: publicKeyString});
             }
           } else {
             console.error("Failed to sync wallet with backend.");

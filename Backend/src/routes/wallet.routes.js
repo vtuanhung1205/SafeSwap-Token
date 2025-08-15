@@ -22,16 +22,16 @@ const walletController = new WalletController();
  *           schema:
  *             type: object
  *             required:
- *               - address
- *               - publicKey
+ *               - addressString
+ *               - publicKeyString
  *             properties:
- *               address:
+ *               addressString:
  *                 type: string
- *                 description: Wallet address
+ *                 description: Wallet address string
  *                 example: 0x1234567890abcdef1234567890abcdef12345678
- *               publicKey:
+ *               publicKeyString:
  *                 type: string
- *                 description: Wallet public key
+ *                 description: Wallet public key string
  *                 example: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
  *     responses:
  *       200:

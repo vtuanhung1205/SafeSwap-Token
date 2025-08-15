@@ -51,9 +51,9 @@ const tokens = [
   { symbol: "APT", name: "Aptos", icon: "https://s2.coinmarketcap.com/static/img/coins/200x200/21794.png", coingeckoId: "aptos", address: "0x1::aptos_coin::AptosCoin" },
   { symbol: "USDC", name: "USD Coin", icon: "https://s2.coinmarketcap.com/static/img/coins/200x200/3408.png", coingeckoId: "usd-coin", address: "0xf22bede237a07e121b56d91a491eb7bcdfd1f5907926a9e58338f964a01b17fa::asset::USDC" },
   { symbol: "USDT", name: "Tether", icon: "https://public.bnbstatic.com/static/academy/uploads-original/2fd4345d8c3a46278941afd9ab7ad225.png", coingeckoId: "tether", address: "0xf22bede237a07e121b56d91a491eb7bcdfd1f5907926a9e58338f964a01b17fa::asset::USDT" },
-  { symbol: "BTC", name: "Bitcoin", icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Bitcoin.svg/800px-Bitcoin.svg.png", coingeckoId: "bitcoin", address: "0xae478ff7d83ed071dbcaf62d0c9c832d41c4b6c8c8c8c8c8c8c8c8c8c8c8c8c8::coin::BTC" },
-  { symbol: "ETH", name: "Ethereum", icon: "https://static1.tokenterminal.com//ethereum/logo.png?logo_hash=fd8f54cab23f8f4980041f4e74607cac0c7ab880", coingeckoId: "ethereum", address: "0xae478ff7d83ed071dbcaf62d0c9c832d41c4b6c8c8c8c8c8c8c8c8c8c8c8c8c8::coin::ETH" },
-  { symbol: "SOL", name: "Solana", icon: "https://s2.coinmarketcap.com/static/img/coins/64x64/5426.png", coingeckoId: "solana", address: "0xdd87f5f64af48e1f51934ab1db5e47276b6039805337450584d25644d7b94d06::coin::SOL" },
+  { symbol: "BTC", name: "Bitcoin", icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Bitcoin.svg/800px-Bitcoin.svg.png", coingeckoId: "bitcoin", address: "0x1::coin::BTC" },
+  { symbol: "ETH", name: "Ethereum", icon: "https://static1.tokenterminal.com//ethereum/logo.png?logo_hash=fd8f54cab23f8f4980041f4e74607cac0c7ab880", coingeckoId: "ethereum", address: "0x1::coin::ETH" },
+  { symbol: "SOL", name: "Solana", icon: "https://s2.coinmarketcap.com/static/img/coins/64x64/5426.png", coingeckoId: "solana", address: "0x1::coin::SOL" },
 ];
 
 
@@ -85,13 +85,15 @@ const SwapForm = () => {
   useEffect(() => {
     const fetchTokenPrices = async () => {
       const ids = tokens.map((t) => t.coingeckoId).join(",");
+      console.log("Fetching prices for tokens:", ids);
       try {
         const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`);
         if (!response.ok) throw new Error("Failed to fetch prices from CoinGecko");
         const data = await response.json();
+        console.log("Received price data:", data);
         setTokenPrices(data);
       } catch (error) {
-        console.error(error);
+        console.error("Error fetching token prices:", error);
       } finally {
         setIsPriceLoading(false);
       }
@@ -168,11 +170,15 @@ const SwapForm = () => {
     try {
       // Calculate quote locally using current prices
       const fromAmount = parseFloat(debouncedAmount);
+      console.log("Getting quote for:", { fromToken: fromToken.symbol, toToken: toToken.symbol, amount: fromAmount });
+      
       const fromPrice = await getTokenPrice(fromToken);
       const toPrice = await getTokenPrice(toToken);
       
+      console.log("Prices received:", { fromPrice, toPrice, fromToken: fromToken.symbol, toToken: toToken.symbol });
+      
       if (!fromPrice || !toPrice) {
-        throw new Error('Unable to get current prices');
+        throw new Error(`Unable to get current prices. From: ${fromPrice}, To: ${toPrice}`);
       }
       
       const toAmount = (fromAmount * fromPrice) / toPrice;
@@ -318,22 +324,39 @@ const SwapForm = () => {
     };
   };
 
-  // Helper function to get token price from GeckoTerminal
+  // Helper function to get token price from CoinGecko data
   const getTokenPrice = async (token) => {
     try {
-      if (!token || !token.address) {
-        console.error('Token or token address is undefined:', token);
+      if (!token || !token.coingeckoId) {
+        console.error('Token or coingeckoId is undefined:', token);
         return null;
       }
-      const response = await axios.get(`https://api.geckoterminal.com/api/v2/networks/aptos/tokens/${token.address}`);
-      if (response.data && response.data.data && response.data.data.attributes) {
-        return response.data.data.attributes.price_usd;
-      } else {
-        console.error('Invalid response format from GeckoTerminal:', response.data);
-        return null;
+      
+      // Use the CoinGecko prices that are already fetched
+      if (tokenPrices && tokenPrices[token.coingeckoId]) {
+        return tokenPrices[token.coingeckoId].usd;
       }
+      
+              // Fallback: try to fetch from CoinGecko directly
+        try {
+          // Add a small delay to avoid rate limiting
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${token.coingeckoId}&vs_currencies=usd`);
+          if (response.ok) {
+            const data = await response.json();
+            console.log(`Fallback price for ${token.symbol}:`, data);
+            return data[token.coingeckoId]?.usd || null;
+          } else {
+            console.error(`Fallback API response not ok for ${token.symbol}:`, response.status, response.statusText);
+          }
+        } catch (fallbackError) {
+          console.error(`Fallback price fetch failed for ${token.symbol}:`, fallbackError);
+        }
+      
+      return null;
     } catch (error) {
-      console.error('Error fetching token price for', token?.address, ':', error);
+      console.error('Error getting token price for', token?.symbol, ':', error);
       return null;
     }
   };

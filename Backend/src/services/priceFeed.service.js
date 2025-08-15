@@ -81,6 +81,7 @@ class PriceFeedService {
         'APT': 'aptos',
         'BTC': 'bitcoin',
         'ETH': 'ethereum',
+        'SOL': 'solana',
         'USDC': 'usd-coin',
         'USDT': 'tether'
       };

@@ -70,11 +70,11 @@ export const authAPI = {
 // Wallet API
 export const walletAPI = {
   // Connect wallet
-  connect: (address, publicKey) => {
-    console.log("API: Connecting wallet with data:", { address, publicKey });
-    console.log("API: Request body will be:", { address, publicKey });
+  connect: (addressString, publicKeyString) => {
+    console.log("API: Connecting wallet with data:", { addressString, publicKeyString });
+    console.log("API: Request body will be:", { addressString, publicKeyString });
     console.log("API: Authorization header:", localStorage.getItem('token') ? 'Bearer ' + localStorage.getItem('token').substring(0, 20) + '...' : 'No token');
-    return api.post('/wallet/connect', { address, publicKey });
+    return api.post('/wallet/connect', { addressString, publicKeyString });
   },
   
   // Disconnect wallet
