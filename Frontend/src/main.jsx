@@ -12,7 +12,7 @@ import { MartianWallet } from "@martianwallet/aptos-wallet-adapter";
 import { PontemWalletAdapter } from "@pontem/aptos-wallet-adapter";
 import { RiseWallet } from "@rise-wallet/wallet-adapter";
 import { FewchaWallet } from "fewcha-plugin-wallet-adapter";
-import { AptosConnectWalletAdapter } from "@aptos-connect/wallet-adapter-plugin";
+import { AptosConnectGoogleWallet } from "@aptos-connect/wallet-adapter-plugin";
 
 // Configure React Router future flags
 import { 
@@ -33,7 +33,7 @@ UNSAFE_LocationContext.displayName = "Location";
 UNSAFE_RouteContext.displayName = "Route";
 
 const wallets = [
-  new AptosConnectWalletAdapter({
+  new AptosConnectGoogleWallet({
     clientId: "68865718442-0na32flmllvguiilt67os6p6rvgl0eqi.apps.googleusercontent.com",
     redirectUri: window.location.origin,
     scope: "openid email profile",
