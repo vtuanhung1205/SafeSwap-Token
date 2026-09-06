@@ -4,12 +4,16 @@ import './index.css'
 import App from './App.jsx'
 import { checkEnv } from './utils/envCheck'
 
+import { WalletProvider } from './contexts/WalletProvider.jsx'
+
 // Check environment variables
 const env = checkEnv();
 console.log('Environment check from main.jsx:', env);
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <App />
+    <WalletProvider>
+      <App />
+    </WalletProvider>
   </StrictMode>,
 )

@@ -31,7 +31,7 @@ class AuthController {
       await user.save();
 
       // Generate tokens
-      const tokens = authService.generateTokens({ userId: user._id });
+      const tokens = authService.generateTokens(user._id.toString());
 
       logger.info(`User registered successfully: ${email}`);
 
@@ -70,7 +70,7 @@ class AuthController {
       }
 
       // Generate tokens
-      const tokens = authService.generateTokens({ userId: user._id });
+      const tokens = authService.generateTokens(user._id.toString());
 
       logger.info(`User logged in successfully: ${email}`);
 
@@ -87,49 +87,23 @@ class AuthController {
     }
   }
 
-  async googleAuth(req, res, next) {
+  async googleCallback(req, res, next) {
     try {
-      const { googleId, email, name, avatar } = req.body;
-
-      if (!googleId || !email) {
-        throw createError(400, 'Google ID and email are required');
-      }
-
-      let user = await User.findOne({ $or: [{ googleId }, { email }] });
-
+      const user = req.user;
+      
       if (!user) {
-        // Create new user from Google
-        user = new User({
-          googleId,
-          email,
-          name,
-          avatar,
-          isVerified: true,
-        });
-        await user.save();
-        logger.info(`New Google user created: ${email}`);
-      } else if (!user.googleId) {
-        // Link existing user with Google
-        user.googleId = googleId;
-        user.avatar = avatar || user.avatar;
-        user.isVerified = true;
-        await user.save();
-        logger.info(`Google linked to existing user: ${email}`);
+        return res.redirect(`${process.env.CORS_ORIGIN || 'http://localhost:5173'}/login?error=true`);
       }
 
       // Generate tokens
-      const tokens = authService.generateTokens({ userId: user._id });
+      const tokens = authService.generateTokens(user._id.toString());
 
-      res.json({
-        success: true,
-        message: 'Google authentication successful',
-        data: {
-          user: user.toJSON(),
-          tokens,
-        },
-      });
+      // Redirect to frontend with tokens
+      const frontendUrl = process.env.CORS_ORIGIN || 'http://localhost:5173';
+      res.redirect(`${frontendUrl}/auth/callback?accessToken=${tokens.accessToken}&refreshToken=${tokens.refreshToken}`);
     } catch (error) {
-      next(error);
+      logger.error('Google callback error:', error);
+      res.redirect(`${process.env.CORS_ORIGIN || 'http://localhost:5173'}/login?error=true`);
     }
   }
 
@@ -141,8 +115,8 @@ class AuthController {
         throw createError(400, 'Refresh token is required');
       }
 
-      const decoded = authService.verifyToken(refreshToken, 'refresh');
-      const tokens = authService.generateTokens({ userId: decoded.userId });
+      const decoded = authService.verifyToken(refreshToken, true);
+      const tokens = authService.generateTokens(decoded.id);
 
       res.json({
         success: true,
@@ -156,7 +130,7 @@ class AuthController {
 
   async getProfile(req, res, next) {
     try {
-      const user = await User.findById(req.userId);
+      const user = await User.findById(req.user._id);
       
       if (!user) {
         throw createError(404, 'User not found');
@@ -180,7 +154,7 @@ class AuthController {
       if (avatar) updateData.avatar = avatar;
 
       const user = await User.findByIdAndUpdate(
-        req.userId,
+        req.user._id,
         updateData,
         { new: true, runValidators: true }
       );
@@ -205,7 +179,7 @@ class AuthController {
     try {
       // In a stateless JWT system, logout is handled client-side
       // But we can log the action
-      logger.info(`User logged out: ${req.userId}`);
+      logger.info(`User logged out: ${req.user._id}`);
 
       res.json({
         success: true,

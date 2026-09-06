@@ -101,7 +101,7 @@ const Footer = () => {
         </div>
         <hr className="my-8 border-gray-700" />
         <div className="flex flex-col md:flex-row md:items-center md:justify-between text-sm gap-4">
-          <div>© {new Date().getFullYear()} - SafeSwap</div>
+          <div>© 2025 - SafeSwap</div>
           <div className="flex space-x-6">
             {policyLinks.map((item) => (
               <Link

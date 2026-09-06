@@ -23,6 +23,7 @@ import ContactUs from "./components/pages/ContactUs";
 import TermsOfUse from "./components/pages/TermsOfUse";
 import PagePrivacy from "./components/pages/PagePrivacy";
 import NotFoundPage from "./components/NotFoundPage/NotFoundPage";
+import AuthCallback from "./components/Auth/AuthCallback";
 import "./index.css";
 // Icons
 import {
@@ -98,6 +99,7 @@ function App() {
               <Route path="/settings" element={<Settings />} />
               <Route path="/pricing" element={<Pricing />} />
               <Route path="/payment" element={<Payment />} />
+              <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </main>

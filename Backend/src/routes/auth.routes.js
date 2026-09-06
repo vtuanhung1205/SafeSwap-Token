@@ -3,6 +3,7 @@ const { AuthController } = require('../controllers/auth.controller');
 const { asyncHandler } = require('../middleware/errorHandler');
 const { strictRateLimiter } = require('../middleware/rateLimiter');
 const { verifyToken } = require('../middleware/auth');
+const passport = require('passport');
 
 const router = express.Router();
 const authController = new AuthController();
@@ -17,10 +18,18 @@ router.post('/register', strictRateLimiter, asyncHandler(authController.register
 // @access  Public
 router.post('/login', strictRateLimiter, asyncHandler(authController.login.bind(authController)));
 
-// @route   POST /api/auth/google
-// @desc    Google OAuth authentication
+// @route   GET /api/auth/google
+// @desc    Initiate Google OAuth authentication
 // @access  Public
-router.post('/google', strictRateLimiter, asyncHandler(authController.googleAuth.bind(authController)));
+router.get('/google', strictRateLimiter, passport.authenticate('google', { scope: ['profile', 'email'], session: false }));
+
+// @route   GET /api/auth/google/callback
+// @desc    Google OAuth callback
+// @access  Public
+router.get('/google/callback', 
+  passport.authenticate('google', { session: false, failureRedirect: `${process.env.CORS_ORIGIN || 'http://localhost:5173'}/login?error=true` }),
+  asyncHandler(authController.googleCallback.bind(authController))
+);
 
 // @route   POST /api/auth/refresh
 // @desc    Refresh access token

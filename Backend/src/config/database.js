@@ -14,6 +14,7 @@ const connectDatabase = async () => {
     
     // MongoDB connection options
     const options = {
+      dbName: process.env.MONGO_DB_NAME || process.env.MONGODB_DB_NAME,
       maxPoolSize: 10,
       serverSelectionTimeoutMS: 10000, // Increased timeout
       socketTimeoutMS: 45000,

@@ -7,7 +7,7 @@ import { DEMO_MODE } from '../config/demo';
 const SOCKET_URL =
   (import.meta.env.VITE_WEBSOCKET_URL
     ? import.meta.env.VITE_WEBSOCKET_URL.replace(/^http/, 'ws')
-    : 'wss://safeswap-backend-service.onrender.com');
+    : 'ws://localhost:5000');
 
 export const useWebSocket = () => {
   const [isConnected, setIsConnected] = useState(false);

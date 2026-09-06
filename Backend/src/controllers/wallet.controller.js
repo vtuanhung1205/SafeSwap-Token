@@ -11,7 +11,7 @@ class WalletController {
   async connectWallet(req, res, next) {
     try {
       const { address, publicKey, signature } = req.body;
-      const userId = req.userId;
+      const userId = req.user._id;
 
       // Validation
       if (!address || !publicKey) {
@@ -45,7 +45,7 @@ class WalletController {
 
   async disconnectWallet(req, res, next) {
     try {
-      const userId = req.userId;
+      const userId = req.user._id;
 
       const wallet = await Wallet.findOne({ userId });
       if (!wallet) {
@@ -67,7 +67,7 @@ class WalletController {
 
   async getWalletInfo(req, res, next) {
     try {
-      const userId = req.userId;
+      const userId = req.user._id;
 
       const wallet = await Wallet.findOne({ userId });
       if (!wallet) {
@@ -89,7 +89,7 @@ class WalletController {
 
   async getBalance(req, res, next) {
     try {
-      const userId = req.userId;
+      const userId = req.user._id;
       const { coinType } = req.query;
 
       const wallet = await Wallet.findOne({ userId });
@@ -123,7 +123,7 @@ class WalletController {
 
   async getTransactionHistory(req, res, next) {
     try {
-      const userId = req.userId;
+      const userId = req.user._id;
       const { limit = 25, offset = 0 } = req.query;
 
       const wallet = await Wallet.findOne({ userId });
@@ -151,7 +151,7 @@ class WalletController {
 
   async getAccountResources(req, res, next) {
     try {
-      const userId = req.userId;
+      const userId = req.user._id;
 
       const wallet = await Wallet.findOne({ userId });
       if (!wallet) {
@@ -196,7 +196,7 @@ class WalletController {
 
   async fundAccount(req, res, next) {
     try {
-      const userId = req.userId;
+      const userId = req.user._id;
       const { amount } = req.body;
 
       const wallet = await Wallet.findOne({ userId });
@@ -235,7 +235,7 @@ class WalletController {
 
   async getAccountInfo(req, res, next) {
     try {
-      const userId = req.userId;
+      const userId = req.user._id;
 
       const wallet = await Wallet.findOne({ userId });
       if (!wallet) {

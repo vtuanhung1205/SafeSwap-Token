@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://safeswap-backend-service.onrender.com/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 console.log('API Base URL:', API_BASE_URL);
 
 // Create axios instance
@@ -77,7 +77,7 @@ export const authAPI = {
     api.post('/auth/logout'),
   
   validateToken: () => 
-    api.get('/auth/validate'),
+    api.get('/auth/profile'),
     
   forgotPassword: (email) =>
     api.post('/auth/forgot-password', { email }),
@@ -106,7 +106,7 @@ export const walletAPI = {
     api.get(`/wallet/transactions?limit=${limit}`),
   
   validateAddress: (address) => 
-    api.post('/wallet/validate-address', { address }),
+    api.get(`/wallet/validate/${address}`),
   
   fundAccount: (amount) => 
     api.post('/wallet/fund', { amount }),

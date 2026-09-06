@@ -70,7 +70,7 @@ class SwapController {
 
   async executeSwap(req, res, next) {
     try {
-      const userId = req.userId;
+      const userId = req.user._id;
       const {
         fromToken,
         toToken,
@@ -175,7 +175,7 @@ class SwapController {
 
   async getSwapHistory(req, res, next) {
     try {
-      const userId = req.userId;
+      const userId = req.user._id;
       const {
         page = 1,
         limit = 20,
@@ -190,26 +190,28 @@ class SwapController {
       if (fromToken) filters.fromToken = fromToken.toUpperCase();
       if (toToken) filters.toToken = toToken.toUpperCase();
 
-      const options = {
-        page: parseInt(page),
-        limit: parseInt(limit),
-        sort,
-        lean: true,
-      };
+      const pageNum = parseInt(page);
+      const limitNum = parseInt(limit);
+      const skip = (pageNum - 1) * limitNum;
 
-      const transactions = await SwapTransaction.paginate(filters, options);
+      const totalDocs = await SwapTransaction.countDocuments(filters);
+      const docs = await SwapTransaction.find(filters)
+        .sort(sort)
+        .skip(skip)
+        .limit(limitNum)
+        .lean();
 
       res.json({
         success: true,
         data: {
-          transactions: transactions.docs,
+          transactions: docs,
           pagination: {
-            totalDocs: transactions.totalDocs,
-            totalPages: transactions.totalPages,
-            page: transactions.page,
-            limit: transactions.limit,
-            hasNext: transactions.hasNextPage,
-            hasPrev: transactions.hasPrevPage,
+            totalDocs,
+            totalPages: Math.ceil(totalDocs / limitNum),
+            page: pageNum,
+            limit: limitNum,
+            hasNext: pageNum < Math.ceil(totalDocs / limitNum),
+            hasPrev: pageNum > 1,
           },
         },
       });
@@ -221,7 +223,7 @@ class SwapController {
   async getTransactionStatus(req, res, next) {
     try {
       const { transactionId } = req.params;
-      const userId = req.userId;
+      const userId = req.user._id;
 
       const transaction = await SwapTransaction.findOne({
         _id: transactionId,
@@ -244,7 +246,7 @@ class SwapController {
   async cancelSwap(req, res, next) {
     try {
       const { transactionId } = req.params;
-      const userId = req.userId;
+      const userId = req.user._id;
 
       const transaction = await SwapTransaction.findOne({
         _id: transactionId,
@@ -276,7 +278,7 @@ class SwapController {
 
   async getSwapStats(req, res, next) {
     try {
-      const userId = req.userId;
+      const userId = req.user._id;
       const { period = '24h' } = req.query;
 
       let startDate;

@@ -3,8 +3,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import api from '../../utils/api';
 import { mockAPI } from '../../utils/mockData';
 
-// Toggle this for demo mode
-const DEMO_MODE = true;
+import { DEMO_MODE } from '../../config/demo';
 
 // --- Helper Components for a cleaner structure ---
 
@@ -49,8 +48,8 @@ const Dashboard = () => {
       setError(null);
       
       const fetcher = DEMO_MODE ? mockAPI : {
-        getSwapHistory: () => api.get('/api/swap/history'),
-        getSwapStats: () => api.get('/api/swap/stats'),
+        getSwapHistory: () => api.get('/swap/history'),
+        getSwapStats: () => api.get('/swap/stats'),
       };
 
       const [historyRes, statsRes] = await Promise.all([
@@ -58,8 +57,22 @@ const Dashboard = () => {
         fetcher.getSwapStats()
       ]);
 
-      setSwapHistory(historyRes.data.swaps || []);
-      setStats(statsRes.data || { totalSwaps: 0, totalVolume: 0, successRate: 0, avgAmount: 0 });
+      const history = DEMO_MODE ? historyRes.data.swaps : historyRes.data.data.transactions;
+      setSwapHistory(history || []);
+
+      let finalStats;
+      if (DEMO_MODE) {
+        finalStats = statsRes.data;
+      } else {
+        const s = statsRes.data.data.stats || {};
+        finalStats = {
+          totalSwaps: s.totalTransactions || 0,
+          totalVolume: s.totalVolume || 0,
+          successRate: s.totalTransactions ? (s.completedTransactions / s.totalTransactions) * 100 : 0,
+          avgAmount: s.avgTransactionSize || 0
+        };
+      }
+      setStats(finalStats);
 
     } catch (err) {
       console.error('Error fetching dashboard data:', err);

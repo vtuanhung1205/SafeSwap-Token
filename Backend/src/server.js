@@ -6,6 +6,9 @@ const dotenv = require('dotenv');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 
+// Load environment variables
+dotenv.config();
+
 const { connectDatabase } = require('./config/database');
 const { logger } = require('./utils/logger');
 const { errorHandler } = require('./middleware/errorHandler');
@@ -17,8 +20,7 @@ const priceRoutes = require('./routes/price.routes');
 const { WebSocketService } = require('./services/websocket.service');
 const { PriceFeedService } = require('./services/priceFeed.service');
 
-// Load environment variables
-dotenv.config();
+
 
 const app = express();
 const server = createServer(app);

@@ -1,5 +1,6 @@
 const passport = require('passport');
 const { Strategy: JwtStrategy, ExtractJwt } = require('passport-jwt');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const { User } = require('../models/User.model');
 const { createError } = require('./errorHandler');
 const { logger } = require('../utils/logger');
@@ -26,6 +27,53 @@ passport.use(
       return done(error, false);
     }
   })
+);
+
+// Configure Google OAuth Strategy
+passport.use(
+  new GoogleStrategy(
+    {
+      clientID: process.env.GOOGLE_CLIENT_ID || 'dummy_client_id',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'dummy_client_secret',
+      callbackURL: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:5000/api/auth/google/callback',
+      passReqToCallback: true,
+    },
+    async (req, accessToken, refreshToken, profile, done) => {
+      try {
+        // Find existing user by Google ID or Email
+        let user = await User.findOne({ 
+          $or: [
+            { googleId: profile.id }, 
+            { email: profile.emails[0].value }
+          ] 
+        });
+
+        if (!user) {
+          // Create new user if doesn't exist
+          user = new User({
+            googleId: profile.id,
+            email: profile.emails[0].value,
+            name: profile.displayName,
+            avatar: profile.photos[0]?.value,
+            isVerified: true, // Google emails are pre-verified
+          });
+          await user.save();
+        } else if (!user.googleId) {
+          // Link existing email account to Google
+          user.googleId = profile.id;
+          if (!user.avatar && profile.photos[0]?.value) {
+            user.avatar = profile.photos[0].value;
+          }
+          user.isVerified = true;
+          await user.save();
+        }
+
+        return done(null, user);
+      } catch (error) {
+        return done(error, null);
+      }
+    }
+  )
 );
 
 // Middleware to authenticate requests

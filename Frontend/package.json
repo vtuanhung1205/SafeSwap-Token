@@ -22,10 +22,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@aptos-labs/wallet-adapter-react": "^8.3.3",
     "axios": "^1.6.0",
     "clsx": "^2.0.0",
     "lucide-react": "^0.263.0",
     "nprogress": "^0.2.0",
+    "petra-plugin-wallet-adapter": "^0.4.5",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hot-toast": "^2.4.0",
