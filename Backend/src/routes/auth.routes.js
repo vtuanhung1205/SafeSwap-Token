@@ -26,13 +26,30 @@ router.post('/wallet-login', strictRateLimiter, asyncHandler(authController.wall
 // @route   GET /api/auth/google
 // @desc    Initiate Google OAuth authentication
 // @access  Public
-router.get('/google', strictRateLimiter, passport.authenticate('google', { scope: ['profile', 'email'], session: false }));
+router.get('/google', strictRateLimiter, (req, res, next) => {
+  const referer = req.headers.referer || req.headers.origin || '';
+  const state = referer.includes('localhost') ? 'local' : 'prod';
+  
+  passport.authenticate('google', { 
+    scope: ['profile', 'email'], 
+    session: false,
+    state: state
+  })(req, res, next);
+});
 
 // @route   GET /api/auth/google/callback
 // @desc    Google OAuth callback
 // @access  Public
 router.get('/google/callback', 
-  passport.authenticate('google', { session: false, failureRedirect: `${process.env.CORS_ORIGIN || 'http://localhost:5173'}/login?error=true` }),
+  (req, res, next) => {
+    const isLocal = req.query.state === 'local';
+    const fallbackUrl = isLocal ? 'http://localhost:5173' : (process.env.CORS_ORIGIN || 'https://safeswap.vercel.app');
+    
+    passport.authenticate('google', { 
+      session: false, 
+      failureRedirect: `${fallbackUrl}/login?error=true` 
+    })(req, res, next);
+  },
   asyncHandler(authController.googleCallback.bind(authController))
 );
 

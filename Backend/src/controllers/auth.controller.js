@@ -91,19 +91,23 @@ class AuthController {
     try {
       const user = req.user;
       
+      const isLocal = req.query.state === 'local';
+      const fallbackUrl = isLocal ? 'http://localhost:5173' : (process.env.CORS_ORIGIN || 'https://safeswap.vercel.app');
+
       if (!user) {
-        return res.redirect(`${process.env.CORS_ORIGIN || 'http://localhost:5173'}/login?error=true`);
+        return res.redirect(`${fallbackUrl}/login?error=true`);
       }
 
       // Generate tokens
       const tokens = authService.generateTokens(user._id.toString());
 
       // Redirect to frontend with tokens
-      const frontendUrl = process.env.CORS_ORIGIN || 'http://localhost:5173';
-      res.redirect(`${frontendUrl}/auth/callback?accessToken=${tokens.accessToken}&refreshToken=${tokens.refreshToken}`);
+      res.redirect(`${fallbackUrl}/auth/callback?accessToken=${tokens.accessToken}&refreshToken=${tokens.refreshToken}`);
     } catch (error) {
       logger.error('Google callback error:', error);
-      res.redirect(`${process.env.CORS_ORIGIN || 'http://localhost:5173'}/login?error=true`);
+      const isLocal = req.query.state === 'local';
+      const fallbackUrl = isLocal ? 'http://localhost:5173' : (process.env.CORS_ORIGIN || 'https://safeswap.vercel.app');
+      res.redirect(`${fallbackUrl}/login?error=true`);
     }
   }
 
