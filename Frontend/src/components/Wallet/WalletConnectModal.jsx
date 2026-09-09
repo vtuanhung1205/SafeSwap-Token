@@ -7,7 +7,7 @@ import { useAuth } from '../../contexts/AuthContext';
 
 const WalletConnectModal = ({ isOpen, onClose, suggestedAddress, onConnected }) => {
   const { wallets, connect, connected, account, signMessage, network } = useWallet();
-  const { walletLogin } = useAuth();
+  const { walletLogin, isAuthenticated } = useAuth();
   const [connecting, setConnecting] = React.useState(false);
   const [error, setError] = React.useState(null);
   const [shouldSign, setShouldSign] = React.useState(false);
@@ -35,6 +35,18 @@ const WalletConnectModal = ({ isOpen, onClose, suggestedAddress, onConnected }) 
         setShouldSign(false); // only run once
         
         try {
+          const address = account.address;
+          const publicKey = account.publicKey;
+
+          // If already authenticated via Google/email, just link the wallet without needing a signature
+          if (isAuthenticated) {
+            await walletAPI.connect(address, publicKey);
+            if (onConnected) onConnected();
+            onClose();
+            return;
+          }
+
+          // Otherwise, require signature for authentication
           const message = "Sign in to SafeSwap securely.";
           const nonce = Date.now().toString();
           
@@ -44,14 +56,11 @@ const WalletConnectModal = ({ isOpen, onClose, suggestedAddress, onConnected }) 
           };
           
           const response = await signMessage(payload);
-          
-          const address = account.address;
-          const publicKey = account.publicKey;
           const signatureStr = typeof response.signature === 'string' ? response.signature : 
              (response.signature?.hexString || response.signature?.data || Buffer.from(response.signature).toString('hex'));
 
-          if (address && publicKey && signatureStr) {
-            await walletLogin(address, publicKey, signatureStr, response.fullMessage || message);
+          if (address && signatureStr) {
+            await walletLogin(address, publicKey || "", signatureStr, response.fullMessage || message);
           }
           
           if (onConnected) {
@@ -60,7 +69,9 @@ const WalletConnectModal = ({ isOpen, onClose, suggestedAddress, onConnected }) 
           onClose();
         } catch (signErr) {
           console.error("Signature error:", signErr);
-          setError("Failed to verify wallet signature. Please try again.");
+          setError(signErr.message?.includes("User rejected") 
+            ? "Signature request rejected by user."
+            : "Failed to verify wallet signature. Please try again.");
           setConnecting(false);
         }
       }

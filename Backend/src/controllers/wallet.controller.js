@@ -14,8 +14,8 @@ class WalletController {
       const userId = req.user._id;
 
       // Validation
-      if (!address || !publicKey) {
-        throw createError(400, 'Wallet address and public key are required');
+      if (!address) {
+        throw createError(400, 'Wallet address is required');
       }
 
       // Validate address format
