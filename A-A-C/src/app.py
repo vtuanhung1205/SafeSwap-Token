@@ -12,6 +12,10 @@ try:
 except ImportError:
     from utils import create_feature_dataframe, cyclical_encoder
 
+# Inject cyclical_encoder into __main__ for joblib to find it in deployment (e.g. gunicorn)
+import __main__
+__main__.cyclical_encoder = cyclical_encoder
+
 app = Flask(__name__)
 
 # Đường dẫn tới pipeline - thử nhiều đường dẫn có thể
