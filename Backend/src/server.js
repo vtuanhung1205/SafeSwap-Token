@@ -96,8 +96,8 @@ app.use('*', (req, res) => {
 app.use(errorHandler);
 
 // Initialize services
-const webSocketService = new WebSocketService(io);
 const priceFeedService = new PriceFeedService();
+const webSocketService = new WebSocketService(io, priceFeedService);
 
 // Graceful shutdown
 const gracefulShutdown = (signal) => {

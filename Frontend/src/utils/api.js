@@ -1,7 +1,6 @@
 import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-console.log('API Base URL:', API_BASE_URL);
 
 // Create axios instance
 const api = axios.create({
@@ -66,6 +65,9 @@ export const authAPI = {
   
   register: (email, name, password, avatar) => 
     api.post('/auth/register', { email, name, password, avatar }),
+    
+  walletLogin: (address, publicKey, signature, message) =>
+    api.post('/auth/wallet-login', { address, publicKey, signature, message }),
   
   getProfile: () => 
     api.get('/auth/profile'),
@@ -131,7 +133,7 @@ export const priceAPI = {
 
 export const swapAPI = {
   getQuote: (fromToken, toToken, amount) => 
-    api.post('/swap/quote', { fromToken, toToken, amount }),
+    api.get(`/swap/quote?fromToken=${fromToken}&toToken=${toToken}&amount=${amount}`),
   
   executeSwap: (fromToken, toToken, fromAmount, toAmount, quoteId) => 
     api.post('/swap/execute', { fromToken, toToken, fromAmount, toAmount, quoteId }),
@@ -140,7 +142,7 @@ export const swapAPI = {
     api.get(`/swap/history?page=${page}&limit=${limit}${status ? `&status=${status}` : ''}`),
   
   getSwapDetails: (transactionId) => 
-    api.get(`/swap/history/${transactionId}`),
+    api.get(`/swap/transaction/${transactionId}`),
   
   getStats: () => 
     api.get('/swap/stats'),

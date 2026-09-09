@@ -12,6 +12,7 @@ import {
   Eye,
   BookOpen,
 } from "lucide-react";
+import SEO from "../SEO";
 
 // --- Helper Hook for On-Scroll Animations ---
 const useInView = (options) => {
@@ -79,6 +80,11 @@ const About = () => {
 
   return (
     <div className="bg-transparent text-white min-h-screen">
+      <SEO
+        title="About"
+        description="Learn about SafeSwap — the AI-powered decentralized exchange protecting DeFi traders from scams on Aptos. Meet our team and discover our mission."
+        keywords="about SafeSwap, DeFi mission, Aptos DEX team, blockchain security, AI trading protection"
+      />
       {/* Hero Section */}
       <section className="relative py-24 px-6 flex items-center justify-center text-center">
         <div className="relative z-10 max-w-4xl mx-auto">

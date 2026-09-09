@@ -1,13 +1,30 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
-import { mockPrices } from '../utils/mockData';
-import toast from 'react-hot-toast';
-import { DEMO_MODE } from '../config/demo';
 
 const SOCKET_URL =
   (import.meta.env.VITE_WEBSOCKET_URL
     ? import.meta.env.VITE_WEBSOCKET_URL.replace(/^http/, 'ws')
     : 'ws://localhost:5000');
+
+// Singleton socket — shared across all component instances to prevent
+// creating multiple connections when useWebSocket is called in multiple places
+let sharedSocket = null;
+let connectionCount = 0;
+
+// Cache Intl.NumberFormat instances to prevent massive CPU overhead on every render
+const formatterStandard = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+const formatterDecimals = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  minimumFractionDigits: 6,
+  maximumFractionDigits: 6,
+});
 
 export const useWebSocket = () => {
   const [isConnected, setIsConnected] = useState(false);
@@ -16,154 +33,118 @@ export const useWebSocket = () => {
   const socketRef = useRef(null);
 
   useEffect(() => {
-    if (DEMO_MODE) {
-      // Use mock data for demo
-      setPrices(mockPrices);
-      setIsConnected(true);
-      setLastUpdate(new Date());
-      console.log('Mock prices loaded:', Object.keys(mockPrices).length, 'tokens');
-      
-      // Simulate price updates
-      const interval = setInterval(() => {
-        setPrices(prev => {
-          const updated = { ...prev };
-          Object.keys(updated).forEach(symbol => {
-            const currentPrice = updated[symbol].price;
-            const change = (Math.random() - 0.5) * 0.02; // ±1% random change
-            updated[symbol] = {
-              ...updated[symbol],
-              price: currentPrice * (1 + change),
-              change24h: updated[symbol].change24h + change * 100
-            };
-          });
-          return updated;
-        });
-        setLastUpdate(new Date());
-      }, 5000); // Update every 5 seconds
-      
-      return () => clearInterval(interval);
-    } else {
-      // Initialize socket connection
-      socketRef.current = io(SOCKET_URL, {
+    connectionCount++;
+
+    // Reuse existing socket if it exists
+    if (!sharedSocket) {
+      sharedSocket = io(SOCKET_URL, {
         transports: ['websocket', 'polling'],
         timeout: 5000,
+        // Reconnect with exponential backoff to avoid hammering the server
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 10000,
+        reconnectionAttempts: 5,
       });
+    }
 
-      const socket = socketRef.current;
+    socketRef.current = sharedSocket;
+    const socket = sharedSocket;
 
-      // Connection event handlers
-      socket.on('connect', () => {
-        console.log('WebSocket connected');
-        setIsConnected(true);
-      });
+    const onConnect = () => setIsConnected(true);
+    const onDisconnect = () => setIsConnected(false);
+    const onConnectError = () => setIsConnected(false);
 
-      socket.on('disconnect', () => {
-        console.log('WebSocket disconnected');
-        setIsConnected(false);
-      });
+    const onInitialPrices = (data) => {
+      if (data.success && data.data) {
+        const priceMap = {};
+        data.data.forEach(price => {
+          priceMap[price.symbol] = price;
+        });
+        setPrices(priceMap);
+        setLastUpdate(new Date());
+      }
+    };
 
-      socket.on('connect_error', (error) => {
-        console.error('WebSocket connection error:', error);
-        setIsConnected(false);
-      });
+    const onPriceUpdate = (data) => {
+      if (data.type === 'price_update' && data.data) {
+        setPrices(prev => ({
+          ...prev,
+          [data.data.symbol]: {
+            ...prev[data.data.symbol],
+            ...data.data,
+          }
+        }));
+        setLastUpdate(new Date());
+      }
+    };
 
-      // Price update handlers
-      socket.on('initial_prices', (data) => {
-        if (data.success && data.data) {
-          const priceMap = {};
-          data.data.forEach(price => {
-            priceMap[price.symbol] = price;
-          });
-          setPrices(priceMap);
-          setLastUpdate(new Date());
-          console.log('Initial prices loaded:', Object.keys(priceMap).length, 'tokens');
-        }
-      });
+    socket.on('connect', onConnect);
+    socket.on('disconnect', onDisconnect);
+    socket.on('connect_error', onConnectError);
+    socket.on('initial_prices', onInitialPrices);
+    socket.on('price_update', onPriceUpdate);
 
-      socket.on('price_update', (data) => {
-        if (data.type === 'price_update' && data.data) {
-          setPrices(prev => ({
-            ...prev,
-            [data.data.symbol]: {
-              ...prev[data.data.symbol],
-              ...data.data,
-            }
-          }));
-          setLastUpdate(new Date());
-        }
-      });
+    // If socket already connected, sync state immediately
+    if (socket.connected) {
+      setIsConnected(true);
+    }
 
-      socket.on('subscription_success', (data) => {
-        console.log('Subscribed to tokens:', data.subscribed);
-      });
+    return () => {
+      socket.off('connect', onConnect);
+      socket.off('disconnect', onDisconnect);
+      socket.off('connect_error', onConnectError);
+      socket.off('initial_prices', onInitialPrices);
+      socket.off('price_update', onPriceUpdate);
 
-      socket.on('unsubscription_success', (data) => {
-        console.log('Unsubscribed from tokens:', data.unsubscribed);
-      });
+      connectionCount--;
+      // Only disconnect the socket when NO components are using it
+      if (connectionCount === 0 && sharedSocket) {
+        sharedSocket.disconnect();
+        sharedSocket = null;
+      }
+    };
+  }, []);
 
-      // Cleanup on unmount
-      return () => {
-        if (socket) {
-          socket.disconnect();
-        }
-      };
+  const subscribeToTokens = useCallback((tokens) => {
+    if (socketRef.current?.connected) {
+      socketRef.current.emit('subscribe_prices', tokens);
     }
   }, []);
 
-  const subscribeToTokens = (tokens) => {
-    if (DEMO_MODE) {
-      // In demo mode, just log subscription
-      console.log('Demo mode: Subscribed to tokens:', tokens);
-    } else if (socketRef.current && isConnected) {
-      socketRef.current.emit('subscribe_prices', tokens);
-    }
-  };
-
-  const unsubscribeFromTokens = (tokens) => {
-    if (DEMO_MODE) {
-      // In demo mode, just log unsubscription
-      console.log('Demo mode: Unsubscribed from tokens:', tokens);
-    } else if (socketRef.current && isConnected) {
+  const unsubscribeFromTokens = useCallback((tokens) => {
+    if (socketRef.current?.connected) {
       socketRef.current.emit('unsubscribe_prices', tokens);
     }
-  };
+  }, []);
 
-  const getTokenPrice = (symbol) => {
+  const getTokenPrice = useCallback((symbol) => {
     return prices[symbol?.toUpperCase()] || null;
-  };
+  }, [prices]);
 
-  const getAllPrices = () => {
-    return prices;
-  };
+  const getAllPrices = useCallback(() => prices, [prices]);
 
-  const getFormattedPrice = (symbol, decimals = 6) => {
-    const price = getTokenPrice(symbol);
+  const getFormattedPrice = useCallback((symbol, decimals = 6) => {
+    const price = prices[symbol?.toUpperCase()];
     if (!price) return '$0.00';
-    
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: price.price < 1 ? decimals : 2,
-      maximumFractionDigits: price.price < 1 ? decimals : 2,
-    }).format(price.price);
-  };
+    return price.price < 1
+      ? formatterDecimals.format(price.price)
+      : formatterStandard.format(price.price);
+  }, [prices]);
 
-  const getPriceChange24h = (symbol) => {
-    const price = getTokenPrice(symbol);
-    return price?.change24h || 0;
-  };
+  const getPriceChange24h = useCallback((symbol) => {
+    return prices[symbol?.toUpperCase()]?.change24h || 0;
+  }, [prices]);
 
-  const getFormattedPriceChange = (symbol) => {
-    const change = getPriceChange24h(symbol);
+  const getFormattedPriceChange = useCallback((symbol) => {
+    const change = prices[symbol?.toUpperCase()]?.change24h || 0;
     const isPositive = change >= 0;
-    
     return {
       value: change,
       formatted: `${isPositive ? '+' : ''}${change.toFixed(2)}%`,
       isPositive,
       className: isPositive ? 'text-green-500' : 'text-red-500',
     };
-  };
+  }, [prices]);
 
   return {
     isConnected,
@@ -177,4 +158,4 @@ export const useWebSocket = () => {
     getPriceChange24h,
     getFormattedPriceChange,
   };
-}; 
+};

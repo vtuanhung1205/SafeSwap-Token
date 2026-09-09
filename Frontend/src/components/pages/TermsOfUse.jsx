@@ -8,6 +8,7 @@ import {
   Info,
   History,
 } from "lucide-react";
+import SEO from "../SEO";
 
 // --- Main TermsOfUse Component ---
 const TermsOfUse = () => {
@@ -28,6 +29,11 @@ const TermsOfUse = () => {
 
   return (
     <div className="bg-transparent text-white">
+      <SEO
+        title="Terms of Use"
+        description="Read SafeSwap's Terms of Use. Understand your rights, responsibilities, and prohibited activities when using our AI-powered decentralized exchange."
+        keywords="SafeSwap terms of use, DEX terms, DeFi legal, crypto exchange terms, user agreement"
+      />
       {/* Hero Section */}
       <section className="relative py-20 px-6 flex items-center justify-center text-center">
         <div className="relative z-10 max-w-4xl mx-auto">

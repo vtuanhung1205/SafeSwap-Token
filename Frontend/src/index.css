@@ -2,25 +2,155 @@
 @tailwind components;
 @tailwind utilities;
 
-.app {
-  padding: 0;
-  margin: 0;
-  min-height: 100vh;
-  background: linear-gradient(#0b004e, #1d152f, #002834);
-  color: white;
+/* Native smooth scroll — zero JS overhead, replaces Lenis */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Prevent invisible text during font load (eliminates FOIT) */
+@layer base {
+  body {
+    font-display: optional;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Prevent CLS from text rendering shifts */
+    text-size-adjust: 100%;
+  }
+}
+
+
+@layer base {
+  :root {
+    --background: 220 30% 6%; /* Deep space blue/black #0b0f19 */
+    --foreground: 210 40% 98%;
+
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 98%;
+ 
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
+ 
+    --primary: 188 95% 42%; /* Neon Cyan #06b6d4 */
+    --primary-foreground: 222 47% 11%;
+ 
+    --secondary: 330 81% 60%; /* Hot Pink #ec4899 */
+    --secondary-foreground: 210 40% 98%;
+ 
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+ 
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+ 
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+ 
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 188 95% 42%;
+ 
+    --radius: 1rem;
+  }
+ 
+  .dark {
+    --background: 220 30% 6%;
+    --foreground: 210 40% 98%;
+ 
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 98%;
+ 
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
+ 
+    --primary: 188 95% 42%;
+    --primary-foreground: 222 47% 11%;
+ 
+    --secondary: 330 81% 60%;
+    --secondary-foreground: 210 40% 98%;
+ 
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+ 
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+ 
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+ 
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 188 95% 42%;
+  }
+}
+ 
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+}
+
+/* Glassmorphism utilities — backdrop-blur-md instead of xl for GPU performance */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(12px);          /* md = 12px instead of xl = 24px */
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.glowing-border {
+  border: 1px solid transparent;
+  box-shadow: 0 0 15px rgba(6,182,212,0.3);
+  transition: box-shadow 300ms ease;
+}
+.glowing-border:hover {
+  box-shadow: 0 0 25px rgba(6,182,212,0.5);
+}
+
+/* Promote animated cards to their own compositor layer */
+.glass-panel,
+.group:hover {
+  will-change: transform;
+}
+
+/* Use content-visibility for off-screen sections to skip rendering */
+section {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 500px;
+}
+
+/* Prevent layout shift for token images */
+img {
+  aspect-ratio: attr(width) / attr(height);
+}
+
+/* Custom scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.1);
+  border-radius: 2px;
+}
+
+/* Hide scrollbar utility */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 @layer base {
   .background-animated {
-    background: linear-gradient(
-      -45deg,
-      #000000,
-      #020c14,
-      #0c0214,
-      #000000
-    );
-    background-size: 400% 400%;
-    animation: gradient 15s ease infinite;
+    background: radial-gradient(circle at 50% 0%, #0c1a2e 0%, #000000 60%);
     position: relative;
     overflow: hidden;
   }
@@ -38,17 +168,7 @@
     background-size: 40px 40px;
     pointer-events: none;
     z-index: 0;
-  }
-}
-
-@keyframes gradient {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
+    /* Prevent this pseudo-element from triggering repaints */
+    transform: translateZ(0);
   }
 }

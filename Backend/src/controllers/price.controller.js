@@ -49,6 +49,23 @@ class PriceController {
     }
   }
 
+  async analyzeToken(req, res, next) {
+    try {
+      const { tokenAddress, tokenName, tokenSymbol } = req.body;
+      const { ScamDetectionService } = require('../services/scamDetection.service');
+      const scamDetectionService = new ScamDetectionService();
+      
+      const analysis = await scamDetectionService.analyzeToken(tokenAddress, tokenName, tokenSymbol);
+      
+      res.json({
+        success: true,
+        data: { analysis }
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async getAllPrices(req, res, next) {
     try {
       const { symbols } = req.query;
@@ -82,12 +99,8 @@ class PriceController {
         throw createError(400, 'Symbol parameter is required');
       }
 
-      // For now, return mock historical data
-      // In production, this would fetch from external API or database
-      const mockHistoricalData = this.generateMockHistoricalData(
-        symbol,
-        parseInt(days)
-      );
+      // For now, return empty data or 501 Not Implemented since historical data requires a Timeseries DB setup for Mainnet
+      const historicalData = [];
 
       res.json({
         success: true,
@@ -95,7 +108,7 @@ class PriceController {
           symbol: symbol.toUpperCase(),
           period: `${days} days`,
           interval,
-          prices: mockHistoricalData,
+          prices: historicalData,
         },
       });
     } catch (error) {
@@ -142,28 +155,8 @@ class PriceController {
 
   async getPriceAlerts(req, res, next) {
     try {
-      // Mock price alerts functionality
       // In production, this would check user's price alert settings
-      const alerts = [
-        {
-          id: 1,
-          symbol: 'APT',
-          type: 'above',
-          targetPrice: 10.0,
-          currentPrice: 8.45,
-          isActive: true,
-          createdAt: new Date(),
-        },
-        {
-          id: 2,
-          symbol: 'USDC',
-          type: 'below',
-          targetPrice: 0.99,
-          currentPrice: 1.0,
-          isActive: true,
-          createdAt: new Date(),
-        },
-      ];
+      const alerts = [];
 
       res.json({
         success: true,
@@ -186,17 +179,8 @@ class PriceController {
         throw createError(400, 'Type must be either "above" or "below"');
       }
 
-      // Mock alert creation
-      const alert = {
-        id: Date.now(),
-        symbol: symbol.toUpperCase(),
-        type,
-        targetPrice: parseFloat(targetPrice),
-        isActive: true,
-        createdAt: new Date(),
-      };
-
-      logger.info(`Price alert created: ${symbol} ${type} ${targetPrice}`);
+      // Real alert creation logic would go here. Returning 501 Not Implemented for Mainnet until DB schema is ready
+      throw createError(501, 'Price alerts not implemented in this version');
 
       res.status(201).json({
         success: true,
@@ -210,24 +194,16 @@ class PriceController {
 
   async getMarketStats(req, res, next) {
     try {
-      // Mock market statistics
+      // Return empty stats until a real market aggregator is integrated
       const stats = {
-        totalMarketCap: 1250000000000, // $1.25T
-        totalVolume24h: 45000000000, // $45B
-        marketCapChange24h: 2.5,
-        btcDominance: 42.3,
-        ethDominance: 18.7,
-        activeCryptocurrencies: 2500,
-        topGainers: [
-          { symbol: 'APT', change24h: 15.2 },
-          { symbol: 'SUI', change24h: 12.8 },
-          { symbol: 'NEAR', change24h: 8.4 },
-        ],
-        topLosers: [
-          { symbol: 'DOGE', change24h: -8.1 },
-          { symbol: 'SHIB', change24h: -6.3 },
-          { symbol: 'ADA', change24h: -4.2 },
-        ],
+        totalMarketCap: 0,
+        totalVolume24h: 0,
+        marketCapChange24h: 0,
+        btcDominance: 0,
+        ethDominance: 0,
+        activeCryptocurrencies: 0,
+        topGainers: [],
+        topLosers: [],
       };
 
       res.json({
@@ -241,14 +217,8 @@ class PriceController {
 
   async getTrendingTokens(req, res, next) {
     try {
-      // Mock trending tokens
-      const trending = [
-        { symbol: 'APT', name: 'Aptos', change24h: 5.2, volume24h: 125000000 },
-        { symbol: 'SUI', name: 'Sui', change24h: 3.8, volume24h: 95000000 },
-        { symbol: 'ARB', name: 'Arbitrum', change24h: 2.1, volume24h: 78000000 },
-        { symbol: 'OP', name: 'Optimism', change24h: 1.9, volume24h: 65000000 },
-        { symbol: 'MATIC', name: 'Polygon', change24h: 1.5, volume24h: 55000000 },
-      ];
+      // Return empty array until real trending aggregator is integrated
+      const trending = [];
 
       res.json({
         success: true,
@@ -259,26 +229,6 @@ class PriceController {
     }
   }
 
-  // Helper method to generate mock historical data
-  generateMockHistoricalData(symbol, days) {
-    const prices = [];
-    const currentPrice = 8.45; // Mock current price for APT
-    const now = Date.now();
-
-    for (let i = days; i >= 0; i--) {
-      const timestamp = now - i * 24 * 60 * 60 * 1000;
-      const randomChange = (Math.random() - 0.5) * 0.1; // ±5% random change
-      const price = currentPrice * (1 + randomChange);
-
-      prices.push({
-        timestamp,
-        price: parseFloat(price.toFixed(6)),
-        date: new Date(timestamp).toISOString(),
-      });
-    }
-
-    return prices;
-  }
 }
 
 module.exports = { PriceController };

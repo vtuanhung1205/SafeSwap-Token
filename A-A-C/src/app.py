@@ -1,5 +1,6 @@
 # src/app.py
 
+# pyrefly: ignore [missing-import]
 from flask import Flask, request, jsonify
 import joblib
 import requests
@@ -15,10 +16,9 @@ app = Flask(__name__)
 
 # Đường dẫn tới pipeline - thử nhiều đường dẫn có thể
 PIPELINE_PATHS = [
-    '../models/aptos_pro_pipeline.joblib',
+    os.path.join(os.path.dirname(__file__), '../models/aptos_pro_pipeline.joblib'),
     'models/aptos_pro_pipeline.joblib',
-    './models/aptos_pro_pipeline.joblib',
-    'A-A-C/models/aptos_pro_pipeline.joblib'
+    '../models/aptos_pro_pipeline.joblib'
 ]
 
 pipeline = None
@@ -26,11 +26,11 @@ pipeline = None
 # Dùng try-except để xử lý việc tải mô hình một cách an toàn
 for path in PIPELINE_PATHS:
     try:
-        pipeline = joblib.load(path)
-        print(f"✅ AI Model loaded successfully from: {path}")
-        break
-    except Exception as e:
-        print(f"❌ Failed to load from {path}: {e}")
+        if os.path.exists(path):
+            pipeline = joblib.load(path)
+            print(f"✅ AI Model loaded successfully from: {path}")
+            break
+    except Exception:
         continue
 
 if pipeline is None:
@@ -96,5 +96,5 @@ def predict():
 
 if __name__ == '__main__':
     # Chạy ứng dụng trên cổng từ environment hoặc 5000
-    port = int(os.environ.get('PORT', 5000))
+    port = int(os.environ.get('PORT', 5001))
     app.run(host='0.0.0.0', port=port, debug=False)  # Tắt debug khi chạy thật

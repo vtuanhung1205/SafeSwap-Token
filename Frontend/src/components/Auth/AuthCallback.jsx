@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
@@ -7,15 +7,19 @@ const AuthCallback = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { checkAuthStatus } = useAuth();
+  const hasProcessed = useRef(false);
 
   useEffect(() => {
     const handleCallback = async () => {
       try {
+        if (hasProcessed.current) return;
+
         const searchParams = new URLSearchParams(location.search);
         const accessToken = searchParams.get('accessToken');
         const refreshToken = searchParams.get('refreshToken');
 
         if (accessToken && refreshToken) {
+          hasProcessed.current = true;
           localStorage.setItem('accessToken', accessToken);
           localStorage.setItem('refreshToken', refreshToken);
           

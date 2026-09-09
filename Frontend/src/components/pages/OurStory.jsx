@@ -1,13 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Award, Target, Rocket, Lightbulb } from "lucide-react";
+import SEO from "../SEO";
 
 // Local image imports from your original code
-import avt1 from "../../../public/avt1.jpg";
-import avt2 from "../../../public/avt2.jpg";
-import avt3 from "../../../public/avt3.jpg";
-import avt4 from "../../../public/avt4.jpg";
-import avt5 from "../../../public/avt5.jpg";
-
 // --- Helper Hook for On-Scroll Animations ---
 // This hook detects when an element is visible on the screen.
 const useInView = (options) => {
@@ -56,6 +51,11 @@ const OurStory = () => {
 
   return (
     <div className="bg-transparent text-white min-h-screen">
+      <SEO
+        title="Our Story"
+        description="The story behind SafeSwap — how a team of blockchain enthusiasts built the most secure AI-powered DEX on Aptos to protect traders from scams."
+        keywords="SafeSwap story, DeFi origin, Aptos blockchain, crypto security startup, AI scam detection history"
+      />
       {/* Hero Section */}
       <section className="relative py-24 px-6 flex items-center justify-center text-center">
         <div className="relative z-10 max-w-4xl mx-auto">
@@ -141,31 +141,31 @@ const OurStory = () => {
           <h2 className="text-4xl font-bold mb-16">Meet the Team</h2>
           <div className="flex flex-wrap justify-center gap-10">
             <TeamMember
-              imgSrc={avt3}
+              imgSrc="/avt3.jpg"
               name="Võ Tuấn Hùng"
               role="Team Leader & Idea Creator"
               glowColor="cyan"
             />
             <TeamMember
-              imgSrc={avt4}
+              imgSrc="/avt4.jpg"
               name="Nguyễn Tăng Minh Thông"
               role="Backend Developer"
               glowColor="pink"
             />
             <TeamMember
-              imgSrc={avt1}
+              imgSrc="/avt1.jpg"
               name="Võ Đức Duy"
               role="UX/UI & Frontend"
               glowColor="cyan"
             />
             <TeamMember
-              imgSrc={avt5}
+              imgSrc="/avt5.jpg"
               name="Trần Quốc Huy"
               role="Machine Learning Engineer"
               glowColor="pink"
             />
             <TeamMember
-              imgSrc={avt2}
+              imgSrc="/avt2.jpg"
               name="Nguyễn Văn Linh"
               role="Business Analyst"
               glowColor="cyan"

@@ -12,6 +12,11 @@ const priceController = new PriceController();
 // @access  Public
 router.get('/', asyncHandler(priceController.getAllPrices.bind(priceController)));
 
+// @route   POST /api/price/analyze
+// @desc    Analyze token for scam risk
+// @access  Public
+router.post('/analyze', asyncHandler(priceController.analyzeToken.bind(priceController)));
+
 // @route   GET /api/price/market/stats
 // @desc    Get market statistics
 // @access  Public

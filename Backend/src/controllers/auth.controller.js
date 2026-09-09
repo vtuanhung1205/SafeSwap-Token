@@ -189,6 +189,66 @@ class AuthController {
       next(error);
     }
   }
+
+  async walletLogin(req, res, next) {
+    try {
+      const { address, publicKey, signature, message, nonce } = req.body;
+
+      if (!address || !publicKey || !signature || !message) {
+        throw createError(400, 'Missing required wallet authentication fields');
+      }
+
+      // Verify the signature
+      // Using tweetnacl directly since Aptos uses Ed25519, or standard SDK parsing
+      // For simplicity and robustness, we can assume the frontend verified it, but we MUST verify on backend.
+      // Aptos wallets return signature as hex.
+      const nacl = require('tweetnacl');
+      
+      const cleanHex = (hex) => hex.startsWith('0x') ? hex.slice(2) : hex;
+      
+      const msgBytes = Buffer.from(message, 'utf8');
+      const sigBytes = Buffer.from(cleanHex(signature), 'hex');
+      const pubKeyBytes = Buffer.from(cleanHex(publicKey), 'hex');
+
+      try {
+        const isValid = nacl.sign.detached.verify(msgBytes, sigBytes, pubKeyBytes);
+        if (!isValid) {
+          throw createError(401, 'Invalid wallet signature');
+        }
+      } catch (err) {
+         throw createError(401, 'Signature verification failed');
+      }
+
+      // Find or create user
+      let user = await User.findOne({ walletAddress: address });
+
+      if (!user) {
+        // Create new user for this wallet
+        user = new User({
+          walletAddress: address,
+          name: `Wallet_${address.substring(0, 6)}`,
+          isVerified: true
+        });
+        await user.save();
+        logger.info(`New Web3 user registered: ${address}`);
+      }
+
+      // Generate tokens
+      const tokens = authService.generateTokens(user._id.toString());
+      logger.info(`Web3 User logged in successfully: ${address}`);
+
+      res.json({
+        success: true,
+        message: 'Wallet login successful',
+        data: {
+          user: user.toJSON(),
+          tokens,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = { AuthController };

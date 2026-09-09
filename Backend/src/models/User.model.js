@@ -5,8 +5,11 @@ const userSchema = new mongoose.Schema(
   {
     email: {
       type: String,
-      required: true,
+      required: function() {
+        return !this.walletAddress; 
+      },
       unique: true,
+      sparse: true,
       lowercase: true,
       trim: true,
     },

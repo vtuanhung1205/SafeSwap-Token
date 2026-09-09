@@ -18,6 +18,11 @@ router.post('/register', strictRateLimiter, asyncHandler(authController.register
 // @access  Public
 router.post('/login', strictRateLimiter, asyncHandler(authController.login.bind(authController)));
 
+// @route   POST /api/auth/wallet-login
+// @desc    Web3 Wallet Login
+// @access  Public
+router.post('/wallet-login', strictRateLimiter, asyncHandler(authController.walletLogin.bind(authController)));
+
 // @route   GET /api/auth/google
 // @desc    Initiate Google OAuth authentication
 // @access  Public

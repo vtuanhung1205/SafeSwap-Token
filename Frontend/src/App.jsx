@@ -1,30 +1,38 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense, useCallback } from "react";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
+  Link,
 } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "./contexts/AuthContext";
 import Navbar from "./components/Navbar/Navbar";
 import Footer from "./components/Footer";
-import SwapForm from "./components/SwapForm";
-import Dashboard from "./components/Dashboard/Dashboard";
-import DemoBadge from "./components/DemoBadge";
-import OurStory from "./components/pages/OurStory";
-import Feature from "./components/Feature";
-import About from "../src/components/pages/About";
-import Docs from "./components/pages/Docs";
-import APIReference from "./components/pages/APIReference";
-import Community from "./components/pages/Community";
-import HelpCenter from "./components/pages/HelpCenter";
-import ContactUs from "./components/pages/ContactUs";
-import TermsOfUse from "./components/pages/TermsOfUse";
-import PagePrivacy from "./components/pages/PagePrivacy";
-import NotFoundPage from "./components/NotFoundPage/NotFoundPage";
-import AuthCallback from "./components/Auth/AuthCallback";
+import CookieConsent from "./components/CookieConsent";
 import "./index.css";
+
+// Lazy load heavy page components to improve LCP
+const Dashboard = React.lazy(() => import("./components/Dashboard/Dashboard"));
+const OurStory = React.lazy(() => import("./components/pages/OurStory"));
+const Feature = React.lazy(() => import("./components/Feature"));
+const About = React.lazy(() => import("../src/components/pages/About"));
+const Docs = React.lazy(() => import("./components/pages/Docs"));
+const APIReference = React.lazy(() => import("./components/pages/APIReference"));
+const Community = React.lazy(() => import("./components/pages/Community"));
+const HelpCenter = React.lazy(() => import("./components/pages/HelpCenter"));
+const ContactUs = React.lazy(() => import("./components/pages/ContactUs"));
+const TermsOfUse = React.lazy(() => import("./components/pages/TermsOfUse"));
+const PagePrivacy = React.lazy(() => import("./components/pages/PagePrivacy"));
+const NotFoundPage = React.lazy(() => import("./components/NotFoundPage/NotFoundPage"));
+const AuthCallback = React.lazy(() => import("./components/Auth/AuthCallback"));
+const Wallet = React.lazy(() => import("./components/pages/Wallet"));
+const Settings = React.lazy(() => import("./components/pages/Settings"));
+const Pricing = React.lazy(() => import("./components/pages/Pricing"));
+const Payment = React.lazy(() => import("./components/pages/Payment"));
+// SwapForm is lazy-loaded to defer the heavy Aptos SDK import
+const SwapForm = React.lazy(() => import("./components/SwapForm"));
 // Icons
 import {
   ShieldCheck,
@@ -37,18 +45,19 @@ import {
   CheckCircle,
   Bot,
 } from "lucide-react";
-import Wallet from "./components/pages/Wallet";
-import Settings from "./components/pages/Settings";
-import Pricing from "./components/pages/Pricing";
-import Payment from "./components/pages/Payment";
 
-// --- Custom Hook to Track Mouse Position ---
-const useMousePosition = () => {
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-
+// --- Custom Hook to Track Mouse Position directly via DOM ---
+const useMousePosition = (ref) => {
   useEffect(() => {
+    if (!ref.current) return;
+    
     const handleMouseMove = (e) => {
-      setPosition({ x: e.clientX, y: e.clientY });
+      // Directly mutate the DOM element's style to avoid React re-renders
+      requestAnimationFrame(() => {
+        if (ref.current) {
+          ref.current.style.background = `radial-gradient(600px at ${e.clientX}px ${e.clientY}px, rgba(29, 78, 216, 0.15), transparent 80%)`;
+        }
+      });
     };
 
     window.addEventListener("mousemove", handleMouseMove);
@@ -56,15 +65,15 @@ const useMousePosition = () => {
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
     };
-  }, []);
-
-  return position;
+  }, [ref]);
 };
 
 // --- Main App Component ---
 function App() {
-  const mousePosition = useMousePosition();
   const [showChatbot, setShowChatbot] = useState(false);
+
+  // CSS smooth scroll handles this natively with zero JS overhead.
+  // See the html { scroll-behavior: smooth } rule in index.css.
 
   return (
     <AuthProvider>
@@ -77,33 +86,44 @@ function App() {
         <div className="min-h-screen flex flex-col background-animated">
           <Navbar />
 
-          <main className="flex-1 relative z-10">
-            <Routes>
-              <Route
-                path="/"
-                element={<HomePage mousePosition={mousePosition} />}
-              />
-              <Route path="/swap" element={<SwapPage />} />
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/our-story" element={<OurStory />} />
-              <Route path="/feature" element={<Feature />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/docs" element={<Docs />} />
-              <Route path="/api-reference" element={<APIReference />} />
-              <Route path="/community" element={<Community />} />
-              <Route path="/help-center" element={<HelpCenter />} />
-              <Route path="/contact" element={<ContactUs />} />
-              <Route path="/terms-of-use" element={<TermsOfUse />} />
-              <Route path="/privacy-policy" element={<PagePrivacy />} />
-              <Route path="/wallet" element={<Wallet />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/pricing" element={<Pricing />} />
-              <Route path="/payment" element={<Payment />} />
-              <Route path="/auth/callback" element={<AuthCallback />} />
-              <Route path="*" element={<NotFoundPage />} />
-            </Routes>
+          <main className="flex-1 relative z-10 pt-24">
+            <Suspense fallback={
+              <div
+                className="flex items-center justify-center"
+                style={{ minHeight: 'calc(100vh - 80px)' }}
+                aria-label="Loading page"
+              >
+                <div className="w-8 h-8 rounded-full border-2 border-cyan-500/30 border-t-cyan-500 animate-spin" />
+              </div>
+            }>
+              <Routes>
+                <Route
+                  path="/"
+                  element={<HomePage />}
+                />
+                <Route path="/swap" element={<SwapPage />} />
+                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/our-story" element={<OurStory />} />
+                <Route path="/feature" element={<Feature />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/docs" element={<Docs />} />
+                <Route path="/api-reference" element={<APIReference />} />
+                <Route path="/community" element={<Community />} />
+                <Route path="/help-center" element={<HelpCenter />} />
+                <Route path="/contact" element={<ContactUs />} />
+                <Route path="/terms-of-use" element={<TermsOfUse />} />
+                <Route path="/privacy-policy" element={<PagePrivacy />} />
+                <Route path="/wallet" element={<Wallet />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/pricing" element={<Pricing />} />
+                <Route path="/payment" element={<Payment />} />
+                <Route path="/auth/callback" element={<AuthCallback />} />
+                <Route path="*" element={<NotFoundPage />} />
+              </Routes>
+            </Suspense>
           </main>
           <Footer />
+          <CookieConsent />
           <Toaster
             position="top-right"
             toastOptions={{
@@ -205,16 +225,20 @@ function App() {
 }
 
 // --- Redesigned Home Page with Spotlight Effect ---
-const HomePage = ({ mousePosition }) => {
+const HomePage = () => {
+  const spotlightRef = React.useRef(null);
+  useMousePosition(spotlightRef);
+  
   return (
     <div className="bg-transparent text-white overflow-hidden">
       {/* Hero Section */}
       <section className="relative min-h-[90vh] flex items-center px-6">
         {/* Interactive Spotlight Effect */}
         <div
-          className="pointer-events-none fixed inset-0 z-0 transition duration-300"
+          ref={spotlightRef}
+          className="pointer-events-none fixed inset-0 z-0 transition-opacity duration-300"
           style={{
-            background: `radial-gradient(600px at ${mousePosition.x}px ${mousePosition.y}px, rgba(29, 78, 216, 0.15), transparent 80%)`,
+            background: `radial-gradient(600px at 50% 50%, rgba(29, 78, 216, 0.15), transparent 80%)`,
           }}
         />
 
@@ -228,18 +252,18 @@ const HomePage = ({ mousePosition }) => {
               detection and institutional-grade security.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <a
-                href="/swap"
+              <Link
+                to="/swap"
                 className="px-8 py-4 bg-cyan-600 hover:bg-cyan-700 text-white font-bold rounded-2xl transition-all duration-300 transform hover:scale-105"
               >
                 Launch App
-              </a>
-              <a
-                href="/feature"
+              </Link>
+              <Link
+                to="/feature"
                 className="px-8 py-4 border border-cyan-600 text-cyan-600 hover:bg-cyan-600 hover:text-white font-bold rounded-2xl transition-all duration-300"
               >
                 Learn More
-              </a>
+              </Link>
             </div>
           </div>
 
@@ -257,6 +281,10 @@ const HomePage = ({ mousePosition }) => {
                   <img
                     src="https://s2.coinmarketcap.com/static/img/coins/200x200/21794.png"
                     alt="APT"
+                    width={24}
+                    height={24}
+                    loading="lazy"
+                    decoding="async"
                     className="w-6 h-6 mr-2"
                   />{" "}
                   APT
@@ -280,6 +308,10 @@ const HomePage = ({ mousePosition }) => {
                   <img
                     src="https://s2.coinmarketcap.com/static/img/coins/200x200/3408.png"
                     alt="USDC"
+                    width={24}
+                    height={24}
+                    loading="lazy"
+                    decoding="async"
                     className="w-6 h-6 mr-2"
                   />{" "}
                   USDC

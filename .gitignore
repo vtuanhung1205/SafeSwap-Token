@@ -54,3 +54,16 @@ Thumbs.db
 
 # Local development
 *.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+ENV/
+env/
+.env.python

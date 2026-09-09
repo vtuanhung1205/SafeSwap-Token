@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, memo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronDown,
   User,
@@ -8,6 +9,8 @@ import {
   Shield,
   BarChart3,
   Bell,
+  Menu,
+  X,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
@@ -23,6 +26,7 @@ const Navbar = () => {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [notifications] = useState([
     { id: 1, message: "Welcome to SafeSwap!" },
     { id: 2, message: "Your swap was successful." },
@@ -46,87 +50,58 @@ const Navbar = () => {
 
   return (
     <>
-      <nav className="bg-[#18181c] border-b border-[#23232a] px-6 py-4">
+      <nav className="fixed top-0 left-0 right-0 z-50 glass-panel border-b-0 shadow-sm px-6 py-4 mx-4 mt-4 rounded-3xl">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center space-x-3">
-            <Link to="/" className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-cyan-600 rounded-full flex items-center justify-center">
-                <Shield size={20} className="text-white" />
-              </div>
+            <Link to="/" className="flex items-center space-x-3 group" aria-label="SafeSwap Home">
+              <img
+                src="/logo.webp"
+                alt="SafeSwap logo"
+                width={36}
+                height={36}
+                className="w-9 h-9 object-contain"
+              />
               <span className="text-xl font-bold text-white">SafeSwap</span>
             </Link>
-            {/* WebSocket Status */}
-            <div className="flex items-center space-x-2">
-              <div
-                className={`w-2 h-2 rounded-full ${
-                  isConnected ? "bg-green-500" : "bg-red-500"
-                }`}
-              ></div>
-              <span className="text-xs text-gray-400">
-                {isConnected ? "Live" : "Offline"}
-              </span>
-            </div>
           </div>
 
           {/* Navigation Menu */}
-          <div className="flex items-center space-x-8">
-            <Link
-              to="/"
-              className={`px-3 py-2 rounded-lg transition ${
-                location.pathname === "/"
-                  ? "text-cyan-400 bg-cyan-600/10"
-                  : "text-gray-300 hover:text-cyan-400"
-              }`}
-            >
-              Home
-            </Link>
-            <Link
-              to="/swap"
-              className={`px-3 py-2 rounded-lg transition ${
-                location.pathname === "/swap"
-                  ? "text-cyan-400 bg-cyan-600/10"
-                  : "text-gray-300 hover:text-cyan-400"
-              }`}
-            >
-              Swap
-            </Link>
-            <Link
-              to="/feature"
-              className={`px-3 py-2 rounded-lg transition ${
-                location.pathname === "/feature"
-                  ? "text-cyan-400 bg-cyan-600/10"
-                  : "text-gray-300 hover:text-cyan-400"
-              }`}
-            >
-              Feature
-            </Link>
-            <Link
-              to="/pricing"
-              className={`px-3 py-2 rounded-lg transition ${
-                location.pathname === "/pricing"
-                  ? "text-cyan-400 bg-cyan-600/10"
-                  : "text-gray-300 hover:text-cyan-400"
-              }`}
-            >
-              Pricing
-            </Link>
-            {isAuthenticated && (
-              <Link
-                to="/dashboard"
-                className={`px-3 py-2 rounded-lg transition ${
-                  location.pathname === "/dashboard"
-                    ? "text-cyan-400 bg-cyan-600/10"
-                    : "text-gray-300 hover:text-cyan-400"
-                }`}
-              >
-                Dashboard
-              </Link>
-            )}
+          <div className="hidden md:flex items-center space-x-1 bg-black/20 backdrop-blur-md rounded-2xl p-1.5 border border-white/5">
+            {['/', '/swap', '/feature', '/pricing', '/dashboard'].map((path) => {
+              if (path === '/dashboard' && !isAuthenticated) return null;
+              
+              const labels = {
+                '/': 'Home',
+                '/swap': 'Swap',
+                '/feature': 'Features',
+                '/pricing': 'Pricing',
+                '/dashboard': 'Dashboard'
+              };
+              
+              const isActive = location.pathname === path;
+              
+              return (
+                <Link
+                  key={path}
+                  to={path}
+                  className={`relative px-5 py-2 rounded-xl transition-colors duration-300 text-sm ${isActive ? 'text-cyan-300' : 'text-gray-400 hover:text-white'}`}
+                >
+                  <span className="relative z-10 font-medium tracking-wide">{labels[path]}</span>
+                  {isActive && (
+                    <motion.div
+                      layoutId="navbar-active"
+                      className="absolute inset-0 bg-gradient-to-r from-cyan-600/20 to-pink-600/20 border border-white/10 rounded-xl z-0"
+                      transition={{ type: "spring", bounce: 0.25, duration: 0.5 }}
+                    />
+                  )}
+                </Link>
+              );
+            })}
           </div>
 
           {/* User Section */}
-          <div className="flex items-center space-x-4">
+          <div className="hidden md:flex items-center space-x-4 min-w-[200px] justify-end">
             {/* Notification Bell */}
             <div className="relative">
               <button
@@ -134,6 +109,9 @@ const Navbar = () => {
                 onClick={() => setShowNotifications((prev) => !prev)}
                 onMouseEnter={() => setShowNotifications(true)}
                 onMouseLeave={() => setShowNotifications(false)}
+                aria-label="Notifications"
+                aria-haspopup="true"
+                aria-expanded={showNotifications}
               >
                 <Bell className="w-6 h-6 text-cyan-400" />
                 {notifications.length > 0 && (
@@ -271,6 +249,17 @@ const Navbar = () => {
               </>
             )}
           </div>
+          {/* Mobile Hamburger Button */}
+          <div className="md:hidden flex items-center">
+            <button
+              className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/10 transition-all"
+              onClick={() => setShowMobileMenu(v => !v)}
+              aria-label={showMobileMenu ? 'Close menu' : 'Open menu'}
+              aria-expanded={showMobileMenu}
+            >
+              {showMobileMenu ? <X size={22} /> : <Menu size={22} />}
+            </button>
+          </div>
         </div>
 
         {/* Click outside to close user menu */}
@@ -280,6 +269,69 @@ const Navbar = () => {
             onClick={() => setShowUserMenu(false)}
           />
         )}
+
+        {/* Mobile Dropdown */}
+        <AnimatePresence>
+          {showMobileMenu && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.25 }}
+              className="md:hidden overflow-hidden border-t border-white/[0.06] mt-3 pt-3"
+            >
+              <div className="flex flex-col gap-1 pb-2">
+                {[{ path: '/', label: 'Home' }, { path: '/swap', label: 'Swap' }, { path: '/feature', label: 'Features' }, { path: '/pricing', label: 'Pricing' }].map(item => (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    onClick={() => setShowMobileMenu(false)}
+                    className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                      location.pathname === item.path
+                        ? 'bg-white/10 text-white'
+                        : 'text-gray-400 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+                {isAuthenticated && (
+                  <Link
+                    to="/dashboard"
+                    onClick={() => setShowMobileMenu(false)}
+                    className="px-4 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-all"
+                  >
+                    Dashboard
+                  </Link>
+                )}
+                <div className="border-t border-white/[0.06] my-2" />
+                {isAuthenticated ? (
+                  <button
+                    onClick={() => { handleLogout(); setShowMobileMenu(false); }}
+                    className="px-4 py-2.5 rounded-xl text-sm font-medium text-red-400 hover:bg-white/5 text-left transition-all"
+                  >
+                    Sign Out
+                  </button>
+                ) : (
+                  <div className="flex gap-2 px-1">
+                    <button
+                      onClick={() => { setShowLoginModal(true); setShowMobileMenu(false); }}
+                      className="flex-1 py-2.5 rounded-xl text-sm font-medium text-cyan-400 border border-cyan-500/30 hover:bg-cyan-500/10 transition-all"
+                    >
+                      Sign In
+                    </button>
+                    <button
+                      onClick={() => { setShowRegisterModal(true); setShowMobileMenu(false); }}
+                      className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-cyan-600 text-white hover:bg-cyan-700 transition-all"
+                    >
+                      Sign Up
+                    </button>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </nav>
 
       {/* Auth Modals */}
@@ -298,4 +350,4 @@ const Navbar = () => {
   );
 };
 
-export default Navbar;
+export default memo(Navbar);

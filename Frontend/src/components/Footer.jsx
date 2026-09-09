@@ -1,24 +1,25 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { Github, Linkedin, Instagram, ArrowUpRight } from "lucide-react";
 
 const socialLinks = [
   {
     href: "https://github.com/vtuanhung1205/SafeSwap-Token",
-    label: "Github",
-    icon: (
-      <svg width="32" height="32" fill="currentColor" viewBox="0 0 24 24">
-        <path d="M12 2C6.48 2 2 6.58 2 12.26c0 4.48 2.87 8.28 6.84 9.63.5.09.68-.22.68-.48 0-.24-.01-.87-.01-1.7-2.78.62-3.37-1.36-3.37-1.36-.45-1.18-1.1-1.5-1.1-1.5-.9-.63.07-.62.07-.62 1 .07 1.53 1.06 1.53 1.06.89 1.56 2.34 1.11 2.91.85.09-.66.35-1.11.63-1.37-2.22-.26-4.56-1.14-4.56-5.07 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.7 0 0 .84-.28 2.75 1.05A9.36 9.36 0 0 1 12 6.84c.85.004 1.71.12 2.51.35 1.91-1.33 2.75-1.05 2.75-1.05.55 1.4.2 2.44.1 2.7.64.72 1.03 1.63 1.03 2.75 0 3.94-2.34 4.81-4.57 5.07.36.32.68.94.68 1.9 0 1.37-.01 2.47-.01 2.81 0 .27.18.58.69.48A10.01 10.01 0 0 0 22 12.26C22 6.58 17.52 2 12 2z" />
-      </svg>
-    ),
+    label: "GitHub",
+    icon: Github,
+    color: "hover:text-white",
   },
   {
-    href: "/",
-    label: "Facebook",
-    icon: (
-      <svg width="32" height="32" fill="currentColor" viewBox="0 0 24 24">
-        <path d="M12 2.04C6.5 2.04 2 6.53 2 12.06c0 5.52 4.5 10.02 10 10.02s10-4.5 10-10.02C22 6.53 17.5 2.04 12 2.04zM16.5 12.06h-2.25v6h-3V12.06H9.5v-2.25h1.75V8.56c0-1.73 1.05-2.68 2.6-2.68h1.9v2.25h-1.14c-.85 0-.9.4-.9.92v1.45h2.25l-.25 2.25z" />
-      </svg>
-    ),
+    href: "https://linkedin.com/in/hans-vo",
+    label: "LinkedIn",
+    icon: Linkedin,
+    color: "hover:text-sky-400",
+  },
+  {
+    href: "https://instagram.com/h4nsx",
+    label: "Instagram",
+    icon: Instagram,
+    color: "hover:text-indigo-400",
   },
 ];
 
@@ -28,6 +29,7 @@ const footerLinks = [
     links: [
       { label: "Features", href: "/feature" },
       { label: "Pricing", href: "/pricing" },
+      { label: "Swap", href: "/swap" },
     ],
   },
   {
@@ -35,6 +37,7 @@ const footerLinks = [
     links: [
       { label: "About", href: "/about" },
       { label: "Our Story", href: "/our-story" },
+      { label: "Community", href: "/community" },
     ],
   },
   {
@@ -42,76 +45,99 @@ const footerLinks = [
     links: [
       { label: "Docs", href: "/docs" },
       { label: "API Reference", href: "/api-reference" },
-      { label: "Community", href: "/community" },
+      { label: "Help Center", href: "/help-center" },
     ],
   },
   {
     title: "Support",
     links: [
-      { label: "Help Center", href: "/help-center" },
       { label: "Contact Us", href: "/contact" },
+      { label: "Terms of Use", href: "/terms-of-use" },
+      { label: "Privacy Policy", href: "/privacy-policy" },
     ],
   },
 ];
 
-const policyLinks = [
-  { label: "Terms Of Use", href: "/terms-of-use" },
-  { label: "Privacy Policy", href: "/privacy-policy" },
-];
-
 const Footer = () => {
   return (
-    <footer className="bg-[#18181c] text-gray-200 pt-10 pb-4 px-4 mt-12">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-8">
-          {/* Social icons */}
-          <div className="flex items-center space-x-8 mb-6 md:mb-0">
-            {socialLinks.map((item) => (
-              <a
-                key={item.label}
-                href={item.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-cyan-400 transition"
-              >
-                {item.icon}
-              </a>
-            ))}
+    <footer className="relative mt-20 border-t border-white/[0.06]" role="contentinfo">
+      {/* Gradient line at top */}
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-500/40 to-transparent" />
+      
+      <div className="max-w-7xl mx-auto px-6 pt-16 pb-8">
+        {/* Main footer grid */}
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-12 mb-16">
+          {/* Brand column */}
+          <div className="md:col-span-2 space-y-6">
+            <Link to="/" className="flex items-center gap-3 group" aria-label="SafeSwap Home">
+              <img
+                src="/logo.webp"
+                alt="SafeSwap logo"
+                width={40}
+                height={40}
+                className="w-10 h-10 object-contain"
+              />
+              <span className="text-xl font-heading font-bold text-white">SafeSwap</span>
+            </Link>
+            <p className="text-sm text-gray-500 leading-relaxed max-w-xs">
+              The most secure AI-powered decentralized exchange on the Aptos blockchain. Swap with confidence.
+            </p>
+            
+            {/* Social icons */}
+            <div className="flex items-center gap-3">
+              {socialLinks.map((item) => (
+                <a
+                  key={item.label}
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`Follow SafeSwap on ${item.label}`}
+                  className={`w-10 h-10 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center text-gray-500 ${item.color} hover:bg-white/[0.08] hover:border-white/10 transition-all duration-300`}
+                >
+                  <item.icon size={18} />
+                </a>
+              ))}
+            </div>
           </div>
-          {/* Footer columns */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 flex-1">
-            {footerLinks.map((col) => (
-              <div key={col.title}>
-                <div className="font-bold text-white mb-2">{col.title}</div>
-                <ul className="space-y-1">
-                  {col.links.map((link) => (
-                    <li key={link.label}>
-                      <a
-                        href={link.href}
-                        className="hover:text-cyan-400 transition text-gray-300"
-                      >
-                        {link.label}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
+
+          {/* Link columns */}
+          {footerLinks.map((col) => (
+            <nav key={col.title} aria-label={`${col.title} links`}>
+              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-5">
+                {col.title}
+              </h3>
+              <ul className="space-y-3">
+                {col.links.map((link) => (
+                  <li key={link.label}>
+                    <Link
+                      to={link.href}
+                      className="text-sm text-gray-500 hover:text-white transition-colors duration-200 flex items-center gap-1 group/link"
+                    >
+                      {link.label}
+                      <ArrowUpRight size={12} className="opacity-0 -translate-x-1 group-hover/link:opacity-100 group-hover/link:translate-x-0 transition-all duration-200 text-cyan-400" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          ))}
         </div>
-        <hr className="my-8 border-gray-700" />
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between text-sm gap-4">
-          <div>© 2025 - SafeSwap</div>
-          <div className="flex space-x-6">
-            {policyLinks.map((item) => (
-              <Link
-                key={item.label}
-                to={item.href}
-                className="hover:text-cyan-400 transition"
-              >
-                {item.label}
-              </Link>
-            ))}
+
+        {/* Bottom bar */}
+        <div className="pt-8 border-t border-white/[0.04] flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-xs text-gray-600">
+            © {new Date().getFullYear()} SafeSwap. All rights reserved.
+          </p>
+          <div className="flex items-center gap-6">
+            <Link to="/terms-of-use" className="text-xs text-gray-600 hover:text-gray-400 transition-colors">
+              Terms
+            </Link>
+            <Link to="/privacy-policy" className="text-xs text-gray-600 hover:text-gray-400 transition-colors">
+              Privacy
+            </Link>
+            <span className="text-xs text-gray-700">
+              Built on <span className="text-cyan-500/70 font-medium">Aptos</span>
+            </span>
           </div>
         </div>
       </div>

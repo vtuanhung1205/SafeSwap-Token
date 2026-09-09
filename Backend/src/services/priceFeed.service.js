@@ -88,6 +88,18 @@ class PriceFeedService {
   }
 
   async getPriceFromBinance(symbol) {
+    if (symbol.toUpperCase() === 'USDT') {
+      return {
+        symbol: 'USDT',
+        price: 1.0,
+        change24h: 0,
+        marketCap: 0,
+        volume24h: 0,
+        source: 'fallback',
+        timestamp: Date.now()
+      };
+    }
+    
     try {
       const binanceSymbol = `${symbol.toUpperCase()}USDT`;
       
@@ -154,14 +166,7 @@ class PriceFeedService {
       return cached.data;
     }
     
-    // Return mock data if no cached price
-    const mockPrices = {
-      'APT': { symbol: 'APT', price: 8.45, change24h: 2.3 },
-      'USDC': { symbol: 'USDC', price: 1.0, change24h: 0.1 },
-      'USDT': { symbol: 'USDT', price: 0.999, change24h: -0.1 }
-    };
-    
-    return mockPrices[symbol.toUpperCase()] || null;
+    return null;
   }
 
   getAllPrices() {
@@ -172,15 +177,6 @@ class PriceFeedService {
         allPrices[symbol] = cached.data;
       }
     });
-    
-    // Add mock prices if cache is empty
-    if (Object.keys(allPrices).length === 0) {
-      return {
-        'APT': { symbol: 'APT', price: 8.45, change24h: 2.3 },
-        'USDC': { symbol: 'USDC', price: 1.0, change24h: 0.1 },
-        'USDT': { symbol: 'USDT', price: 0.999, change24h: -0.1 }
-      };
-    }
     
     return allPrices;
   }

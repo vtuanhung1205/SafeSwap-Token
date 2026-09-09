@@ -9,16 +9,24 @@ import {
   CheckCircle,
   X,
   Upload,
+  Settings as SettingsIcon,
+  Smartphone,
+  Save,
+  KeyRound
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+
+const TABS = [
+  { id: 'general', label: 'General Info', icon: User },
+  { id: 'security', label: 'Security', icon: Shield },
+  { id: 'appearance', label: 'Appearance', icon: Sun },
+];
 
 const Settings = () => {
   const [loading, setLoading] = useState(true);
-  const [twoFA, setTwoFA] = useState(false);
-  const [theme, setTheme] = useState("light");
-  const [showEditProfile, setShowEditProfile] = useState(false);
-  const [showChangePassword, setShowChangePassword] = useState(false);
-
-  // Edit Profile state
+  const [activeTab, setActiveTab] = useState('general');
+  
+  // General Info
   const [name, setName] = useState("John Doe");
   const [email, setEmail] = useState("john.doe@email.com");
   const [avatar, setAvatar] = useState(null);
@@ -26,7 +34,8 @@ const Settings = () => {
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileSuccess, setProfileSuccess] = useState(false);
 
-  // Change Password state
+  // Security
+  const [twoFA, setTwoFA] = useState(false);
   const [current, setCurrent] = useState("");
   const [newPass, setNewPass] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -37,29 +46,30 @@ const Settings = () => {
   const [passwordSuccess, setPasswordSuccess] = useState(false);
   const [passwordError, setPasswordError] = useState("");
 
+  // Appearance
+  const [theme, setTheme] = useState("dark");
+
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 800);
+    const timer = setTimeout(() => setLoading(false), 600);
     return () => clearTimeout(timer);
   }, []);
 
-  // Edit Profile handlers
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
     setAvatar(file);
     setPreview(URL.createObjectURL(file));
   };
+
   const handleProfileSubmit = (e) => {
     e.preventDefault();
     setSavingProfile(true);
     setTimeout(() => {
       setSavingProfile(false);
       setProfileSuccess(true);
-      setTimeout(() => setProfileSuccess(false), 1500);
-      setShowEditProfile(false);
-    }, 1200);
+      setTimeout(() => setProfileSuccess(false), 2000);
+    }, 1000);
   };
 
-  // Change Password handlers
   const handlePasswordSubmit = (e) => {
     e.preventDefault();
     setPasswordError("");
@@ -78,310 +88,273 @@ const Settings = () => {
       setCurrent("");
       setNewPass("");
       setConfirm("");
-      setTimeout(() => setPasswordSuccess(false), 1500);
-      setShowChangePassword(false);
-    }, 1200);
+      setTimeout(() => setPasswordSuccess(false), 2000);
+    }, 1000);
+  };
+
+  const contentVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: { opacity: 1, y: 0, transition: { type: "spring", bounce: 0, duration: 0.4 } },
+    exit: { opacity: 0, y: -10, transition: { duration: 0.2 } }
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-96 text-gray-400">
-        Loading Settings...
+      <div className="flex flex-col items-center justify-center min-h-[80vh] text-cyan-400 space-y-4">
+        <SettingsIcon className="w-10 h-10 animate-spin-slow" />
+        <span className="font-heading tracking-widest text-sm uppercase">Loading Preferences...</span>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen from-[#18181c] to-[#23232a] text-white px-4 py-12 md:px-12 lg:px-48">
-      {/* Hero Card - User Info */}
-      <div className="max-w-3xl mx-auto mb-10">
-        <div className="relative bg-gradient-to-br from-cyan-900/60 to-pink-900/40 backdrop-blur-xl rounded-3xl shadow-2xl p-8 flex flex-col md:flex-row items-center gap-6 border border-cyan-800/30">
-          <div className="flex items-center gap-4 w-full md:w-auto">
-            <div className="w-16 h-16 rounded-full bg-cyan-600 flex items-center justify-center shadow-lg border-4 border-cyan-400/30">
-              <User size={36} className="text-white" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-white">{name}</div>
-              <div className="text-cyan-300 font-mono text-sm flex items-center gap-1">
-                <Mail size={16} className="inline-block text-cyan-400" />
-                {email}
-              </div>
-            </div>
-          </div>
-          <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto justify-end">
-            <button
-              onClick={() => setShowEditProfile(true)}
-              className="bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-2 rounded-xl font-semibold shadow transition"
-            >
-              Edit Profile
-            </button>
-          </div>
-        </div>
+    <div className="max-w-6xl mx-auto px-4 py-8 md:py-12 text-white min-h-[80vh]">
+      <div className="mb-10">
+        <h1 className="text-4xl md:text-5xl font-heading font-extrabold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+          Settings
+        </h1>
+        <p className="text-gray-400 mt-2 font-medium">Manage your account preferences and security protocols.</p>
       </div>
 
-      {/* Settings Sections */}
-      <div className="max-w-3xl mx-auto bg-[#18181c] rounded-2xl shadow-lg p-8 mb-10 space-y-10">
-        {/* Change Password */}
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <Lock size={20} className="text-pink-400" />
-            <h2 className="text-xl font-semibold text-pink-400">
-              Change Password
-            </h2>
-          </div>
-          <button
-            onClick={() => setShowChangePassword(true)}
-            className="bg-pink-600 hover:bg-pink-700 text-white px-6 py-2 rounded-xl font-semibold transition mb-2"
-          >
-            Change Password
-          </button>
+      <div className="flex flex-col md:flex-row gap-8 items-start">
+        {/* Sidebar Navigation */}
+        <div className="w-full md:w-64 flex-shrink-0 space-y-2">
+          {TABS.map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`w-full flex items-center gap-3 px-5 py-4 rounded-2xl transition-all duration-300 relative group overflow-hidden ${isActive ? 'text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+              >
+                {isActive && (
+                  <motion.div
+                    layoutId="settings-active-tab"
+                    className="absolute inset-0 bg-cyan-900/40 border border-cyan-500/30 rounded-2xl z-0"
+                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                  />
+                )}
+                <tab.icon size={20} className={`relative z-10 ${isActive ? 'text-cyan-400' : 'text-gray-500 group-hover:text-gray-300 transition-colors'}`} />
+                <span className="relative z-10 font-semibold">{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
 
-        {/* Two-Factor Authentication */}
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <Shield size={20} className="text-cyan-400" />
-            <h2 className="text-xl font-semibold text-cyan-400">
-              Two-Factor Authentication (2FA)
-            </h2>
-          </div>
-          <label className="flex items-center space-x-3 mb-2">
-            <input
-              type="checkbox"
-              checked={twoFA}
-              onChange={() => setTwoFA(!twoFA)}
-              className="form-checkbox h-5 w-5 text-cyan-600"
-            />
-            <span className="text-gray-300">Enable 2FA</span>
-            {twoFA && <CheckCircle size={18} className="text-green-400 ml-2" />}
-          </label>
-          <div className="text-xs text-gray-400 ml-8">
-            Add an extra layer of security to your account.
-          </div>
-        </div>
+        {/* Main Content Area */}
+        <div className="flex-1 glass-panel p-1 rounded-3xl min-h-[500px] w-full">
+          <div className="bg-[#111112]/50 backdrop-blur-md w-full h-full rounded-[23px] p-8 md:p-10 relative overflow-hidden">
+            {/* Background decorative glow */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 blur-[100px] rounded-full pointer-events-none"></div>
 
-        {/* Appearance */}
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <Sun size={20} className="text-yellow-300" />
-            <Moon size={20} className="text-pink-400" />
-            <h2 className="text-xl font-semibold bg-gradient-to-r from-yellow-300 to-pink-400 bg-clip-text text-transparent">
-              Appearance
-            </h2>
-          </div>
-          <div className="flex items-center space-x-6">
-            <label className="flex items-center space-x-2">
-              <input
-                type="radio"
-                name="theme"
-                value="light"
-                checked={theme === "light"}
-                onChange={() => setTheme("light")}
-                className="form-radio h-5 w-5 text-yellow-300"
-              />
-              <span className="text-gray-300">Light Mode</span>
-            </label>
-            <label className="flex items-center space-x-2">
-              <input
-                type="radio"
-                name="theme"
-                value="dark"
-                checked={theme === "dark"}
-                onChange={() => setTheme("dark")}
-                className="form-radio h-5 w-5 text-pink-600"
-              />
-              <span className="text-gray-300">Dark Mode</span>
-            </label>
-          </div>
-        </div>
-      </div>
+            <AnimatePresence mode="wait">
+              {/* General Tab */}
+              {activeTab === 'general' && (
+                <motion.div key="general" variants={contentVariants} initial="hidden" animate="visible" exit="exit" className="relative z-10">
+                  <h2 className="text-2xl font-heading font-bold mb-8 flex items-center gap-2">
+                    <User className="text-cyan-400" /> General Information
+                  </h2>
+                  
+                  <form onSubmit={handleProfileSubmit} className="max-w-xl space-y-8">
+                    <div className="flex items-center gap-6 mb-8">
+                      <div className="relative group cursor-pointer">
+                        <div className="w-24 h-24 rounded-2xl bg-[#23232a] border border-white/10 flex items-center justify-center overflow-hidden group-hover:border-cyan-500/50 transition-colors">
+                          {preview ? (
+                            <img src={preview} alt="Avatar" className="w-full h-full object-cover" />
+                          ) : (
+                            <User size={40} className="text-gray-500" />
+                          )}
+                        </div>
+                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-2xl">
+                          <Upload size={24} className="text-white" />
+                        </div>
+                        <input type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" id="avatar-upload" />
+                        <label htmlFor="avatar-upload" className="absolute inset-0 cursor-pointer"></label>
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-bold">Profile Picture</h3>
+                        <p className="text-sm text-gray-400">Upload a new avatar to personalize your account.</p>
+                      </div>
+                    </div>
 
-      {/* Edit Profile Modal */}
-      {showEditProfile && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="w-full max-w-lg bg-[#18181c] rounded-2xl shadow-2xl p-8 relative animate-fade-in">
-            <button
-              onClick={() => setShowEditProfile(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-pink-400"
-            >
-              <X size={28} />
-            </button>
-            <h1 className="text-3xl md:text-4xl font-extrabold mb-8 text-center bg-gradient-to-r from-cyan-400 to-pink-400 bg-clip-text text-transparent">
-              Edit Profile
-            </h1>
-            <form onSubmit={handleProfileSubmit} className="space-y-6">
-              <div className="flex flex-col items-center mb-4">
-                <label htmlFor="avatar-upload" className="cursor-pointer group">
-                  <div className="w-24 h-24 rounded-full bg-cyan-700 flex items-center justify-center shadow-lg border-4 border-cyan-400/30 overflow-hidden mb-2 relative">
-                    {preview ? (
-                      <img
-                        src={preview}
-                        alt="Avatar Preview"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <User size={48} className="text-white" />
-                    )}
-                    <div className="absolute opacity-0 group-hover:opacity-100 transition bg-black/60 w-24 h-24 flex items-center justify-center rounded-full top-0 left-0">
-                      <Upload size={28} className="text-cyan-300" />
+                    <div className="space-y-6">
+                      <div className="relative">
+                        <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
+                        <input
+                          type="text"
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                          className="w-full bg-[#18181c] border border-[#23232a] text-white px-12 py-4 rounded-xl focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 transition-all peer"
+                          placeholder=" "
+                          required
+                        />
+                        <label className="absolute left-12 top-4 text-gray-500 text-sm transition-all peer-focus:-top-2 peer-focus:left-4 peer-focus:text-xs peer-focus:text-cyan-400 peer-focus:bg-[#111112] peer-focus:px-2 peer-[:not(:placeholder-shown)]:-top-2 peer-[:not(:placeholder-shown)]:left-4 peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:bg-[#111112] peer-[:not(:placeholder-shown)]:px-2 pointer-events-none">
+                          Display Name
+                        </label>
+                      </div>
+
+                      <div className="relative">
+                        <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
+                        <input
+                          type="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className="w-full bg-[#18181c] border border-[#23232a] text-white px-12 py-4 rounded-xl focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 transition-all peer"
+                          placeholder=" "
+                          required
+                        />
+                        <label className="absolute left-12 top-4 text-gray-500 text-sm transition-all peer-focus:-top-2 peer-focus:left-4 peer-focus:text-xs peer-focus:text-cyan-400 peer-focus:bg-[#111112] peer-focus:px-2 peer-[:not(:placeholder-shown)]:-top-2 peer-[:not(:placeholder-shown)]:left-4 peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:bg-[#111112] peer-[:not(:placeholder-shown)]:px-2 pointer-events-none">
+                          Email Address
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="pt-4 flex items-center gap-4">
+                      <button
+                        type="submit"
+                        disabled={savingProfile}
+                        className="bg-cyan-600 hover:bg-cyan-500 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-[0_0_15px_rgba(6,182,212,0.2)] flex items-center gap-2 disabled:opacity-50"
+                      >
+                        {savingProfile ? <SettingsIcon className="animate-spin" size={20} /> : <Save size={20} />}
+                        {savingProfile ? "Saving..." : "Save Changes"}
+                      </button>
+                      
+                      <AnimatePresence>
+                        {profileSuccess && (
+                          <motion.span initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} className="text-green-400 flex items-center gap-2 font-medium text-sm">
+                            <CheckCircle size={16} /> Saved
+                          </motion.span>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  </form>
+                </motion.div>
+              )}
+
+              {/* Security Tab */}
+              {activeTab === 'security' && (
+                <motion.div key="security" variants={contentVariants} initial="hidden" animate="visible" exit="exit" className="relative z-10">
+                  <h2 className="text-2xl font-heading font-bold mb-8 flex items-center gap-2">
+                    <Shield className="text-cyan-400" /> Security
+                  </h2>
+
+                  <div className="max-w-xl space-y-10">
+                    {/* 2FA Section */}
+                    <div className="p-6 rounded-2xl bg-[#18181c] border border-white/5 flex items-start justify-between">
+                      <div>
+                        <h3 className="font-bold text-lg mb-1 flex items-center gap-2">
+                          Two-Factor Auth <Smartphone size={16} className="text-cyan-400" />
+                        </h3>
+                        <p className="text-sm text-gray-400 max-w-sm">Secure your account with a one-time passcode generated by your authenticator app.</p>
+                      </div>
+                      <button 
+                        onClick={() => setTwoFA(!twoFA)}
+                        className={`relative w-14 h-8 rounded-full transition-colors duration-300 focus:outline-none ${twoFA ? 'bg-cyan-600' : 'bg-gray-700'}`}
+                      >
+                        <motion.div 
+                          className="w-6 h-6 bg-white rounded-full absolute top-1 shadow-md"
+                          animate={{ left: twoFA ? '34px' : '4px' }}
+                          transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                        />
+                      </button>
+                    </div>
+
+                    {/* Change Password */}
+                    <div>
+                      <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                        <KeyRound size={18} className="text-pink-400" /> Change Password
+                      </h3>
+                      <form onSubmit={handlePasswordSubmit} className="space-y-4">
+                        {[
+                          { label: "Current Password", state: current, setter: setCurrent, show: showCurrent, setShow: setShowCurrent },
+                          { label: "New Password", state: newPass, setter: setNewPass, show: showNew, setShow: setShowNew },
+                          { label: "Confirm Password", state: confirm, setter: setConfirm, show: showConfirm, setShow: setShowConfirm }
+                        ].map((field, idx) => (
+                          <div key={idx} className="relative">
+                            <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
+                            <input
+                              type={field.show ? "text" : "password"}
+                              value={field.state}
+                              onChange={(e) => field.setter(e.target.value)}
+                              className="w-full bg-[#18181c] border border-[#23232a] text-white px-12 py-4 rounded-xl focus:outline-none focus:border-pink-500/50 focus:ring-1 focus:ring-pink-500/50 transition-all peer"
+                              placeholder=" "
+                              required
+                              minLength={6}
+                            />
+                            <label className="absolute left-12 top-4 text-gray-500 text-sm transition-all peer-focus:-top-2 peer-focus:left-4 peer-focus:text-xs peer-focus:text-pink-400 peer-focus:bg-[#111112] peer-focus:px-2 peer-[:not(:placeholder-shown)]:-top-2 peer-[:not(:placeholder-shown)]:left-4 peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:bg-[#111112] peer-[:not(:placeholder-shown)]:px-2 pointer-events-none">
+                              {field.label}
+                            </label>
+                            <button
+                              type="button"
+                              onClick={() => field.setShow(!field.show)}
+                              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
+                            >
+                              {field.show ? <X size={18} /> : <Lock size={18} />}
+                            </button>
+                          </div>
+                        ))}
+
+                        {passwordError && <p className="text-red-400 text-sm mt-2">{passwordError}</p>}
+
+                        <div className="pt-4 flex items-center gap-4">
+                          <button
+                            type="submit"
+                            disabled={savingPassword}
+                            className="bg-pink-600 hover:bg-pink-500 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-[0_0_15px_rgba(236,72,153,0.2)] disabled:opacity-50"
+                          >
+                            {savingPassword ? "Updating..." : "Update Password"}
+                          </button>
+                          <AnimatePresence>
+                            {passwordSuccess && (
+                              <motion.span initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} className="text-green-400 flex items-center gap-2 font-medium text-sm">
+                                <CheckCircle size={16} /> Password Updated
+                              </motion.span>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      </form>
                     </div>
                   </div>
-                  <input
-                    id="avatar-upload"
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleAvatarChange}
-                  />
-                </label>
-                <span className="text-xs text-gray-400">
-                  Click to change avatar
-                </span>
-              </div>
-              <div>
-                <label className="block text-gray-300 mb-1">Name</label>
-                <div className="flex items-center bg-[#23232a] rounded-lg px-3 py-2">
-                  <User size={18} className="text-cyan-400 mr-2" />
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="bg-transparent outline-none w-full text-white placeholder-gray-500"
-                    required
-                    minLength={2}
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-gray-300 mb-1">Email</label>
-                <div className="flex items-center bg-[#23232a] rounded-lg px-3 py-2">
-                  <Mail size={18} className="text-cyan-400 mr-2" />
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="bg-transparent outline-none w-full text-white placeholder-gray-500"
-                    required
-                  />
-                </div>
-              </div>
-              <button
-                type="submit"
-                className="w-full bg-cyan-600 hover:bg-cyan-700 text-white py-3 rounded-xl font-semibold transition mt-4 disabled:opacity-60"
-                disabled={savingProfile}
-              >
-                {savingProfile ? "Saving..." : "Save Changes"}
-              </button>
-              {profileSuccess && (
-                <div className="text-green-400 text-center mt-2">
-                  Profile updated successfully!
-                </div>
+                </motion.div>
               )}
-            </form>
-          </div>
-        </div>
-      )}
 
-      {/* Change Password Modal */}
-      {showChangePassword && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="w-full max-w-lg bg-[#18181c] rounded-2xl shadow-2xl p-8 relative animate-fade-in">
-            <button
-              onClick={() => setShowChangePassword(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-pink-400"
-            >
-              <X size={28} />
-            </button>
-            <h1 className="text-3xl md:text-4xl font-extrabold mb-8 text-center bg-gradient-to-r from-pink-400 to-cyan-400 bg-clip-text text-transparent">
-              Change Password
-            </h1>
-            <form onSubmit={handlePasswordSubmit} className="space-y-6">
-              <div>
-                <label className="block text-gray-300 mb-1">
-                  Current Password
-                </label>
-                <div className="flex items-center bg-[#23232a] rounded-lg px-3 py-2">
-                  <Lock size={18} className="text-pink-400 mr-2" />
-                  <input
-                    type={showCurrent ? "text" : "password"}
-                    value={current}
-                    onChange={(e) => setCurrent(e.target.value)}
-                    className="bg-transparent outline-none w-full text-white placeholder-gray-500"
-                    required
-                    minLength={6}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowCurrent((v) => !v)}
-                    className="ml-2 text-gray-400"
-                  >
-                    {showCurrent ? <X size={18} /> : <Lock size={18} />}
-                  </button>
-                </div>
-              </div>
-              <div>
-                <label className="block text-gray-300 mb-1">New Password</label>
-                <div className="flex items-center bg-[#23232a] rounded-lg px-3 py-2">
-                  <Lock size={18} className="text-cyan-400 mr-2" />
-                  <input
-                    type={showNew ? "text" : "password"}
-                    value={newPass}
-                    onChange={(e) => setNewPass(e.target.value)}
-                    className="bg-transparent outline-none w-full text-white placeholder-gray-500"
-                    required
-                    minLength={6}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowNew((v) => !v)}
-                    className="ml-2 text-gray-400"
-                  >
-                    {showNew ? <X size={18} /> : <Lock size={18} />}
-                  </button>
-                </div>
-              </div>
-              <div>
-                <label className="block text-gray-300 mb-1">
-                  Confirm New Password
-                </label>
-                <div className="flex items-center bg-[#23232a] rounded-lg px-3 py-2">
-                  <Lock size={18} className="text-cyan-400 mr-2" />
-                  <input
-                    type={showConfirm ? "text" : "password"}
-                    value={confirm}
-                    onChange={(e) => setConfirm(e.target.value)}
-                    className="bg-transparent outline-none w-full text-white placeholder-gray-500"
-                    required
-                    minLength={6}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirm((v) => !v)}
-                    className="ml-2 text-gray-400"
-                  >
-                    {showConfirm ? <X size={18} /> : <Lock size={18} />}
-                  </button>
-                </div>
-              </div>
-              {passwordError && (
-                <div className="text-red-400 text-center">{passwordError}</div>
+              {/* Appearance Tab */}
+              {activeTab === 'appearance' && (
+                <motion.div key="appearance" variants={contentVariants} initial="hidden" animate="visible" exit="exit" className="relative z-10">
+                  <h2 className="text-2xl font-heading font-bold mb-8 flex items-center gap-2">
+                    <Sun className="text-yellow-400" /> Appearance
+                  </h2>
+
+                  <div className="max-w-xl">
+                    <h3 className="font-bold text-lg mb-4">Theme Preference</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <button 
+                        onClick={() => setTheme('dark')}
+                        className={`p-6 rounded-2xl border text-left transition-all ${theme === 'dark' ? 'bg-cyan-900/20 border-cyan-500/50 shadow-[0_0_20px_rgba(6,182,212,0.1)]' : 'bg-[#18181c] border-[#23232a] hover:border-white/20'}`}
+                      >
+                        <Moon size={28} className={theme === 'dark' ? 'text-cyan-400 mb-4' : 'text-gray-500 mb-4'} />
+                        <h4 className="font-bold text-lg text-white mb-1">Deep Space</h4>
+                        <p className="text-sm text-gray-400">Dark aesthetic optimized for focus.</p>
+                      </button>
+
+                      <button 
+                        onClick={() => setTheme('light')}
+                        className={`p-6 rounded-2xl border text-left transition-all opacity-50 cursor-not-allowed ${theme === 'light' ? 'bg-yellow-900/20 border-yellow-500/50' : 'bg-[#18181c] border-[#23232a]'}`}
+                        disabled // Disabled as we only built a dark theme for now
+                        title="Coming Soon"
+                      >
+                        <Sun size={28} className={theme === 'light' ? 'text-yellow-400 mb-4' : 'text-gray-500 mb-4'} />
+                        <h4 className="font-bold text-lg text-white mb-1">Light Mode</h4>
+                        <p className="text-sm text-gray-400">Currently in development.</p>
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
               )}
-              <button
-                type="submit"
-                className="w-full bg-pink-600 hover:bg-pink-700 text-white py-3 rounded-xl font-semibold transition mt-4 disabled:opacity-60"
-                disabled={savingPassword}
-              >
-                {savingPassword ? "Saving..." : "Change Password"}
-              </button>
-              {passwordSuccess && (
-                <div className="text-green-400 text-center mt-2 flex items-center justify-center gap-1">
-                  <CheckCircle size={18} /> Password changed successfully!
-                </div>
-              )}
-            </form>
+            </AnimatePresence>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };

@@ -1,33 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import api from '../../utils/api';
-import { mockAPI } from '../../utils/mockData';
+import { motion } from 'framer-motion';
+import {
+  ArrowRight,
+  TrendingUp,
+  Activity,
+  CheckCircle,
+  AlertTriangle,
+  RefreshCw,
+  Wallet,
+  BarChart3,
+  ShieldAlert,
+  Clock
+} from 'lucide-react';
+import { Link } from 'react-router-dom';
 
-import { DEMO_MODE } from '../../config/demo';
+// Animation variants for stagger effects
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
 
-// --- Helper Components for a cleaner structure ---
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0, transition: { type: "spring", bounce: 0.4 } }
+};
 
-// Icon for the "From -> To" column
-const ArrowRightIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500 mx-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-  </svg>
-);
-
-// A single statistic card
-const StatCard = ({ icon, title, value }) => (
-  <div className="bg-[#18181c] border border-[#23232a] rounded-2xl p-6 flex items-center gap-5 transition-all duration-300 hover:border-cyan-500/50 hover:scale-105">
-    <div className="bg-gray-800 p-4 rounded-full text-2xl">
-      {icon}
-    </div>
-    <div>
-      <p className="text-gray-400 text-sm">{title}</p>
-      <h3 className="text-2xl md:text-3xl font-bold text-white">{value}</h3>
-    </div>
-  </div>
-);
-
-// --- Main Dashboard Component ---
+const currencyFormatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -37,7 +42,7 @@ const Dashboard = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (user || DEMO_MODE) { // Allow fetching in demo mode without a user
+    if (user) {
       fetchDashboardData();
     }
   }, [user]);
@@ -47,31 +52,21 @@ const Dashboard = () => {
       setLoading(true);
       setError(null);
       
-      const fetcher = DEMO_MODE ? mockAPI : {
-        getSwapHistory: () => api.get('/swap/history'),
-        getSwapStats: () => api.get('/swap/stats'),
-      };
-
       const [historyRes, statsRes] = await Promise.all([
-        fetcher.getSwapHistory(),
-        fetcher.getSwapStats()
+        api.get('/swap/history'),
+        api.get('/swap/stats')
       ]);
 
-      const history = DEMO_MODE ? historyRes.data.swaps : historyRes.data.data.transactions;
+      const history = historyRes.data.data.transactions;
       setSwapHistory(history || []);
 
-      let finalStats;
-      if (DEMO_MODE) {
-        finalStats = statsRes.data;
-      } else {
-        const s = statsRes.data.data.stats || {};
-        finalStats = {
-          totalSwaps: s.totalTransactions || 0,
-          totalVolume: s.totalVolume || 0,
-          successRate: s.totalTransactions ? (s.completedTransactions / s.totalTransactions) * 100 : 0,
-          avgAmount: s.avgTransactionSize || 0
-        };
-      }
+      const s = statsRes.data.data.stats || {};
+      const finalStats = {
+        totalSwaps: s.totalTransactions || 0,
+        totalVolume: s.totalVolume || 0,
+        successRate: s.totalTransactions ? (s.completedTransactions / s.totalTransactions) * 100 : 0,
+        avgAmount: s.avgTransactionSize || 0
+      };
       setStats(finalStats);
 
     } catch (err) {
@@ -82,124 +77,198 @@ const Dashboard = () => {
     }
   };
 
-  // --- Formatting and Style Helpers ---
+  const formatCurrency = (amount) => currencyFormatter.format(amount);
+  
+  const timeAgo = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = Math.floor((now - date) / 1000); // seconds
+    if (diff < 60) return `${diff}s ago`;
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    return `${Math.floor(diff / 86400)}d ago`;
+  };
 
-  const formatCurrency = (amount) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
-  const formatDate = (dateString) => new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-
-  const getStatusClasses = (status) => {
+  const getStatusColor = (status) => {
     switch (status) {
-      case 'completed': return 'bg-green-500/10 text-green-400';
-      case 'pending': return 'bg-yellow-500/10 text-yellow-400';
-      case 'failed': return 'bg-red-500/10 text-red-400';
-      default: return 'bg-gray-500/10 text-gray-400';
+      case 'completed': return 'text-green-400 bg-green-500/20 border-green-500/30';
+      case 'pending': return 'text-yellow-400 bg-yellow-500/20 border-yellow-500/30';
+      case 'failed': return 'text-red-400 bg-red-500/20 border-red-500/30';
+      default: return 'text-gray-400 bg-gray-500/20 border-gray-500/30';
     }
   };
 
-  const getRiskColor = (risk) => {
-    if (risk > 70) return 'bg-red-500';
-    if (risk > 40) return 'bg-yellow-500';
-    return 'bg-green-500';
-  };
-
-  // --- Render Logic ---
-
   if (loading) {
-    return <div className="flex items-center justify-center h-96 text-gray-400">Loading Dashboard...</div>;
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[80vh] text-cyan-400 space-y-4">
+        <RefreshCw className="w-10 h-10 animate-spin" />
+        <span className="font-heading tracking-widest text-sm uppercase">Initializing Workspace...</span>
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="flex items-center justify-center h-96 text-red-400 bg-red-500/10 rounded-lg p-8">{error}</div>;
+    return (
+      <div className="flex items-center justify-center min-h-[80vh]">
+        <div className="glass-panel p-8 text-center border-red-500/30 bg-red-900/10 max-w-md">
+          <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+          <h3 className="text-xl font-bold text-red-400 mb-2">Connection Error</h3>
+          <p className="text-gray-400">{error}</p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="p-4 md:p-8 text-white">
-      {/* Header */}
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+    <div className="p-4 md:p-8 text-white max-w-7xl mx-auto">
+      <div className="flex justify-between items-end mb-8">
         <div>
-          <h1 className="text-4xl font-bold">Dashboard</h1>
-          <p className="text-gray-400 mt-1">Welcome back, {user?.name || 'Guest'}</p>
+          <h1 className="text-4xl md:text-5xl font-heading font-extrabold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+            Command Center
+          </h1>
+          <p className="text-gray-400 mt-2 font-medium">Welcome back, {user?.name || 'Commander'}</p>
         </div>
-        <div className="flex items-center gap-4 mt-4 md:mt-0 bg-[#18181c] border border-[#23232a] p-3 rounded-2xl">
-          <img src={user?.avatar || `https://i.pravatar.cc/150?u=${user?.email || 'guest'}`} alt="User" className="w-12 h-12 rounded-full" />
-          <div>
-            <h3 className="font-semibold">{user?.name || 'Anonymous User'}</h3>
-            <p className="text-sm text-gray-400">{user?.email}</p>
-          </div>
-        </div>
-      </header>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-12">
-        <StatCard icon="🔄" title="Total Swaps" value={stats.totalSwaps} />
-        <StatCard icon="💰" title="Total Volume" value={formatCurrency(stats.totalVolume)} />
-        <StatCard icon="📊" title="Success Rate" value={`${stats.successRate.toFixed(1)}%`} />
-        <StatCard icon="📈" title="Avg. Amount" value={formatCurrency(stats.avgAmount)} />
+        <button 
+          onClick={fetchDashboardData}
+          className="p-3 bg-cyan-900/30 border border-cyan-500/30 rounded-xl hover:bg-cyan-800/40 hover:border-cyan-400 transition-all group"
+          title="Refresh Data"
+        >
+          <RefreshCw className="w-5 h-5 text-cyan-400 group-hover:rotate-180 transition-transform duration-500" />
+        </button>
       </div>
 
-      {/* Swap History Section */}
-      <div className="bg-[#18181c] border border-[#23232a] rounded-2xl">
-        <div className="flex justify-between items-center p-6 border-b border-[#23232a]">
-          <h2 className="text-2xl font-bold">Swap History</h2>
-          <button 
-            className="px-4 py-2 bg-cyan-600/20 text-cyan-400 font-semibold rounded-lg hover:bg-cyan-600/40 transition-colors"
-            onClick={fetchDashboardData}
-            disabled={loading}
-          >
-              {loading ? 'Refreshing...' : 'Refresh'}
-            </button>
-        </div>
-
-        {swapHistory.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="text-5xl mb-4">📝</div>
-            <h3 className="text-xl font-semibold">No Swap History</h3>
-            <p className="text-gray-400">Your transactions will appear here once you start swapping.</p>
+      <motion.div 
+        variants={containerVariants} 
+        initial="hidden" 
+        animate="show" 
+        className="grid grid-cols-1 md:grid-cols-12 gap-6"
+      >
+        {/* Profile Widget (Bento 1) */}
+        <motion.div variants={itemVariants} className="col-span-1 md:col-span-4 glass-panel p-6 rounded-3xl flex flex-col justify-between glowing-border group">
+          <div className="flex items-start justify-between mb-6">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-600 to-pink-600 p-0.5">
+              <div className="w-full h-full bg-[#111112] rounded-2xl overflow-hidden flex items-center justify-center">
+                {user?.avatar ? (
+                  <img src={user.avatar} alt="User" className="w-full h-full object-cover" />
+                ) : (
+                  <User size={32} className="text-gray-400" />
+                )}
+              </div>
+            </div>
+            <Link to="/settings" className="text-xs bg-[#23232a] text-gray-400 px-3 py-1.5 rounded-full hover:bg-cyan-900/50 hover:text-cyan-400 transition-colors">
+              Edit Profile
+            </Link>
           </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead className="border-b border-[#23232a]">
-                <tr>
-                  <th className="p-4 text-sm font-semibold text-gray-400">Date</th>
-                  <th className="p-4 text-sm font-semibold text-gray-400">Transaction</th>
-                  <th className="p-4 text-sm font-semibold text-gray-400">Value</th>
-                  <th className="p-4 text-sm font-semibold text-gray-400">Status</th>
-                  <th className="p-4 text-sm font-semibold text-gray-400">Scam Risk</th>
-                </tr>
-              </thead>
-              <tbody>
+          <div>
+            <h3 className="text-2xl font-bold text-white mb-1">{user?.name || 'Anonymous User'}</h3>
+            <p className="text-sm text-gray-400 font-mono mb-4">{user?.email}</p>
+            <div className="flex items-center gap-2 text-xs bg-green-500/10 text-green-400 px-3 py-1.5 rounded-lg border border-green-500/20 w-max">
+              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+              Account Verified
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Portfolio Hero Widget (Bento 2) */}
+        <motion.div variants={itemVariants} className="col-span-1 md:col-span-8 glass-panel p-8 rounded-3xl relative overflow-hidden group">
+          <div className="absolute -right-20 -top-20 w-64 h-64 bg-cyan-500/20 blur-[80px] rounded-full group-hover:bg-cyan-400/30 transition-colors duration-700"></div>
+          
+          <div className="flex items-center gap-3 text-cyan-400 mb-2">
+            <Wallet className="w-5 h-5" />
+            <h2 className="font-semibold uppercase tracking-wider text-sm">Total Trading Volume</h2>
+          </div>
+          <div className="text-5xl md:text-7xl font-heading font-black text-white mb-6">
+            {formatCurrency(stats.totalVolume)}
+          </div>
+          
+          <div className="flex flex-wrap gap-4">
+            <Link to="/swap" className="px-6 py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(6,182,212,0.3)] transition-all">
+              New Swap
+            </Link>
+            <Link to="/wallet" className="px-6 py-3 bg-[#23232a] hover:bg-[#2a2a35] text-white font-bold rounded-xl transition-all">
+              View Wallet
+            </Link>
+          </div>
+        </motion.div>
+
+        {/* 4 Small Stat Widgets (Bento 3-6) */}
+        {[
+          { title: "Total Swaps", value: stats.totalSwaps, icon: Activity, color: "from-pink-500 to-purple-500" },
+          { title: "Success Rate", value: `${stats.successRate.toFixed(1)}%`, icon: CheckCircle, color: "from-green-400 to-emerald-600" },
+          { title: "Avg. Size", value: formatCurrency(stats.avgAmount), icon: BarChart3, color: "from-cyan-400 to-blue-500" },
+          { title: "Threats Blocked", value: "0", icon: ShieldAlert, color: "from-yellow-400 to-orange-500" }
+        ].map((stat, i) => (
+          <motion.div key={i} variants={itemVariants} className="col-span-1 md:col-span-3 glass-panel p-6 rounded-3xl relative overflow-hidden group hover:border-white/20 transition-colors">
+            <div className={`absolute -right-10 -bottom-10 w-32 h-32 bg-gradient-to-br ${stat.color} opacity-10 blur-3xl group-hover:opacity-20 transition-opacity`}></div>
+            <div className="flex justify-between items-start mb-4">
+              <div className="p-3 bg-[#23232a] rounded-xl border border-white/5">
+                <stat.icon className="w-6 h-6 text-white" />
+              </div>
+            </div>
+            <p className="text-gray-400 text-sm font-medium mb-1">{stat.title}</p>
+            <h3 className="text-3xl font-heading font-bold text-white">{stat.value}</h3>
+          </motion.div>
+        ))}
+
+        {/* Activity Feed Widget (Bento 7) */}
+        <motion.div variants={itemVariants} className="col-span-1 md:col-span-12 glass-panel p-1 rounded-3xl">
+          <div className="bg-[#111112]/50 backdrop-blur-md w-full h-full rounded-[23px] p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <Clock className="w-5 h-5 text-cyan-400" /> Recent Activity
+              </h2>
+              <Link to="/wallet" className="text-sm text-cyan-400 hover:text-cyan-300 font-medium">View All &rarr;</Link>
+            </div>
+
+            {swapHistory.length === 0 ? (
+              <div className="text-center py-16 bg-[#18181c]/50 rounded-2xl border border-dashed border-[#23232a]">
+                <div className="w-16 h-16 bg-[#23232a] rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Activity className="w-8 h-8 text-gray-500" />
+                </div>
+                <h3 className="text-lg font-semibold text-white mb-2">No Swaps Yet</h3>
+                <p className="text-gray-400 text-sm">Your decentralized journey begins with your first swap.</p>
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
                 {swapHistory.map((swap, index) => (
-                  <tr key={swap._id || index} className="border-b border-[#23232a] last:border-none hover:bg-gray-800/50 transition-colors">
-                    <td className="p-4 text-gray-300">{formatDate(swap.createdAt)}</td>
-                    <td className="p-4">
-                      <div className="flex items-center">
-                        <span className="font-semibold">{swap.fromAmount} {swap.fromToken}</span>
-                        <ArrowRightIcon />
-                        <span className="font-semibold">{swap.toAmount} {swap.toToken}</span>
+                  <div key={swap._id || index} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-[#18181c]/80 rounded-2xl border border-white/5 hover:border-cyan-500/30 transition-colors group">
+                    <div className="flex items-center gap-4 mb-3 sm:mb-0">
+                      <div className="w-12 h-12 rounded-full bg-[#23232a] flex items-center justify-center">
+                        <TrendingUp className="w-5 h-5 text-gray-400 group-hover:text-cyan-400 transition-colors" />
                       </div>
-                    </td>
-                    <td className="p-4 font-mono">{formatCurrency(swap.usdValue || 0)}</td>
-                    <td className="p-4">
-                      <span className={`px-3 py-1 text-xs font-semibold rounded-full capitalize ${getStatusClasses(swap.status)}`}>
+                      <div>
+                        <div className="flex items-center gap-2 font-bold text-lg">
+                          <span>{swap.fromAmount} {swap.fromToken}</span>
+                          <ArrowRight className="w-4 h-4 text-gray-500" />
+                          <span className="text-cyan-400">{swap.toAmount} {swap.toToken}</span>
+                        </div>
+                        <div className="text-xs text-gray-500 font-mono">
+                          {timeAgo(swap.createdAt)} &bull; {formatCurrency(swap.usdValue || 0)}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-400">Risk:</span>
+                        <div className="w-16 h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full ${swap.scamRisk > 40 ? 'bg-red-500' : 'bg-green-500'}`} 
+                            style={{ width: `${swap.scamRisk || 0}%` }} 
+                          />
+                        </div>
+                      </div>
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${getStatusColor(swap.status)}`}>
                         {swap.status}
                       </span>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-24 h-2 bg-gray-700 rounded-full">
-                          <div className={`h-2 rounded-full ${getRiskColor(swap.scamRisk || 0)}`} style={{ width: `${swap.scamRisk || 0}%` }} />
-                        </div>
-                        <span className="text-sm font-semibold">{swap.scamRisk || 0}%</span>
-                      </div>
-                    </td>
-                  </tr>
+                    </div>
+                  </div>
                 ))}
-              </tbody>
-            </table>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </motion.div>
+      </motion.div>
     </div>
   );
 };

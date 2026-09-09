@@ -99,16 +99,13 @@ class WalletService {
 
   async getWalletBalance(address) {
     try {
-      // TODO: Implement actual blockchain balance fetching
-      // For now return mock data
-      const mockBalance = {
-        APT: parseFloat((Math.random() * 100).toFixed(6)),
-        USDC: parseFloat((Math.random() * 1000).toFixed(6)),
-        USDT: parseFloat((Math.random() * 1000).toFixed(6))
+      // Real blockchain balance fetching is handled by the aptos.service
+      // Returning 0 here. The controller should ideally not call this method.
+      return {
+        APT: 0,
+        USDC: 0,
+        USDT: 0
       };
-
-      logger.debug(`Mock balance for ${address}:`, mockBalance);
-      return mockBalance;
     } catch (error) {
       logger.error(`Failed to get balance for address ${address}:`, error);
       throw error;

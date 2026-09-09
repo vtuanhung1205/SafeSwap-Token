@@ -9,6 +9,7 @@ import {
   Baby,
   History,
 } from "lucide-react";
+import SEO from "../SEO";
 
 // --- Main PagePrivacy Component ---
 const PagePrivacy = () => {
@@ -28,6 +29,11 @@ const PagePrivacy = () => {
 
   return (
     <div className="bg-transparent text-white">
+      <SEO
+        title="Privacy Policy"
+        description="SafeSwap's Privacy Policy. Learn how we collect, use, and protect your data, including wallet addresses, usage analytics, and security measures."
+        keywords="SafeSwap privacy policy, DeFi privacy, crypto data protection, blockchain privacy, user data security"
+      />
       {/* Hero Section */}
       <section className="relative py-20 px-6 flex items-center justify-center text-center">
         <div className="relative z-10 max-w-4xl mx-auto">

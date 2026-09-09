@@ -3,12 +3,14 @@ import { useWallet } from '@aptos-labs/wallet-adapter-react';
 import { X, CheckCircle2, Wallet as WalletIcon } from 'lucide-react';
 import { walletAPI } from '../../utils/api';
 
+import { useAuth } from '../../contexts/AuthContext';
+
 const WalletConnectModal = ({ isOpen, onClose, suggestedAddress, onConnected }) => {
-  const { wallets, connect, connected } = useWallet();
+  const { wallets, connect, connected, account, signMessage, network } = useWallet();
+  const { walletLogin } = useAuth();
   const [connecting, setConnecting] = React.useState(false);
   const [error, setError] = React.useState(null);
-
-  if (!isOpen) return null;
+  const [shouldSign, setShouldSign] = React.useState(false);
 
   const handleConnect = async (walletName) => {
     try {
@@ -16,22 +18,58 @@ const WalletConnectModal = ({ isOpen, onClose, suggestedAddress, onConnected }) 
       setError(null);
       await connect(walletName);
       
-      // We will let the useEffect in the parent component handle backend sync
-      // or we can handle it here if we pass the address and public key.
-      // But the wallet adapter connects asynchronously. 
-      // The parent component should listen for `connected` state and then call walletAPI.connect()
-      
-      if (onConnected) {
-        onConnected();
-      }
-      onClose();
+      // We set a flag to trigger the signature once the wallet adapter
+      // finishes connecting and updates the React state (account).
+      setShouldSign(true);
     } catch (err) {
       console.error("Connection error:", err);
       setError(err.message || "Failed to connect wallet.");
-    } finally {
       setConnecting(false);
     }
   };
+
+  // Listen for the account to become available after connecting
+  React.useEffect(() => {
+    const performWeb3Auth = async () => {
+      if (connected && account && shouldSign) {
+        setShouldSign(false); // only run once
+        
+        try {
+          const message = "Sign in to SafeSwap securely.";
+          const nonce = Date.now().toString();
+          
+          const payload = {
+            message: message,
+            nonce: nonce,
+          };
+          
+          const response = await signMessage(payload);
+          
+          const address = account.address;
+          const publicKey = account.publicKey;
+          const signatureStr = typeof response.signature === 'string' ? response.signature : 
+             (response.signature?.hexString || response.signature?.data || Buffer.from(response.signature).toString('hex'));
+
+          if (address && publicKey && signatureStr) {
+            await walletLogin(address, publicKey, signatureStr, response.fullMessage || message);
+          }
+          
+          if (onConnected) {
+            onConnected();
+          }
+          onClose();
+        } catch (signErr) {
+          console.error("Signature error:", signErr);
+          setError("Failed to verify wallet signature. Please try again.");
+          setConnecting(false);
+        }
+      }
+    };
+    
+    performWeb3Auth();
+  }, [connected, account, shouldSign]);
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
