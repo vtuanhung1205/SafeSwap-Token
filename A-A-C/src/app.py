@@ -30,7 +30,8 @@ for path in PIPELINE_PATHS:
             pipeline = joblib.load(path)
             print(f"✅ AI Model loaded successfully from: {path}")
             break
-    except Exception:
+    except Exception as e:
+        print(f"⚠️ Failed to load from {path}: {e}")
         continue
 
 if pipeline is None:

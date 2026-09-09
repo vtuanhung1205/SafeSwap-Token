@@ -35,8 +35,8 @@ const WalletConnectModal = ({ isOpen, onClose, suggestedAddress, onConnected }) 
         setShouldSign(false); // only run once
         
         try {
-          const address = account.address;
-          const publicKey = account.publicKey;
+          const address = typeof account.address === 'string' ? account.address : account.address?.toString();
+          const publicKey = typeof account.publicKey === 'string' ? account.publicKey : (account.publicKey?.toString() || '');
 
           // If already authenticated via Google/email, just link the wallet without needing a signature
           if (isAuthenticated) {
