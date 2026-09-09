@@ -81,8 +81,7 @@ Visit: https://safeswap-frontend.onrender.com
    - Verify connection string in environment variables
 
 2. **Build Failed**
-   - Check build logs in Render dashboard
-   - Ensure all dependencies are in package.json
+   - **Start Command**: `gunicorn src.app:app` in package.json
 
 3. **CORS Issues**
    - Verify ALLOWED_ORIGINS includes frontend URL
