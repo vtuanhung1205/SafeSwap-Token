@@ -13,19 +13,6 @@ import SEO from "../SEO";
 
 // --- Main PagePrivacy Component ---
 const PagePrivacy = () => {
-  const [loading, setLoading] = useState(true);
-  useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 1200);
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-transparent text-gray-400">
-        Loading Privacy Policy...
-      </div>
-    );
-  }
 
   return (
     <div className="bg-transparent text-white">
@@ -54,7 +41,10 @@ const PagePrivacy = () => {
             <ul className="list-disc list-inside space-y-2">
               <li>
                 <strong>Personal Information:</strong> Data you provide, such as
-                your email or wallet address when connecting.
+                your email, name, profile picture, or wallet address when connecting or logging in.
+              </li>
+              <li>
+                <strong>Google OAuth Data:</strong> If you choose to log in using Google, we access your Google profile (Name, Email, Profile Picture) to create and authenticate your account. We strictly use this data solely for authentication and account management. We do not sell, rent, or share your Google user data with any third parties.
               </li>
               <li>
                 <strong>Usage Data:</strong> Information on how you interact
