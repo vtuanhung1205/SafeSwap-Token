@@ -1,26 +1,26 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { MessageCircle, Twitter, Github, Users, Trophy, Bug, Heart, BookOpen, ArrowUpRight, Sparkles, Calendar } from "lucide-react";
+import { Linkedin, Instagram, Github, Users, Trophy, Bug, Heart, BookOpen, ArrowUpRight, Sparkles, Calendar } from "lucide-react";
 import SEO from "../SEO";
 
 const platforms = [
   {
-    name: "Discord",
-    desc: "Join 5,000+ members for real-time support and trading discussion.",
-    href: "https://discord.gg/safeswap",
-    handle: "discord.gg/safeswap",
-    icon: MessageCircle,
+    name: "LinkedIn",
+    desc: "Connect with us on LinkedIn for professional updates and insights.",
+    href: "https://linkedin.com/in/hans-vo",
+    handle: "@hans-vo",
+    icon: Linkedin,
     color: "from-indigo-500/20 to-indigo-500/5",
     border: "border-indigo-500/20 hover:border-indigo-500/40",
     iconColor: "text-indigo-400",
     shadow: "hover:shadow-indigo-500/10",
   },
   {
-    name: "Twitter / X",
+    name: "Instagram",
     desc: "Follow for announcements, updates, and ecosystem alpha.",
-    href: "https://twitter.com/safeswap",
-    handle: "@safeswap",
-    icon: Twitter,
+    href: "https://instagram.com/h4nsx",
+    handle: "@H4nsx",
+    icon: Instagram,
     color: "from-sky-500/20 to-sky-500/5",
     border: "border-sky-500/20 hover:border-sky-500/40",
     iconColor: "text-sky-400",
@@ -29,7 +29,7 @@ const platforms = [
   {
     name: "GitHub",
     desc: "Explore our open-source code, report issues, and contribute.",
-    href: "https://github.com/vtuanhung1205/SafeSwap-Token",
+    href: "https://github.com/h4nsx/SafeSwap-Token",
     handle: "@SafeSwap-Token",
     icon: Github,
     color: "from-gray-500/20 to-gray-500/5",

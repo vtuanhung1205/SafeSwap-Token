@@ -17,7 +17,8 @@ class WalletService {
       // Check if wallet already exists for another user
       const existingWallet = await Wallet.findOne({ address });
       if (existingWallet && existingWallet.userId.toString() !== userId) {
-        throw createError(400, 'Wallet is already connected to another user');
+        // Reassign by deleting the old association
+        await Wallet.deleteOne({ _id: existingWallet._id });
       }
 
       let wallet = await Wallet.findOne({ userId });
