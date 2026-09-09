@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+
+# Disallow authenticated/private routes
+Disallow: /dashboard
+Disallow: /wallet
+Disallow: /settings
+Disallow: /payment
+Disallow: /auth/callback
+
+# Sitemap location
+Sitemap: https://safeswap-token.vercel.app/sitemap.xml
